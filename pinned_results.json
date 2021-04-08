@@ -1,0 +1,250 @@
+{
+    "tests/manager_test/license_test.py::test_with_dev_token_1": "INFO     manager.license:license.py:65 Activation code read successfully, validity time updated to: 2030-01-01 00:00:00+00:00\n",
+    "tests/manager_test/license_test.py::test_with_mumbojumbo_token_1": "INFO     manager.auth_api:auth_api.py:95 Token not valid: skjdnblaknsk\nWARNING  manager.license:license.py:42 Could not read activation key successfully!\n",
+    "tests/manager_test/proxy_test.py::test_default_config_middlewares_1": [
+        {
+            "forwardAuth": {
+                "address": "http://localhost:8000/auth/verify"
+            },
+            "name": "proxy_auth_middleware@file",
+            "provider": "file",
+            "status": "enabled",
+            "type": "forwardauth"
+        },
+        {
+            "name": "traefik-dashboard-prefix-stripper@file",
+            "provider": "file",
+            "status": "enabled",
+            "stripPrefix": {
+                "prefixes": [
+                    "/proxy"
+                ]
+            },
+            "type": "stripprefix",
+            "usedBy": [
+                "traefik_dashboard@file"
+            ]
+        }
+    ],
+    "tests/manager_test/proxy_test.py::test_default_config_routers_1": [
+        {
+            "entryPoints": [
+                "web",
+                "websecure"
+            ],
+            "name": "login_page@file",
+            "provider": "file",
+            "rule": "Host(`localhost`) && PathPrefix(`/auth/login`)",
+            "service": "manager_service",
+            "status": "enabled",
+            "using": [
+                "web",
+                "websecure"
+            ]
+        },
+        {
+            "entryPoints": [
+                "web",
+                "websecure"
+            ],
+            "name": "manager@file",
+            "provider": "file",
+            "rule": "Host(`localhost`)",
+            "service": "manager_service",
+            "status": "enabled",
+            "using": [
+                "web",
+                "websecure"
+            ]
+        },
+        {
+            "entryPoints": [
+                "web",
+                "websecure"
+            ],
+            "middlewares": [
+                "traefik-dashboard-prefix-stripper@file"
+            ],
+            "name": "traefik_dashboard@file",
+            "provider": "file",
+            "rule": "Host(`localhost`) &&         (PathPrefix(`/proxy/dashboard`) || PathPrefix(`/api`))",
+            "service": "api@internal",
+            "status": "enabled",
+            "using": [
+                "web",
+                "websecure"
+            ]
+        }
+    ],
+    "tests/manager_test/proxy_test.py::test_default_config_services_1": [
+        {
+            "name": "api@internal",
+            "provider": "internal",
+            "status": "enabled",
+            "usedBy": [
+                "traefik_dashboard@file"
+            ]
+        },
+        {
+            "name": "dashboard@internal",
+            "provider": "internal",
+            "status": "enabled"
+        },
+        {
+            "loadBalancer": {
+                "passHostHeader": true,
+                "servers": [
+                    {
+                        "url": "http://localhost:8000"
+                    }
+                ]
+            },
+            "name": "manager_service@file",
+            "provider": "file",
+            "serverStatus": {
+                "http://localhost:8000": "UP"
+            },
+            "status": "enabled",
+            "type": "loadbalancer",
+            "usedBy": [
+                "login_page@file",
+                "manager@file"
+            ]
+        },
+        {
+            "name": "noop@internal",
+            "provider": "internal",
+            "status": "enabled"
+        }
+    ],
+    "tests/manager_test/proxy_test.py::test_https_dynamic_config_services_1": {
+        "http": {
+            "middlewares": {
+                "1_prefix_stripper": {
+                    "stripPrefix": {
+                        "forceSlash": false,
+                        "prefixes": [
+                            "/services/1"
+                        ]
+                    }
+                }
+            },
+            "routers": {
+                "1": {
+                    "middlewares": [
+                        "1_prefix_stripper"
+                    ],
+                    "rule": "Host(`localhost`) && PathPrefix(`/services/1`)",
+                    "service": "1",
+                    "tls": {
+                        "certresolver": "cert-resolver"
+                    }
+                }
+            },
+            "services": {
+                "1": {
+                    "mirroring": {
+                        "mirrors": [],
+                        "service": "1_1.0.0"
+                    }
+                }
+            }
+        }
+    },
+    "tests/manager_test/proxy_test.py::test_https_static_config_1": {
+        "certificatesResolvers": {
+            "cert-resolver": {
+                "acme": {
+                    "email": "dummy@email.com",
+                    "httpChallenge": {
+                        "entryPoint": "web"
+                    }
+                }
+            }
+        },
+        "entryPoints": {
+            "web": {
+                "address": ":5080",
+                "http": {
+                    "redirections": {
+                        "entryPoint": {
+                            "scheme": "https",
+                            "to": "websecure"
+                        }
+                    }
+                }
+            },
+            "websecure": {
+                "address": ":5443"
+            }
+        }
+    },
+    "tests/manager_test/proxy_test.py::test_with_dynamic_service_1": [
+        {
+            "entryPoints": [
+                "web",
+                "websecure"
+            ],
+            "middlewares": [
+                "dummy_service_1.0.0_prefix_stripper@file"
+            ],
+            "name": "dummy_service_1.0.0@file",
+            "provider": "file",
+            "rule": "Host(`localhost`) && PathPrefix(`/services/dummy_service_1.0.0`)",
+            "service": "dummy_service_1.0.0",
+            "status": "enabled",
+            "using": [
+                "web",
+                "websecure"
+            ]
+        },
+        {
+            "entryPoints": [
+                "web",
+                "websecure"
+            ],
+            "name": "login_page@file",
+            "provider": "file",
+            "rule": "Host(`localhost`) && PathPrefix(`/auth/login`)",
+            "service": "manager_service",
+            "status": "enabled",
+            "using": [
+                "web",
+                "websecure"
+            ]
+        },
+        {
+            "entryPoints": [
+                "web",
+                "websecure"
+            ],
+            "name": "manager@file",
+            "provider": "file",
+            "rule": "Host(`localhost`)",
+            "service": "manager_service",
+            "status": "enabled",
+            "using": [
+                "web",
+                "websecure"
+            ]
+        },
+        {
+            "entryPoints": [
+                "web",
+                "websecure"
+            ],
+            "middlewares": [
+                "traefik-dashboard-prefix-stripper@file"
+            ],
+            "name": "traefik_dashboard@file",
+            "provider": "file",
+            "rule": "Host(`localhost`) &&         (PathPrefix(`/proxy/dashboard`) || PathPrefix(`/api`))",
+            "service": "api@internal",
+            "status": "enabled",
+            "using": [
+                "web",
+                "websecure"
+            ]
+        }
+    ]
+}

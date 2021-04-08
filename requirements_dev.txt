@@ -1,0 +1,14 @@
+-r requirements_docs.txt
+wheel
+pytest
+pytest-sphinx
+pytest-asyncio
+pytest-pinned
+pylint
+black
+flake8
+darglint
+streamlit
+async_asgi_testclient
+scikit-learn
+nbconvert

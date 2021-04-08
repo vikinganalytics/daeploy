@@ -1,0 +1,4 @@
+{
+  "project_name": "my_project",
+  "_daeploy_specifier": "{{cookiecutter._daeploy_specifier}}"
+}

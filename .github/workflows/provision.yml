@@ -1,0 +1,67 @@
+name: Provision MV Integrator
+
+on:
+  workflow_dispatch:
+    inputs:
+      host_name:
+        description: 'Host name of server'     
+        required: true
+        default: 'demo.integrator.multiviz.com'
+      version:
+        description: 'Version to be provisioned'
+        required: true
+        default: 'latest'
+      activation_key:
+        description: 'License Activation Key'
+        required: false
+        default: ''
+      secured:
+        description: 'Use HTTPS (SSL)'
+        required: false
+        default: 'false'
+      admin_password:
+        description: 'Password for admin user'
+        required: true
+        default: 'admin'
+      
+
+jobs:
+
+  provision:
+    name: Provision a new docker container
+    runs-on: ubuntu-latest
+    steps:
+    
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Copy BASH script via ssh 
+      uses: appleboy/scp-action@master
+      with:
+        host: ${{ github.event.inputs.host_name }}
+        username: manager
+        key: ${{ secrets.MANAGER_SSH_KEY }}
+        port: 22
+        source: "configuration-scripts/*.sh"
+        target: "."
+      
+    - name: Login to DockerHub account and start a daeploy Manager
+      uses: appleboy/ssh-action@master
+      env:
+        HOST: ${{ github.event.inputs.host_name }}
+        DOCKER_USER: va-integrator
+        DOCKER_TOKEN: ${{ secrets.VA_GITHUB_TOKEN }}
+        ACTIVATION_KEY: ${{ github.event.inputs.activation_key }}
+        SECURED: ${{ github.event.inputs.secured }}
+        VERSION: ${{ github.event.inputs.version }}
+        ADMIN_PASSWORD: ${{ github.event.inputs.admin_password }}
+      with:
+        host: ${{ github.event.inputs.host_name }}
+        username: manager
+        key: ${{ secrets.MANAGER_SSH_KEY }}
+        port: 22
+        envs: HOST,DOCKER_USER,DOCKER_TOKEN,ACTIVATION_KEY,SECURED,VERSION,ADMIN_PASSWORD
+        script: bash configuration-scripts/start-daeploy-manager.sh -u $DOCKER_USER -t $DOCKER_TOKEN -h $HOST -a $ACTIVATION_KEY -s $SECURED -v $VERSION -w $ADMIN_PASSWORD
+
+         
+      

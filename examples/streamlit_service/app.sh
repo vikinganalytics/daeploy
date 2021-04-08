@@ -1,0 +1,1 @@
+streamlit run die_app.py

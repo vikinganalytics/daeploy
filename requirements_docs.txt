@@ -1,0 +1,7 @@
+sphinx
+sphinx-rtd-theme
+sphinx-multiversion
+pip-licenses
+sphinx-copybutton
+nbsphinx
+sphinx-click

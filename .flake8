@@ -1,0 +1,4 @@
+[flake8]
+max-line-length = 88
+extend-ignore = E203, W503
+exclude = daeploy/cli/service_template/{{cookiecutter.project_name}}/tests/user_test.py

@@ -1,0 +1,29 @@
+name: pypi-upload
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  deploy:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install setuptools wheel twine
+    - name: Build and publish to pypi.org
+      env:
+        TWINE_USERNAME: ${{ secrets.GLOBAL_PYPI_USERNAME }}
+        TWINE_PASSWORD: ${{ secrets.GLOBAL_PYPI_PASSWORD }}
+        DAEPLOY_RELEASE_VERSION: ${{ github.event.release.tag_name }}
+      run: |
+        python setup.py bdist_wheel
+        twine upload dist/*

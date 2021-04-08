@@ -1,0 +1,203 @@
+#!/bin/bash
+# ---------------------------------------------------------------------------
+# start_manager - Starts a daeploy manager on this machine
+
+# Copyright 2020, info@vikinganalytics.se
+# All rights reserved.
+
+# Usage: start_manager [-h|--help] [-v|--version version] [-d|--docker-username docker_username] [-t|--docker-token docker_token] [-n|--host-name host_name] [-p|--http-port http_port] [-P|--https-port https_port] [-A|--auth-enabled] [-l|--log-level log_level] [-a|--disable-access-logs] [-H|--https-enabled] [-s|--https-staging-server] [-e|--config-email email] [-E|--config-password password] [-S|--smtp-server smtp_server] [-N|--smtp-port smtp_port] [-k|--activation-key activation_key]
+
+# Revision history:
+# 2020-12-21 Created by new_script ver. 3.3
+# ---------------------------------------------------------------------------
+
+PROGNAME=${0##*/}
+VERSION="0.1"
+
+clean_up() { # Perform pre-exit housekeeping
+  return
+}
+
+error_exit() {
+  echo -e "${PROGNAME}: ${1:-"Unknown Error"}" >&2
+  clean_up
+  exit 1
+}
+
+graceful_exit() {
+  clean_up
+  exit
+}
+
+signal_exit() { # Handle trapped signals
+  case $1 in
+    INT)
+      error_exit "Program interrupted by user" ;;
+    TERM)
+      echo -e "\n$PROGNAME: Program terminated" >&2
+      graceful_exit ;;
+    *)
+      error_exit "$PROGNAME: Terminating on unknown signal" ;;
+  esac
+}
+
+usage() {
+  echo -e "Usage: $PROGNAME -v version [-h|--help] [-d|--docker-username docker_username] [-t|--docker-token docker_token] [-n|--host-name host_name] [-p|--http-port http_port] [-P|--https-port https_port] [-A|--auth-enabled] [-l|--log-level log_level] [-a|--disable-access-logs] [-H|--https-enabled] [-s|--https-staging-server] [-e|--config-email email] [-E|--config-password password] [-S|--smtp-server smtp_server] [-N|--smtp-port smtp_port] [-k|--activation-key activation_key] [-w|--admin-password admin_password]"
+}
+
+help_message() {
+  cat <<- _EOF_
+  $PROGNAME ver. $VERSION
+  Starts a daeploy manager on this machine.
+
+  $(usage)
+
+  Options:
+  -h, --help  Display this help message and exit.
+  -v, --version  Manager version. Mandatory argument
+    Where 'version' is the manager version to start up.
+  -d, --docker-username  Docker username
+    Where 'docker_username' is the username to docker hub.
+  -t, --docker-token  Docker token
+    where 'docker_token' is the docker token.
+  -n, --host-name host_name  Host name
+    Where 'host_name' is the host name.
+  -p, --http-port http_port  Proxy HTTP port
+    Where 'http_port' is the HTTP port of the proxy.
+  -P, --https-port https_port  Proxy HTTPS port
+    Where 'https_port' is the HTTPS port of the proxy.
+  -A, --auth-enabled  Authentication enabled
+  -l, --log-level log_level  Log level
+    Where 'log_level' is the DEBUG, INFO, WARNING or CRITICAL.
+  -a, --disable-access-logs  Disable access logs
+  -H, --https-enabled  Enable HTTPS
+  -s, --https-staging-server  HTTPS staging server, for testing
+  -e, --config-email email  Configuration email for sending notification emails and getting SSL certificate notification
+    Where 'email' is the email address.
+  -E, --config-password password  Configuration email password
+    Where 'password' is the Password for the configuration email and the smtp server.
+  -S, --smtp-server smtp_server  SMTP email server for sending email notifications
+    Where 'smtp_server' is the smtp server url.
+  -N, --smtp-port smtp_port  SMTP server port, usually 465 or 587
+    Where 'smtp_port' is the port.
+  -k, --activation-key  License activation key
+    Where 'activation_key' is the activation key.
+  -w --admin-password Password for admin user
+    Where admin_password is the password for the admin user.
+
+_EOF_
+  return
+}
+
+# Trap signals
+trap "signal_exit TERM" TERM HUP
+trap "signal_exit INT"  INT
+
+
+
+environ=""
+
+# Parse command-line
+while [[ -n $1 ]]; do
+  case $1 in
+    -h | --help)
+      help_message; graceful_exit ;;
+    -v | --version)
+      echo "Manager version"; shift; version="$1" ;;
+    -d | --docker-username)
+      echo "Docker username"; shift; docker_username="$1" ;;
+    -t | --docker-token)
+      echo "Docker token"; shift; docker_token="$1" ;;
+    -i | --image-path)
+      echo "Manager image path"; shift; image_path="$1" ;;
+    -n | --host-name)
+      echo "Host name"; shift; environ="$environ -e DAEPLOY_HOST_NAME=$1" ;;
+    -p | --http-port)
+      echo "Proxy HTTP port"; shift; http_port=${1:=80}; environ="$environ -e DAEPLOY_PROXY_HTTP_PORT=$http_port" ;;
+    -P | --https-port)
+      echo "Proxy HTTPS port"; shift; https_port=${1:=443}; environ="$environ -e DAEPLOY_PROXY_HTTPS_PORT=$https_port" ;;
+    -A | --auth-enabled)
+      echo "Authentication enabled"; environ="$environ -e DAEPLOY_AUTH_ENABLED=true" ;;
+    -l | --log-level)
+      echo "Log level"; shift; environ="$environ -e DAEPLOY_LOG_LEVEL=$1" ;;
+    -a | --disable-access-logs)
+      echo "Disabled access logs"; environ="$environ -e DAEPLOY_ACCESS_LOGS_ENABLED=false" ;;
+    -H | --https-enabled)
+      echo "Enable HTTPS"; environ="$environ -e DAEPLOY_PROXY_HTTPS=true" ;;
+    -s | --https-staging-server)
+      echo "HTTPS staging server, for testing"; environ="$environ -e DAEPLOY_HTTPS_STAGING_SERVER=true" ;;
+    -e | --config-email)
+      echo "Configuration email for sending notification emails and getting SSL certificate notification"; shift; environ="$environ -e DAEPLOY_CONFIG_EMAIL=$1" ;;
+    -E | --config-password)
+      echo "Configuration email password"; shift; environ="$environ -e DAEPLOY_CONFIG_EMAIL_PASSWORD=$1" ;;
+    -S | --smtp-server)
+      echo "SMTP email server for sending email notifications"; shift; environ="$environ -e DAEPLOY_NOTIFICATION_SMTP_SERVER=$1" ;;
+    -N | --smtp-port)
+      echo "SMTP server port, usually 465 or 587"; shift; environ="$environ -e DAEPLOY_NOTIFICATION_SMTP_PORT=$1" ;;
+    -k | --activation-key)
+      echo "License activation key"; shift; environ="$environ -e DAEPLOY_ACTIVATION_KEY=$1" ;;
+    -w | -- admin-password)
+      echo "Admin password"; shift; environ="$environ -e DAEPLOY_ADMIN_PASSWORD=$1" ;;
+    -* | --*)
+      usage
+      error_exit "Unknown option $1" ;;
+    *)
+      echo "Argument $1 to process..." ;;
+  esac
+  shift
+done
+
+# Main logic
+
+# Mandatory arguments
+if [[ -z $version ]]; then
+  error_exit "Mandatory argument -v|--version not set"
+fi
+
+# Download the image from docker or get it from a file
+if [[ -z $docker_username || -z $docker_token ]]; then
+  if [[ -z $image_path ]]; then
+    echo "Could not load the image. Either give docker username and token, or the path to an image tar-file."
+    echo "Will try to use an already loaded image."
+  else
+    docker load -i $image_path
+  fi
+else
+  echo "Logging into container registry"
+  echo $token | docker login --username $username --password-stdin ghcr.io
+  echo "Pulling the latest version of the image"
+  docker pull ghcr.io/vikinganalytics/mvi/mvi_manager:$version
+fi
+
+echo "Stopping and removing current Docker container:"
+docker rm -f mvi_manager
+
+echo "Creating docker volume for persistent db storage:"
+docker volume create mvi_data
+
+if [[ -z $http_port ]]; then
+  http_port=80
+fi
+if [[ -z $https_port ]]; then
+  https_port=443
+fi
+
+echo "Running version $version of the daeploy Manager"
+docker run \
+        --name mvi_manager \
+        -v /var/run/docker.sock:/var/run/docker.sock \
+        -v mvi_data:/data \
+        -p $http_port:$http_port \
+        -p $https_port:$https_port \
+        $environ \
+        --restart always \
+        --log-driver json-file \
+        --log-opt max-size=100m \
+        --log-opt max-file=5 \
+        -d ghcr.io/vikinganalytics/mvi/mvi_manager:$version
+
+echo "Logging out of container registry"
+docker logout ghcr.io
+
+graceful_exit
+

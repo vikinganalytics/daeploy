@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <title>Daeploy install and login</title>
+        <meta charset="utf-8">
+        <!-- include the termynal stylesheet -->
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@duckdoc/termynal@1.0.0/termynal.css">
+        <!-- some custom styles for the page -->
+        <link href="https://fonts.googleapis.com/css?family=Fira+Mono">
+        <style>
+            body {
+                padding: 0; margin: 0;
+                background: #1a1e24;
+                width: 100%;
+                min-height: 100vh;
+                background: -webkit-linear-gradient(to right, #3a1c71, #d76d77, #ffaf7b);
+                background: linear-gradient(to right, #3a1c71, #d76d77, #ffaf7b);
+                white-space: pre-wrap;
+                display: -webkit-box; display: -ms-flexbox; display: flex;
+                -webkit-box-align: center; -ms-flex-align: center; align-items: center;
+                -webkit-box-pack: center; -ms-flex-pack: center; justify-content: center;
+                -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+            }
+        </style>
+    </head>
+    <body>
+        <!-- the termynal container -->
+        <div id="termynal" style="min-width: 1000px;"></div>
+
+        <!-- include and initialise termynal.js -->
+        <script src="https://cdn.jsdelivr.net/npm/@duckdoc/termynal@1.0.0/termynal.js"></script>
+        <script>
+          var termynal = new Termynal('#termynal', {
+            typeDelay: 40,
+            lineDelay: 1000,
+            lineData: [
+              { type: 'input', value: 'pip install daeploy' },
+              { type: 'progress' },
+              { value: 'Successfully installed daeploy' },
+              { type: 'input', value: 'daeploy login' },
+              { value: 'Enter daeploy host:'},
+              { type: 'input', prompt: '', value: 'http://your.domain.com'},
+              { value: 'Username:'},
+              { type: 'input', prompt: '', value: 'username'},
+              { value: 'Password:'},
+              { type: 'input', prompt: '', value: '*******'},
+              { value: 'Changed host to http://your.domain.com' },
+            ]
+          });
+        </script>
+    </body>
+</html>

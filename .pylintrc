@@ -1,0 +1,18 @@
+[pylint]
+disable = 
+    R0801,
+    C0330, 
+    C0326,
+    no-self-argument,
+    no-name-in-module,
+    too-few-public-methods,
+    too-many-arguments,
+    logging-fstring-interpolation,
+    fixme,
+    missing-module-docstring,
+    missing-function-docstring,
+    missing-class-docstring,
+    raise-missing-from,
+    unsubscriptable-object # TODO: Only required in python 3.9
+
+max-line-length = 88

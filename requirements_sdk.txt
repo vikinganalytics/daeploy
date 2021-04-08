@@ -1,0 +1,13 @@
+typer
+tabulate
+cookiecutter
+uvicorn
+requests
+fastapi
+pydantic
+numpy
+setuptools
+sqlalchemy
+aiofiles
+pytest
+pandas

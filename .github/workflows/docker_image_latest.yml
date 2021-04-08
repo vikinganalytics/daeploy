@@ -1,0 +1,30 @@
+name: Release docker image
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+
+  build:
+    name: Build and run daeploy manager
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Login to DockerHub
+      uses: docker/login-action@v1
+      with:
+        registry: ghcr.io
+        username: va-integrator
+        password: ${{ secrets.VA_GITHUB_TOKEN }}
+
+    - name: Docker build and push
+      run: |
+        docker build --build-arg version=${GITHUB_SHA} -t ghcr.io/vikinganalytics/mvi/daeploy_manager:latest .
+        docker push ghcr.io/vikinganalytics/mvi/daeploy_manager:latest
+
+
+         
+      

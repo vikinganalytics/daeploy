@@ -1,0 +1,5 @@
+#!/bin/bash
+# Running stock assemble script
+${STI_SCRIPTS_PATH}/assemble
+# Making app.sh executable
+chmod +x ${APP_ROOT}/src/app.sh

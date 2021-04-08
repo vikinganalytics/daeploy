@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <title>Daeploy init and deploy</title>
+        <meta charset="utf-8">
+        <!-- include the termynal stylesheet -->
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@duckdoc/termynal@1.0.0/termynal.css">
+        <!-- some custom styles for the page -->
+        <link href="https://fonts.googleapis.com/css?family=Fira+Mono">
+        <style>
+            body {
+                padding: 0; margin: 0;
+                background: #1a1e24;
+                width: 100%;
+                min-height: 100vh;
+                background: -webkit-linear-gradient(to right, #3a1c71, #d76d77, #ffaf7b);
+                background: linear-gradient(to right, #3a1c71, #d76d77, #ffaf7b);
+                white-space: pre-wrap;
+                display: -webkit-box; display: -ms-flexbox; display: flex;
+                -webkit-box-align: center; -ms-flex-align: center; align-items: center;
+                -webkit-box-pack: center; -ms-flex-pack: center; justify-content: center;
+                -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+            }
+        </style>
+    </head>
+    <body>
+        <!-- the termynal container -->
+        <div id="termynal" style="min-width: 1000px;"></div>
+
+        <!-- include and initialise termynal.js -->
+        <script src="https://cdn.jsdelivr.net/npm/@duckdoc/termynal@1.0.0/termynal.js"></script>
+        <script>
+          var termynal = new Termynal('#termynal', {
+            typeDelay: 40,
+            lineDelay: 1000,
+            lineData: [
+              { type: 'input', value: 'daeploy init'},
+              { value: 'project_name [my_project]:' },
+              { type: 'input', prompt: '', value: 'my_first_daeploy_project'},
+              { type: 'input', value: 'ls my_first_daeploy_project/' },
+              { value: 'README.md  requirements.txt  service.py  tests' },
+              { type: 'input', value: 'daeploy deploy my_first_service 0.0.1 ./my_first_daeploy_project' },
+              { value: 'Active host: http://your.domain.com' },
+              { value: 'Deploying service...' },
+              { value: 'Service deployed successfully' },
+              { value: `
+MAIN    NAME              VERSION    STATUS    RUNNING
+------  ----------------  ---------  --------  -----------------------------------
+*       my_first_service  0.0.1      running   Running (since 2021-01-27 10:16:24)` }
+
+            ]
+          });
+        </script>
+    </body>
+</html>

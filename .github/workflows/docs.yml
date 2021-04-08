@@ -1,0 +1,52 @@
+name: Publish docs
+
+on:
+  push:
+    branches: [ develop ]
+  release:
+    types: [published]
+
+jobs:
+    docs: 
+      name: Build and push docs to GH pages
+      runs-on: "ubuntu-latest"
+      steps: 
+        -   uses: actions/checkout@v2
+            with:
+              fetch-depth: 0
+        -   name: "Set up Python 3"
+            uses: actions/setup-python@v2
+            with: 
+                python-version: '3.x'
+        -   name: "Install dependencies"
+            run: |
+                pip install -r requirements_manager.txt 
+                pip install -r requirements_sdk.txt
+                pip install -r requirements_docs.txt
+                pip install .
+        -   name: "Install pandoc"
+            run: |
+                wget https://github.com/jgm/pandoc/releases/download/2.11.4/pandoc-2.11.4-1-amd64.deb
+                sudo dpkg -i pandoc-2.11.4-1-amd64.deb
+                rm pandoc-2.11.4-1-amd64.deb
+        - name: Build docs
+          run: |
+            cd docs
+            sphinx-multiversion source/ build/html/
+            touch build/html/.nojekyll
+            python render_redirect_index_html_file.py
+        - name: Debug output
+          run: |
+            ls docs/build/html
+            cat docs/build/html/index.html
+        - name: Pushes to another repository
+          uses: cpina/github-action-push-to-another-repository@master
+          env:
+            API_TOKEN_GITHUB: ${{ secrets.VA_GITHUB_TOKEN }}
+          with:
+            source-directory: 'docs/build/html'
+            destination-github-username: 'vikinganalytics'
+            destination-repository-name: 'daeploy-docs'
+            target-branch: 'gh-pages'
+            user-email: develop@vikinganalytics.se
+
