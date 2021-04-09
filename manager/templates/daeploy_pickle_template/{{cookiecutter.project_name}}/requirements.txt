@@ -1,2 +1,2 @@
-daeploy==0.4.5
+daeploy==0.4.6
 pandas
