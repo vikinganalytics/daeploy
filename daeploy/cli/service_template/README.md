@@ -1,6 +1,6 @@
 # Daeploy project skeleton template
 
-The template should be updated to contain necessary boilerplate code for creating an daeploy service using the SDK. A project is created from the template through the CLI by using the function `daeploy init`.
+The template should be updated to contain necessary boilerplate code for creating a daeploy service using the SDK. A project is created from the template through the CLI by using the function `daeploy init`.
 
 ## Usage guide
 

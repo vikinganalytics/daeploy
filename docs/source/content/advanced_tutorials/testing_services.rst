@@ -72,7 +72,7 @@ Which is equivalent to:
 Functions That Do Not Work Locally
 ----------------------------------
 
-There are three ways to run an Daeploy service. We have seen how to deploy and run
+There are three ways to run a Daeploy service. We have seen how to deploy and run
 your services to a manager using ``daeploy deploy`` many times now, but you could also
 run it with ``python <project_path>/service.py`` in which case it will be run as
 it's own webserver on localhost if `service.py` ends with

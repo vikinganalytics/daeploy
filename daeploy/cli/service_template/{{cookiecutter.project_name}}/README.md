@@ -6,7 +6,7 @@ The ```service.py``` contains an example service and shows how to use the daeplo
 
 This example shows:
 
-- How to initiate an daeploy service
+- How to initiate a daeploy service
 - How to register changeable parameters
 - How to register functions as entrypoints
 - How to log from the service

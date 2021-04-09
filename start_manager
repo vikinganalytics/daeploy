@@ -93,8 +93,6 @@ _EOF_
 trap "signal_exit TERM" TERM HUP
 trap "signal_exit INT"  INT
 
-
-
 environ=""
 
 # Parse command-line
@@ -163,17 +161,15 @@ if [[ -z $docker_username || -z $docker_token ]]; then
     docker load -i $image_path
   fi
 else
-  echo "Logging into container registry"
-  echo $token | docker login --username $username --password-stdin ghcr.io
   echo "Pulling the latest version of the image"
-  docker pull ghcr.io/vikinganalytics/mvi/mvi_manager:$version
+  docker pull daeploy/manager:$version
 fi
 
 echo "Stopping and removing current Docker container:"
-docker rm -f mvi_manager
+docker rm -f daeploy_manager
 
 echo "Creating docker volume for persistent db storage:"
-docker volume create mvi_data
+docker volume create daeploy_data
 
 if [[ -z $http_port ]]; then
   http_port=80
@@ -184,9 +180,9 @@ fi
 
 echo "Running version $version of the daeploy Manager"
 docker run \
-        --name mvi_manager \
+        --name daeploy_manager \
         -v /var/run/docker.sock:/var/run/docker.sock \
-        -v mvi_data:/data \
+        -v daeploy_data:/data \
         -p $http_port:$http_port \
         -p $https_port:$https_port \
         $environ \
@@ -194,10 +190,6 @@ docker run \
         --log-driver json-file \
         --log-opt max-size=100m \
         --log-opt max-file=5 \
-        -d ghcr.io/vikinganalytics/mvi/mvi_manager:$version
-
-echo "Logging out of container registry"
-docker logout ghcr.io
+        -d daeploy/manager:$version
 
 graceful_exit
-

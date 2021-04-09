@@ -145,7 +145,7 @@ control enabled and being activated using a provided activation key:
         --log-driver json-file \
         --log-opt max-size=100m \
         --log-opt max-file=5 \
-        -d ghcr.io/vikinganalytics/mvi/mvi_manager:{version} \
+        -d daeploy/manager:{version} \
 
 .. tip:: To ease working with all environment variables, it is possible to make use
     of the ``--env-file`` parameter to ``docker run``. 

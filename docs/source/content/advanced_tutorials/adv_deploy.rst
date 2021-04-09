@@ -84,7 +84,7 @@ Advanced Deployment of Docker Images
 Extra ``key: value`` arguments (beyond port number and environment variables) needed for the docker image
 to run properly can be specified when deploying the image via the ``/~image`` POST HTTP endpoint. These extra
 ``key: value`` arguments should be specified under the ``docker_run_args`` key in the request data field. The accepted
-parameters for docker run which can be found `here <https://docker-py.readthedocs.io/en/stable/containers.html>`_.
+parameters for ``docker run`` which can be found `here <https://docker-py.readthedocs.io/en/stable/containers.html>`_.
 
 For instance, a docker image
 that requires ``privileged`` mode to run properly can be deployed like (using pythons request library)::
