@@ -5,7 +5,7 @@ from typing import List, Any
 
 import pandas as pd
 
-from mvi import service
+from daeploy import service
 
 THIS_DIR = Path(__file__).parent
 

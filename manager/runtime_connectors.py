@@ -82,8 +82,8 @@ class LocalDockerConnector(ConnectorBase):
             # If the network is already created, just continue.
             # If the errors is something else, raise!
             if (
-                f'Conflict ("network with name {DAEPLOY_DOCKER_NETWORK} already exists")'
-                not in str(exc)
+                f'Conflict ("network with name {DAEPLOY_DOCKER_NETWORK}'
+                ' already exists")' not in str(exc)
             ):
                 raise
 
@@ -114,7 +114,9 @@ class LocalDockerConnector(ConnectorBase):
         """
         matches = self.CLIENT.containers.list(
             filters={
-                "label": f"{DAEPLOY_CONTAINER_TYPE_KEY}={DAEPLOY_CONTAINER_TYPE_MANAGER}"
+                "label": (
+                    f"{DAEPLOY_CONTAINER_TYPE_KEY}={DAEPLOY_CONTAINER_TYPE_MANAGER}"
+                )
             },
         )
 
@@ -137,7 +139,9 @@ class LocalDockerConnector(ConnectorBase):
         return self.CLIENT.containers.list(
             all=True,
             filters={
-                "label": f"{DAEPLOY_CONTAINER_TYPE_KEY}={DAEPLOY_CONTAINER_TYPE_SERVICE}"
+                "label": (
+                    f"{DAEPLOY_CONTAINER_TYPE_KEY}={DAEPLOY_CONTAINER_TYPE_SERVICE}"
+                )
             },
         )
 
@@ -244,7 +248,9 @@ class LocalDockerConnector(ConnectorBase):
 
         # Standard environment variables
         standard_environment_variables = {
-            DAEPLOY_MANAGER_URL_KEY: f"http://{manager_identifier}:{get_proxy_http_port()}",
+            DAEPLOY_MANAGER_URL_KEY: (
+                f"http://{manager_identifier}:{get_proxy_http_port()}"
+            ),
             DAEPLOY_MANAGER_HOSTNAME_KEY: get_proxy_domain_name(),
             DAEPLOY_SERVICE_NAME_KEY: name,
             DAEPLOY_SERVICE_VERSION_KEY: version,

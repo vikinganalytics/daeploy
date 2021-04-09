@@ -88,7 +88,7 @@ Parameters set with :py:func:`~daeploy.service.add_parameter` can also be monito
 Getting the Data
 ----------------
 
-The MultiViz Integrator provides three options for accessing the time-series data for
+Daeploy provides three options for accessing the time-series data for
 your monitored variables.
 
 **Option 1: Json format**

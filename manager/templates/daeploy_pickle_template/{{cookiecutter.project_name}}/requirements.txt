@@ -1,2 +1,2 @@
-va-mvi==0.4.0
+daeploy==0.4.5
 pandas

@@ -77,8 +77,8 @@ class DaeploySession(requests.Session):
         except requests.exceptions.SSLError:
             # It failed, log a warning and skip the verification
             self._log_func(
-                "WARNING! SSL certificate could not be verified! Daeploy will continue to"
-                " work but this potentially makes your solution vulnerable to"
+                "WARNING! SSL certificate could not be verified! Daeploy will continue"
+                " to work but this potentially makes your solution vulnerable to"
                 " Man-in-the-middle attacks! Adding a verifiable certificate is highly"
                 " advised!"
             )
