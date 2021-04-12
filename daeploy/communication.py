@@ -171,7 +171,7 @@ def call_service(
 
         data = call_service(
             service_name="data_connector",
-            entrypoint_name= "get_data",
+            entrypoint_name="get_data",
             arguments={"variable_name": value}
         )
 

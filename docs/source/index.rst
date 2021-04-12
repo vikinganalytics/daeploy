@@ -33,10 +33,9 @@ If you want to get in contact, you can reach us at info@vikinganalytics.se
 
 .. toctree::
    :maxdepth: 1
-   :caption: Getting Started
+   :caption: User Guide
 
-   content/getting_started/installation
-   content/getting_started/first_service
+   content/getting_started/getting_started
    content/getting_started/custom_service
    content/getting_started/dashboard
    content/getting_started/service_logs
@@ -49,7 +48,7 @@ If you want to get in contact, you can reach us at info@vikinganalytics.se
 
 .. toctree::
    :maxdepth: 1
-   :caption: Advanced Tutorials
+   :caption: Advanced User Guide
 
    content/advanced_tutorials/sdk_typing
    content/advanced_tutorials/using_multiple_hosts
