@@ -3,7 +3,7 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to the daeploy documentation!
+Welcome to the Daeploy documentation!
 =====================================
 
 Daeploy is a software deployment tool that is perfect for
