@@ -16,15 +16,10 @@ jobs:
     - name: Login to DockerHub
       uses: docker/login-action@v1
       with:
-        registry: ghcr.io
-        username: va-integrator
-        password: ${{ secrets.VA_GITHUB_TOKEN }}
+        username: ${{ secrets.DAEPLOY_DOCKER_USERNAME }}
+        password: ${{ secrets.DAEPLOY_DOCKER_PASSWORD }}
 
     - name: Docker build and push
       run: |
-        docker build --build-arg version=${{ github.event.release.tag_name }} -t ghcr.io/vikinganalytics/mvi/daeploy_manager:${{ github.event.release.tag_name }} .
-        docker push ghcr.io/vikinganalytics/mvi/daeploy_manager:${{ github.event.release.tag_name }}
-
-
-         
-      
+        docker build --build-arg version=${{ github.event.release.tag_name }} -t daeploy/manager:${{ github.event.release.tag_name }} -t daeploy/manager:latest .
+        docker push --all-tags daeploy/manager

@@ -123,6 +123,8 @@ def test_with_failing_services_port_allocation(local_docker_connection):
 
     assert int(first_url.split(":")[-1]) == DAEPLOY_FIRST_EXTERNAL_PORT
 
+    time.sleep(1)
+
     second_url = local_docker_connection.create_service(
         image="traefik/whoami:latest",
         name="running",

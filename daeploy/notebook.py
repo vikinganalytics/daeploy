@@ -64,7 +64,7 @@ def service_requirements(project_dir, cell):
         )
 
     if "daeploy" not in cell:
-        cell = "daeploy" + cell
+        cell = "daeploy\n" + cell
 
     with open(project_dir / "requirements.txt", "w") as file_handle:
         file_handle.write(cell)

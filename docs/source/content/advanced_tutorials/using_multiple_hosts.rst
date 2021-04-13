@@ -3,8 +3,8 @@
 Using Multiple Hosts
 ====================
 
-In :ref:`first-service-reference` we logged in to our first host:
-http://your-host, but often you will be working on multiple managers.
+So far you have probably seen how to log in to a host with the ``daeploy login`` command,
+but often you will be working on more than one machine, each running a manager.
 Changing between managers is done with the ``daeploy login`` command just
 like for the first manager and if you run the command now, you
 should see someting like this:

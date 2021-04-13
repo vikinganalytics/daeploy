@@ -17,12 +17,8 @@ do
   esac
 done
 
-
-echo "Logging in to container registry"
-echo $token | docker login --username $username --password-stdin ghcr.io
-
 echo "Pulling the latest version of the image"
-docker pull ghcr.io/vikinganalytics/mvi/daeploy_manager:$version
+docker pull daeploy/manager:$version
 
 echo "DAEPLOY_HOST_NAME is" $host
 
@@ -47,7 +43,4 @@ docker run \
         --log-driver json-file \
         --log-opt max-size=100m \
         --log-opt max-file=5 \
-        -d ghcr.io/vikinganalytics/mvi/daeploy_manager:$version
-
-echo "Logging our of container registry"
-docker logout ghcr.io
+        -d daeploy/manager:$version

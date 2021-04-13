@@ -4,7 +4,7 @@ Software Development Kit
 ========================
 
 Service API (:py:mod:`daeploy.service`)
------------------------------------
+---------------------------------------
 
 .. note:: :py:mod:`daeploy.service` is an object (not a module), and should be used accordingly.
 
@@ -19,7 +19,7 @@ Service API (:py:mod:`daeploy.service`)
 
 
 Communication API (:py:mod:`daeploy.communication`)
------------------------------------------------
+---------------------------------------------------
 
 .. automodule:: daeploy.communication
    :members: notify, Severity, call_service
@@ -27,8 +27,7 @@ Communication API (:py:mod:`daeploy.communication`)
    :show-inheritance:
 
 Utilities API (:py:mod:`daeploy.utilities`)
--------------------------------------------------
-
+-------------------------------------------
 .. automodule:: daeploy.utilities
    :members:
    :undoc-members:
@@ -36,7 +35,7 @@ Utilities API (:py:mod:`daeploy.utilities`)
 
 
 Data Types API (:py:mod:`daeploy.data_types`)
--------------------------------------------------
+---------------------------------------------
 
 .. automodule:: daeploy.data_types
    :members:

@@ -9,7 +9,7 @@ Connecting Daeploy with Other Tools
 MultiViz Explorer
 -----------------
 `MultiViz Explorer <https://vikinganalytics.se/multiviz/>`_, is a very powerful tool for data exploration and
-it is part of the MultiViz family. The connection between MultiViz Explorer and MultiViz Integrator is very simple.
+it is part of the MultiViz family. The connection between MultiViz Explorer and Daeploy is very simple.
 
 With this connection, you can subscribe to time-series data of your monitored variables.
 This connection is handled by a separate and independent service, called mv_connector, which needs to be deployed besides your already deployed services.

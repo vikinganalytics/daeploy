@@ -8,7 +8,7 @@ project_name = "{{ cookiecutter.project_name }}"
 
 if not re.match(project_regex, project_name):
     print(
-        f'"{project_name}" is not a valid daeploy service name. '
+        f'"{project_name}" is not a valid Daeploy service name. '
         "Should contain only letters, numers and underscores."
     )
 

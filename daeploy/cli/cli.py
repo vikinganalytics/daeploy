@@ -102,7 +102,7 @@ def _autocomplete_service_version(ctx: typer.Context, incomplete: str):
 
 @app.callback()
 def _callback(context: typer.Context):
-    """Command-line tool for MultiViz Integrator. Initialize a new project,
+    """Command-line tool for Daeploy. Initialize a new project,
     deploy services, list them and kill them in a convenient package.
 
     \f

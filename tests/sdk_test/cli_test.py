@@ -371,7 +371,6 @@ def test_init_not_logged_in(tmp_path):
 def test_init(dummy_manager, tmp_path, cli_auth_login, clean_services):
     result = runner.invoke(app, ["init", str(tmp_path)], input="test_project")
 
-    print(result.stdout)
     assert result.exit_code == 0
     assert (tmp_path / "test_project").is_dir()
     assert (tmp_path / "test_project" / "requirements.txt").read_text() == "daeploy"
@@ -380,7 +379,6 @@ def test_init(dummy_manager, tmp_path, cli_auth_login, clean_services):
 def test_init_no_prompt(dummy_manager, tmp_path, cli_auth_login, clean_services):
     result = runner.invoke(app, ["init", str(tmp_path), "-n", "test_project"])
 
-    print(result.stdout)
     assert result.exit_code == 0
     assert (tmp_path / "test_project").is_dir()
     assert (tmp_path / "test_project" / "requirements.txt").read_text() == "daeploy"
