@@ -4,9 +4,8 @@ import json
 import sys
 import datetime
 import click
-
 import pkg_resources
-from requests.models import HTTPError
+import requests
 import typer
 import pytest
 from tabulate import tabulate
@@ -53,7 +52,7 @@ def _check_token_validity(host, jwt_token):
             allow_redirects=True,
         )
         return True
-    except HTTPError:
+    except requests.models.HTTPError:
         return False
 
 
@@ -100,14 +99,53 @@ def _autocomplete_service_version(ctx: typer.Context, incomplete: str):
             yield ver
 
 
+def version_callback(value: bool):
+    if not value:
+        return
+
+    sdk_version = pkg_resources.get_distribution("daeploy").version
+    # Create a configuration file if missing
+    if not config.CONFIG_FILE.exists():
+        config.initialize_cli_configuration()
+
+    # Update the state from the configuration file
+    with config.CONFIG_FILE.open("r") as file_handle:
+        state.update(json.load(file_handle))
+
+    typer.echo(f"SDK version: {sdk_version}")
+    active_host = _get_active_host()
+    if active_host:
+        try:
+            manager_version = requests.get(
+                f"{active_host}/version",
+                headers=cliutils.get_request_auth_header(_get_token_for_active_host()),
+            )
+        except (requests.exceptions.ConnectionError, requests.models.HTTPError):
+            typer.echo(
+                "Manager version not available."
+                " Either the version is > 1.0.0 or it is unreachable."
+            )
+            raise typer.Exit()
+        typer.echo(f"Manager version: {manager_version.json()}")
+
+    raise typer.Exit()
+
+
+# pylint: disable=unused-argument
 @app.callback()
-def _callback(context: typer.Context):
+def _callback(
+    context: typer.Context,
+    version: bool = typer.Option(
+        None, "--version", callback=version_callback, is_eager=True
+    ),
+):
     """Command-line tool for Daeploy. Initialize a new project,
     deploy services, list them and kill them in a convenient package.
 
     \f
     Arguments:
         context (Context): Callback context.
+        version (bool): If asking for the version of SDK and manager.
 
     Returns:
         None
