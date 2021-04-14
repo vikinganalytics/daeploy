@@ -133,4 +133,4 @@ Can be found here: [Scope Statement](https://vikinganalytics.sharepoint.com/site
 
 ## Architecture Overview
 
-![Architecture Overview](Daeploy_Architecture_Overview.png)
+![Architecture Overview](docs/source/content/img/daeploy_architecture.jpg)
