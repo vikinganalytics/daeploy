@@ -1,6 +1,6 @@
 # Description
 
-Short description:
+Include a summary of this pull request
 
 New dependencies: (Added to requirements_*.txt)
 
@@ -18,6 +18,6 @@ Fixes # (potential issues that are fixed by this PR)
 - [ ] I have added tests that prove that my fix/feature works
 - [ ] Linters pass locally and I have followed PEP8 code style
 - [ ] New and existing tests pass locally
-- [ ] I have updated the documentation
-- [ ] I have included my changes in CHANGES.md
+- [ ] I have updated the documentation if needed
+- [ ] I have included any significant changes in CHANGES.md
 - [ ] I have commented hard-to-understand areas in the code
