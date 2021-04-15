@@ -8,7 +8,7 @@ jobs:
 
   build:
     name: Build and run daeploy Manager
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, ubuntu, ibm]
     steps:
     - name: Checkout code
       uses: actions/checkout@v2

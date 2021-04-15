@@ -8,7 +8,7 @@ on:
 
 jobs:
     black: 
-        runs-on: ubuntu-latest
+        runs-on: [self-hosted, ubuntu, ibm]
         name: "running black"
         steps: 
         -   uses: actions/checkout@v2
@@ -21,7 +21,7 @@ jobs:
         -   name: "Run black!"
             run: "black --check ."
     pylint: 
-        runs-on: ubuntu-latest
+        runs-on: [self-hosted, ubuntu, ibm]
         name: "running pylint"
         steps: 
         -   uses: actions/checkout@v2
@@ -37,7 +37,7 @@ jobs:
         -   name: "Run pylint!"
             run: "pylint manager daeploy"
     flake8: 
-        runs-on: ubuntu-latest
+        runs-on: [self-hosted, ubuntu, ibm]
         name: "running flake8"
         steps: 
         -   uses: actions/checkout@v2
@@ -50,7 +50,7 @@ jobs:
         -   name: "Run flake8!"
             run: "flake8 manager daeploy"
     pytest-base: 
-        runs-on: ubuntu-latest
+        runs-on: [self-hosted, ubuntu, ibm]
         needs: [black, pylint, flake8]
         strategy:
             matrix:
@@ -85,7 +85,7 @@ jobs:
         -   name: "Running base tests with pytest"
             run: "python -m pytest --verbose tests/manager_test/ tests/sdk_test/"
     pytest-e2e: 
-        runs-on: ubuntu-latest
+        runs-on: [self-hosted, ubuntu, ibm]
         needs: [black, pylint, flake8, pytest-base]
         steps: 
         -   uses: actions/checkout@v2
