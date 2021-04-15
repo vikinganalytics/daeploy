@@ -62,6 +62,3 @@ jobs:
         port: 22
         envs: HOST,DOCKER_USER,DOCKER_TOKEN,ACTIVATION_KEY,SECURED,VERSION,ADMIN_PASSWORD
         script: bash configuration-scripts/start-daeploy-manager.sh -u $DOCKER_USER -t $DOCKER_TOKEN -h $HOST -a $ACTIVATION_KEY -s $SECURED -v $VERSION -w $ADMIN_PASSWORD
-
-         
-      

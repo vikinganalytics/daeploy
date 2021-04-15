@@ -49,4 +49,3 @@ jobs:
             destination-repository-name: 'daeploy-docs'
             target-branch: 'gh-pages'
             user-email: develop@vikinganalytics.se
-
