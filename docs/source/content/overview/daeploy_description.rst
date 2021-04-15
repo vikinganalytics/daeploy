@@ -34,3 +34,14 @@ The CLI is used as the connection between the developer and the manager. It is u
 to deploy (upload) the services you've written from your development environment to
 the deployment environment, monitor the health and status of your services,
 jumpstart new projects and more!
+
+Architecture overview
+---------------------
+
+The image below shows the architecture of Daeploy and how all different parts interact with each other.
+
+.. image:: ../img/daeploy_architecture.jpg
+  :width: 800
+  :alt: Architecture of daeploy
+
+(click image to enlarge)
