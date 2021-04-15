@@ -139,11 +139,8 @@ def test_version_flag_without_manager():
         app,
         ["--version"],
     )
-    expected_sdk_output = "SDK version: 0.0.0.dev0"
-    expected_manager_output = "Manager version not available. Either the version is > 1.0.0 or it is unreachable."
-    assert expected_sdk_output in result.stdout
-    assert expected_manager_output in result.stdout
-
+    expected_sdk_output = "SDK version: 0.0.0.dev0\n"
+    assert expected_sdk_output == result.stdout
 
 def test_version_flag_with_manager(dummy_manager, cli_auth_login):
     result = runner.invoke(
