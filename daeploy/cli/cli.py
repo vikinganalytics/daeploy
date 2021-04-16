@@ -115,10 +115,9 @@ def version_callback(value: bool):
 
     try:
         sdk_version = pkg_resources.get_distribution("daeploy").version
+        typer.echo(f"SDK version: {sdk_version}")
     except pkg_resources.DistributionNotFound:
-        raise typer.Exit()
-
-    typer.echo(f"SDK version: {sdk_version}")
+        pass
 
     _update_state_from_config_file()
     active_host = _get_active_host()
