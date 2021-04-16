@@ -142,6 +142,7 @@ def test_version_flag_without_manager():
     expected_sdk_output = "SDK version: 0.0.0.dev0\n"
     assert expected_sdk_output == result.stdout
 
+
 def test_version_flag_with_manager(dummy_manager, cli_auth_login):
     result = runner.invoke(
         app,
