@@ -99,11 +99,7 @@ def _autocomplete_service_version(ctx: typer.Context, incomplete: str):
             yield ver
 
 
-def version_callback(value: bool):
-    if not value:
-        return
-
-    sdk_version = pkg_resources.get_distribution("daeploy").version
+def _update_state_from_config_file():
     # Create a configuration file if missing
     if not config.CONFIG_FILE.exists():
         config.initialize_cli_configuration()
@@ -112,7 +108,15 @@ def version_callback(value: bool):
     with config.CONFIG_FILE.open("r") as file_handle:
         state.update(json.load(file_handle))
 
+
+def version_callback(value: bool):
+    if not value:
+        return
+
+    sdk_version = pkg_resources.get_distribution("daeploy").version
     typer.echo(f"SDK version: {sdk_version}")
+
+    _update_state_from_config_file()
     active_host = _get_active_host()
     if active_host:
         try:
@@ -123,7 +127,7 @@ def version_callback(value: bool):
         except (requests.exceptions.ConnectionError, requests.models.HTTPError):
             typer.echo(
                 "Manager version not available."
-                " Either the version is > 1.0.0 or it is unreachable."
+                " Either the version is < 1.0.0 or it is unreachable."
             )
             raise typer.Exit()
         typer.echo(f"Manager version: {manager_version.json()}")
@@ -150,14 +154,7 @@ def _callback(
     Returns:
         None
     """
-    # Create a configuration file if missing
-    if not config.CONFIG_FILE.exists():
-        config.initialize_cli_configuration()
-
-    # Update the state from the configuration file
-    with config.CONFIG_FILE.open("r") as file_handle:
-        state.update(json.load(file_handle))
-
+    _update_state_from_config_file()
     # Skip host and token checks if --help flag is included.
     if "--help" in click.get_os_args():
         return

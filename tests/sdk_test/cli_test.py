@@ -7,6 +7,7 @@ from unittest.mock import MagicMock
 from random import choice
 from string import ascii_uppercase
 
+import pkg_resources
 import pytest
 import docker
 import threading
@@ -139,8 +140,8 @@ def test_version_flag_without_manager():
         app,
         ["--version"],
     )
-    expected_sdk_output = "SDK version: 0.0.0.dev0\n"
-    assert expected_sdk_output == result.stdout
+    expected_sdk_version = pkg_resources.get_distribution("daeploy").version
+    assert expected_sdk_version in result.stdout
 
 
 def test_version_flag_with_manager(dummy_manager, cli_auth_login):
@@ -148,9 +149,7 @@ def test_version_flag_with_manager(dummy_manager, cli_auth_login):
         app,
         ["--version"],
     )
-    expected_sdk_output = "SDK version: 0.0.0.dev0"
     expected_manager_output = "develop"
-    assert expected_sdk_output in result.stdout
     assert expected_manager_output in result.stdout
 
 
