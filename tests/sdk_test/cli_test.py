@@ -140,8 +140,8 @@ def test_version_flag_without_manager():
         app,
         ["--version"],
     )
-    expected_sdk_version = pkg_resources.get_distribution("daeploy").version
-    assert expected_sdk_version in result.stdout
+    assert result.exit_code == 0
+    assert "Manager" not in result.stdout
 
 
 def test_version_flag_with_manager(dummy_manager, cli_auth_login):
@@ -149,8 +149,8 @@ def test_version_flag_with_manager(dummy_manager, cli_auth_login):
         app,
         ["--version"],
     )
-    expected_manager_output = "develop"
-    assert expected_manager_output in result.stdout
+    assert result.exit_code == 0
+    assert "Manager" in result.stdout
 
 
 def test_deploy_from_git_source(dummy_manager, cli_auth_login, clean_services):
