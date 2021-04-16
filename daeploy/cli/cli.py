@@ -113,7 +113,11 @@ def version_callback(value: bool):
     if not value:
         return
 
-    sdk_version = pkg_resources.get_distribution("daeploy").version
+    try:
+        sdk_version = pkg_resources.get_distribution("daeploy").version
+    except pkg_resources.DistributionNotFound:
+        raise typer.Exit()
+
     typer.echo(f"SDK version: {sdk_version}")
 
     _update_state_from_config_file()
@@ -121,7 +125,7 @@ def version_callback(value: bool):
     if active_host:
         try:
             manager_version = requests.get(
-                f"{active_host}/version",
+                f"{active_host}/~version",
                 headers=cliutils.get_request_auth_header(_get_token_for_active_host()),
             )
         except (requests.exceptions.ConnectionError, requests.models.HTTPError):
