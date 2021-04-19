@@ -27,6 +27,11 @@ def raise_notification() -> str:
     return "Done"
 
 
+@service.entrypoint(method="GET")
+def get_method() -> str:
+    return "Get - Got - Gotten"
+
+
 class model1(BaseModel):
     name: str
     sirname: str
