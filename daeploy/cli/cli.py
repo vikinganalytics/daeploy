@@ -4,9 +4,8 @@ import json
 import sys
 import datetime
 import click
-
 import pkg_resources
-from requests.models import HTTPError
+import requests
 import typer
 import pytest
 from tabulate import tabulate
@@ -53,7 +52,7 @@ def _check_token_validity(host, jwt_token):
             allow_redirects=True,
         )
         return True
-    except HTTPError:
+    except requests.models.HTTPError:
         return False
 
 
@@ -100,18 +99,7 @@ def _autocomplete_service_version(ctx: typer.Context, incomplete: str):
             yield ver
 
 
-@app.callback()
-def _callback(context: typer.Context):
-    """Command-line tool for Daeploy. Initialize a new project,
-    deploy services, list them and kill them in a convenient package.
-
-    \f
-    Arguments:
-        context (Context): Callback context.
-
-    Returns:
-        None
-    """
+def _update_state_from_config_file():
     # Create a configuration file if missing
     if not config.CONFIG_FILE.exists():
         config.initialize_cli_configuration()
@@ -120,6 +108,62 @@ def _callback(context: typer.Context):
     with config.CONFIG_FILE.open("r") as file_handle:
         state.update(json.load(file_handle))
 
+
+def version_callback(value: bool):
+    if not value:
+        return
+
+    # Get SDK Version
+    try:
+        sdk_version = pkg_resources.get_distribution("daeploy").version
+        typer.echo(f"SDK version: {sdk_version}")
+    except pkg_resources.DistributionNotFound:
+        pass
+
+    # Get Manager Version
+    _update_state_from_config_file()
+    active_host = _get_active_host()
+    if active_host:
+        try:
+            manager_version = requests.get(
+                f"{active_host}/~version",
+                headers=cliutils.get_request_auth_header(_get_token_for_active_host()),
+            )
+        except (requests.exceptions.ConnectionError, requests.models.HTTPError):
+            typer.echo(
+                "Manager version not available."
+                " Either the version is < 1.0.0 or it is unreachable."
+            )
+            raise typer.Exit(1)
+        typer.echo(f"Manager version: {manager_version.json()}")
+
+    raise typer.Exit()
+
+
+# pylint: disable=unused-argument
+@app.callback()
+def _callback(
+    context: typer.Context,
+    version: bool = typer.Option(
+        None,
+        "--version",
+        callback=version_callback,
+        is_eager=True,
+        help="Show version of the SDK and the Manager",
+    ),
+):
+    """Command-line tool for Daeploy. Initialize a new project,
+    deploy services, list them and kill them in a convenient package.
+
+    \f
+    Arguments:
+        context (Context): Callback context.
+        version (bool): If asking for the version of SDK and manager.
+
+    Returns:
+        None
+    """
+    _update_state_from_config_file()
     # Skip host and token checks if --help flag is included.
     if "--help" in click.get_os_args():
         return
