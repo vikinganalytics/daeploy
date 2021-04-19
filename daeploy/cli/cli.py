@@ -145,7 +145,11 @@ def version_callback(value: bool):
 def _callback(
     context: typer.Context,
     version: bool = typer.Option(
-        None, "--version", callback=version_callback, is_eager=True
+        None,
+        "--version",
+        callback=version_callback,
+        is_eager=True,
+        help="Show version of the SDK and the Manager",
     ),
 ):
     """Command-line tool for Daeploy. Initialize a new project,
