@@ -13,7 +13,7 @@ from docker.errors import ImageNotFound
 from fastapi.testclient import TestClient
 from manager import logging_api, notification_api, service_api, proxy
 from manager.app import app
-from manager.constants import DAEPLOY_DOCKER_BUILD_IMAGE
+from manager.constants import DAEPLOY_DOCKER_BUILD_IMAGE, get_manager_version
 from manager.data_models.request_models import BaseService
 from manager.database.database import initialize_db, remove_db
 
@@ -111,6 +111,12 @@ def clean_proxy_config():
 def test_root():
     response = client.get("/")
     assert response.status_code == 200
+
+
+def test_version():
+    response = client.get("/~version")
+    assert response.status_code == 200
+    assert response.json() == get_manager_version()
 
 
 def test_post_notifications(notifications_dict):

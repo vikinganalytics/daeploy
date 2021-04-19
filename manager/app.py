@@ -51,6 +51,12 @@ async def root():
     return RedirectResponse(url="/dashboard")
 
 
+# Get the version of the manger
+@app.get("/~version")
+def return_manager_version() -> str:
+    return get_manager_version()
+
+
 @app.on_event("startup")
 def startup_event():
     """Perform initial setup of dependencies"""
