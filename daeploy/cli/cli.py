@@ -113,12 +113,14 @@ def version_callback(value: bool):
     if not value:
         return
 
+    # Get SDK Version
     try:
         sdk_version = pkg_resources.get_distribution("daeploy").version
         typer.echo(f"SDK version: {sdk_version}")
     except pkg_resources.DistributionNotFound:
         pass
 
+    # Get Manager Version
     _update_state_from_config_file()
     active_host = _get_active_host()
     if active_host:
@@ -132,7 +134,7 @@ def version_callback(value: bool):
                 "Manager version not available."
                 " Either the version is < 1.0.0 or it is unreachable."
             )
-            raise typer.Exit()
+            raise typer.Exit(1)
         typer.echo(f"Manager version: {manager_version.json()}")
 
     raise typer.Exit()

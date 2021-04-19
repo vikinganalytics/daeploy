@@ -52,7 +52,7 @@ async def root():
 
 
 # Get the version of the manger
-@app.get("/version")
+@app.get("/~version")
 def return_manager_version() -> str:
     return get_manager_version()
 

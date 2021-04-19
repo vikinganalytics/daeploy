@@ -114,7 +114,7 @@ def test_root():
 
 
 def test_version():
-    response = client.get("/version")
+    response = client.get("/~version")
     assert response.status_code == 200
     assert response.json() == get_manager_version()
 

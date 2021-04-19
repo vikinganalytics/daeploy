@@ -135,6 +135,7 @@ def dummy_manager():
         remove_db()
 
 
+# The same test but with a manager can be found in the e2e tests.
 def test_version_flag_without_manager():
     result = runner.invoke(
         app,
@@ -142,15 +143,6 @@ def test_version_flag_without_manager():
     )
     assert result.exit_code == 0
     assert "Manager" not in result.stdout
-
-
-def test_version_flag_with_manager(dummy_manager, cli_auth_login):
-    result = runner.invoke(
-        app,
-        ["--version"],
-    )
-    assert result.exit_code == 0
-    assert "Manager" in result.stdout
 
 
 def test_deploy_from_git_source(dummy_manager, cli_auth_login, clean_services):
