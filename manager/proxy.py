@@ -10,7 +10,7 @@ import toml
 from manager.notification_api import _manager_notification, register_notification
 from manager.constants import (
     DAEPLOY_PROXY_DASHBOARD_IDENTIFIER,
-    DAEPLOY_MANAGER_IDENTIFIER,
+    DAEPLOY_MANAGER_PROXY_CONFIG_FILE,
     DAEPLOY_AUTH_MIDDLEWARE,
     DAEPLOY_AUTH_MIDDLEWARE_IDENTIFIER,
     DAEPLOY_DATA_DIR,
@@ -343,7 +343,9 @@ def initial_setup():
     )
 
     # Add manager to root
-    add_dynamic_configuration(DAEPLOY_MANAGER_IDENTIFIER, get_manager_configuration())
+    add_dynamic_configuration(
+        DAEPLOY_MANAGER_PROXY_CONFIG_FILE, get_manager_configuration()
+    )
 
     # Add auth middleware
     add_dynamic_configuration(
@@ -405,7 +407,7 @@ def create_new_service_configuration(name: str, version: str, address: str):
     """
     LOGGER.info(f"Creating configuration for service: {name}")
     service_name = f"{name}_{version}"
-    file_name = f"{service_name}_configuration.toml"
+    file_name = f"service_{service_name}_configuration.toml"
     config = get_base_service_config(service_name)
 
     # Create service configurations
@@ -437,7 +439,7 @@ def create_mirror_configuration(
         shadow_versions (List[str], optional): List of versions of the shadow
             services. Defaults to None.
     """
-    file_name = f"{name}_configuration.toml"
+    file_name = f"service_{name}_configuration.toml"
     config = get_base_service_config(name)
 
     shadow_versions = shadow_versions or []
@@ -465,7 +467,7 @@ def remove_service_configuration(name: str, version: str):
         version (str): Service version
     """
     service_name = f"{name}_{version}"
-    file_name = f"{service_name}_configuration.toml"
-    mirror_file_name = f"{name}_configuration.toml"
+    file_name = f"service_{service_name}_configuration.toml"
+    mirror_file_name = f"service_{name}_configuration.toml"
     remove_dynamic_configuration(file_name)
     remove_dynamic_configuration(mirror_file_name)

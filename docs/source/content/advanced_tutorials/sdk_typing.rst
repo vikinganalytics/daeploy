@@ -304,7 +304,7 @@ that pydantic supports to find which schema fits you data type.
 
 
 .. note:: Using :py:class:`~daeploy.data_types.ArrayInput` and
-  :py:class:`~daeploy.data_types.dataFrameInput` as input type can be likened to using
+  :py:class:`~daeploy.data_types.DataFrameInput` as input type can be likened to using
   ``list`` or ``dict`` and doesn't give as much control of the validation as the
   pydantic models. So in some cases it might be better to use pydantic and convert
   the data inside of the entrypoint.

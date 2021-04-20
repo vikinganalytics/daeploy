@@ -26,6 +26,7 @@ from daeploy.utilities import (
     get_service_name,
     get_service_version,
     get_service_root_path,
+    HTTP_METHODS,
 )
 
 setup_logging()
@@ -72,7 +73,11 @@ class _Service:
         self.app.get("/~parameters", tags=["Parameters"])(get_all_parameters)
 
     def entrypoint(
-        self, func: Callable = None, monitor: bool = False, **fastapi_kwargs
+        self,
+        func: Callable = None,
+        method: str = "POST",
+        monitor: bool = False,
+        **fastapi_kwargs,
     ) -> Callable:
         """Registers a function as an entrypoint, which will make it reachable
         as an HTTP method on your host machine.
@@ -88,17 +93,26 @@ class _Service:
 
         Args:
             func (Callable): The decorated function to make an entrypoint for.
+            method (str): HTTP method for entrypoint. Defauts to "POST"
             monitor (bool): Set if the input and output to this entrypoint should
-                be saved to the service's monitoring database.
+                be saved to the service's monitoring database. Defaults to False.
             **fastapi_kwargs: Keyword arguments for the resulting API endpoint.
-                See FastAPI for keyword arguments of the ``FastAPI.post()`` function.
+                See FastAPI for keyword arguments of the ``FastAPI.api_route()``
+                function.
 
         Raises:
             TypeError: If :obj:`func` is not callable.
+            ValueError: If method is not a valid HTTP method.
 
         Returns:
             Callable: The decorated function: :obj:`func`.
         """
+        method = method.upper()
+        if method not in HTTP_METHODS:
+            raise ValueError(
+                f"Invalid HTTP method: {method}." f" Possible options: {HTTP_METHODS}"
+            )
+
         # pylint: disable=protected-access
         def entrypoint_decorator(deco_func):
             funcname = deco_func.__name__
@@ -149,7 +163,9 @@ class _Service:
             kwargs.update(fastapi_kwargs)
 
             # Create API endpoint
-            self.app.post(path, tags=["Entrypoints"], **kwargs)(wrapper)
+            self.app.api_route(path, methods=[method], tags=["Entrypoints"], **kwargs)(
+                wrapper
+            )
 
             # Wrap the original func in a pydantic validation wrapper and return that
             return validate_arguments(deco_func)

@@ -12,6 +12,7 @@ from daeploy.utilities import (
     get_service_version,
     get_headers,
     get_authorized_domains,
+    HTTP_METHODS,
 )
 
 logger = logging.getLogger(__name__)
@@ -163,6 +164,7 @@ def call_service(
     entrypoint_name: str,
     arguments: dict = None,
     service_version: str = None,
+    entrypoint_method: str = "POST",
     **request_kwargs,
 ) -> Any:
     """Call an entrypoint in a different service.
@@ -181,10 +183,17 @@ def call_service(
             The return object(s) of this entrypoint must be jsonable, i.e pass FastAPI's
             jsonable_encoder, otherwise it won't be reachable.
         arguments (dict): Arguments to the entrypoint.
-            In the form: {"argument_name": value, ...}. Default None.
+            In the form: {"argument_name": value, ...}. Defaults to None.
         service_version (str): The specific version of the service to call.
-            Default None, the main version and the shadows versions will be called.
+            Defaults to None, in which case the main version and the shadows
+            versions will be called.
+        entrypoint_method (str): HTTP method of the entrypoint to call. You only need
+            to change this if you have created an entrypoint with a non-default HTTP
+            method. Defaults to "POST".
         **request_kwargs: Keyword arguments to pass on to :func:``requests.post``.
+
+    Raises:
+        ValueError: If entrypoint_method is not a valid HTTP method
 
     Returns:
         Any: The output from the entrypoint in the other service.
@@ -197,6 +206,13 @@ def call_service(
     else:
         url = f"{get_daeploy_manager_url()}/services/{service_name}/{entrypoint_name}"
 
+    entrypoint_method = entrypoint_method.upper()
+    if entrypoint_method not in HTTP_METHODS:
+        raise ValueError(
+            f"Invalid HTTP method: {entrypoint_method}."
+            f" Possible options: {HTTP_METHODS}"
+        )
+
     arguments = arguments if arguments else {}
 
     logger_msg = f"Calling entrypoint: {entrypoint_name} in service: {service_name}"
@@ -208,7 +224,7 @@ def call_service(
     logger.info(f"Sending POST request to: {url}")
 
     response = request(
-        "POST",
+        entrypoint_method,
         url=url,
         auth_domains=get_authorized_domains(),
         headers=get_headers(),
