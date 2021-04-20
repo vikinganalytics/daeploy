@@ -479,6 +479,23 @@ def test_call_service_log_args(request, caplog):
         assert f"{arguments}" in caplog.text
 
 
+@patch("daeploy.communication.request")
+def test_call_service_invalid_method(request):
+    service_name = "myservice"
+    entrypoint_name = "mymethod"
+    arguments = {"value": 10, "active": False}
+    version = "1.0.0"
+
+    with pytest.raises(ValueError):
+        call_service(
+            service_name=service_name,
+            entrypoint_name=entrypoint_name,
+            service_version=version,
+            arguments=arguments,
+            entrypoint_method="NOT A HTTP METHOD",
+        )
+
+
 def test_local_invocation_pydantic_validation():
     service = _Service()
     wrapped = service.entrypoint(valid_entrypoint_method_args)
@@ -560,6 +577,60 @@ def test_entrypoint_not_monitored():
     )
     assert response.status_code == 200
     service.store.assert_not_called()
+
+
+def test_entrypoint_get():
+    service = _Service()
+    service.entrypoint(monitor=False, method="GET")(valid_entrypoint_method_args)
+    client = TestClient(service.app)
+
+    req = {"name": "Rune", "age": 100}
+    response = client.get(
+        "/valid_entrypoint_method_args",
+        json=req,
+        headers={"accept": "application/json"},
+    )
+    assert response.status_code == 200
+
+
+def test_entrypoint_invalid_method():
+    service = _Service()
+    with pytest.raises(ValueError):
+        service.entrypoint(monitor=False, method="NOT A HTTP METHOD")(
+            valid_entrypoint_method_args
+        )
+
+
+@patch("daeploy.communication.request")
+def test_call_service_get_entrypoint(request):
+    service_name = "myservice"
+    entrypoint_name = "mymethod"
+    version = "1.0.0"
+    arguments = {"value": 10, "active": False}
+
+    call_service(
+        service_name=service_name,
+        entrypoint_name=entrypoint_name,
+        arguments=arguments,
+        service_version=version,
+        entrypoint_method="GET",
+    )
+
+    expected_url = f"http://host.docker.internal/services/{service_name}_{version}/{entrypoint_name}"
+    auth_domains = ["localhost"]
+    expected_headers = {
+        "Authorization": "Bearer unknown",
+        "Content-Type": "application/json",
+        "Host": "localhost",
+    }
+
+    request.assert_called_with(
+        "GET",
+        url=expected_url,
+        auth_domains=auth_domains,
+        headers=expected_headers,
+        json=arguments,
+    )
 
 
 def test_call_every_decorator():

@@ -253,14 +253,16 @@ def test_reaching_daeploy_entrypoint_with_basemodel_args(
 def test_call_service_multiple_cases(
     dummy_manager, cli_auth_login, services, logs, headers
 ):
-    url = "http://localhost/services/upstream/call_downstream_method"
+    url = "http://localhost/services/upstream/"
+    url_downstream_post = url + "call_downstream_method"
+    url_downstream_get = url + "call_downstream_get_method"
 
     unique_name = str(uuid.uuid1())
 
     # Correct arguments
     resp = requests.request(
         "POST",
-        url=url,
+        url=url_downstream_post,
         json={
             "service_name": "downstream",
             "entrypoint_name": "hello",
@@ -282,7 +284,7 @@ def test_call_service_multiple_cases(
     unique_name = str(uuid.UUID)
     resp = requests.request(
         "POST",
-        url=url,
+        url=url_downstream_post,
         json={
             "service_name": "downstream",
             "entrypoint_name": "hello",
@@ -298,7 +300,7 @@ def test_call_service_multiple_cases(
     unique_name = str(uuid.uuid1())
     resp = requests.request(
         "POST",
-        url=url,
+        url=url_downstream_post,
         json={
             "service_name": "downstream",
             "entrypoint_name": "hello",
@@ -314,7 +316,7 @@ def test_call_service_multiple_cases(
     unique_name = str(uuid.uuid1())
     resp = requests.request(
         "POST",
-        url=url,
+        url=url_downstream_post,
         json={
             "service_name": "downstream",
             "entrypoint_name": "hello_TYPO",
@@ -330,7 +332,7 @@ def test_call_service_multiple_cases(
     unique_name = str(uuid.uuid1())
     resp = requests.request(
         "POST",
-        url=url,
+        url=url_downstream_post,
         json={
             "service_name": "downstream_TYPO",
             "entrypoint_name": "hello",
@@ -341,6 +343,19 @@ def test_call_service_multiple_cases(
     assert resp.status_code == 500
     upstream_logs = logs("upstream")
     assert "Not Found" in upstream_logs
+
+    # Call get method
+    resp = requests.request(
+        "POST",
+        url=url_downstream_get,
+        json={
+            "service_name": "downstream",
+        },
+        headers=headers,
+    )
+
+    assert resp.status_code == 200
+    assert resp.json() == "Get - Got - Gotten"
 
 
 def test_raised_notification_from_service_ends_up_at_manager(

@@ -6,6 +6,7 @@ LOGGER = logging.getLogger(__name__)
 
 UNKNOWN_NAME = "unknown"
 UNKNOWN_VERSION = "0.0.0"
+HTTP_METHODS = ["GET", "POST", "PUT", "DELETE", "HEAD", "OPTIONS", "TRACE", "PATCH"]
 
 
 def get_daeploy_manager_url() -> str:
