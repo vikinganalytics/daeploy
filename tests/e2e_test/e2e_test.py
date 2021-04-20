@@ -176,6 +176,18 @@ def generate_requirements_file_for_service(service_folder):
         file_handle.write(WHEEL_FILE_NAME)
 
 
+# This test is included in the e2e tests since it need to have a Manager
+# running as a docker container. Otherwise, the version cannot be fetched.
+def test_version_command_cli(dummy_manager, cli_auth_login):
+    result = runner.invoke(
+        app,
+        ["--version"],
+    )
+    assert result.exit_code == 0
+    assert "SDK version: 0.0.0.dev0" in result.stdout
+    assert "Manager version: latest" in result.stdout
+
+
 def test_manager_restart_ok(dummy_manager, headers):
 
     assert requests.get("http://localhost", headers=headers).status_code == 200
