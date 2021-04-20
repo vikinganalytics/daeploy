@@ -16,10 +16,12 @@ class BaseService(BaseModel):
     @validator("name")
     def must_adhere_to_docker_requirements(cls, name):
         # Only allow a name to contain lower case letters, numbers and underscore
-        regex_pattern = re.compile("[a-z0-9_]+$")
+        # anywhere but in the beginning and end
+        regex_pattern = re.compile("^(?!_)[a-z0-9_]+(?<!_)$")
         if not regex_pattern.match(name):
             raise ValueError(
-                "can only contain lower case letters, numbers and underscores"
+                "Name can only contain lower case letters, numbers and underscores,"
+                " but should not start or end with an underscore."
             )
         return name
 
@@ -27,7 +29,7 @@ class BaseService(BaseModel):
     @validator("version")
     def must_be_semver_string(cls, version):
         if not semver.VersionInfo.isvalid(version):
-            raise ValueError("must be a semantic version string")
+            raise ValueError("Version must be a semantic version string.")
         return version
 
 

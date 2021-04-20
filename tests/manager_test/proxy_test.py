@@ -174,11 +174,11 @@ def test_initial_setup_creates_existing_service_configs(tmp_path):
     time.sleep(1)  # Grace period
     try:
         proxy_files = os.listdir(tmp_path / "dynamic")
-        assert "1_configuration.toml" in proxy_files
-        assert "1_1.0.0_configuration.toml" in proxy_files
-        assert "1_1.1.0_configuration.toml" in proxy_files
-        assert "2_configuration.toml" in proxy_files
-        assert "2_1.0.1_configuration.toml" in proxy_files
+        assert "service_1_configuration.toml" in proxy_files
+        assert "service_1_1.0.0_configuration.toml" in proxy_files
+        assert "service_1_1.1.0_configuration.toml" in proxy_files
+        assert "service_2_configuration.toml" in proxy_files
+        assert "service_2_1.0.1_configuration.toml" in proxy_files
     finally:
         killer()
 
@@ -198,7 +198,7 @@ def test_https_dynamic_config_services(tmp_path, pinned):
     root.recreate_proxy_configurations()
     time.sleep(1)  # Grace period
     try:
-        with open(tmp_path / "dynamic" / "1_configuration.toml", "r") as f:
+        with open(tmp_path / "dynamic" / "service_1_configuration.toml", "r") as f:
             service_config = toml.load(f)
         assert service_config == pinned
     finally:

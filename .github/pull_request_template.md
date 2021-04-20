@@ -4,7 +4,7 @@ Include a summary of this pull request
 
 New dependencies: (Added to requirements_*.txt)
 
-Fixes # (potential issues that are fixed by this PR)
+Fixes vikinganalytics/daeploy-issues# (potential issues that are fixed by this PR)
 
 ## Type of Change
 
