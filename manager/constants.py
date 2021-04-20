@@ -30,7 +30,7 @@ DAEPLOY_TAR_FILE_NAME = "service.tar.gz"
 DAEPLOY_PICKLE_FILE_NAME = "model.pkl"
 
 DAEPLOY_PROXY_DASHBOARD_IDENTIFIER = "proxy_dashboard_configuration"
-DAEPLOY_MANAGER_IDENTIFIER = "manager_configuration"
+DAEPLOY_MANAGER_PROXY_CONFIG_FILE = "manager_configuration"
 DAEPLOY_AUTH_MIDDLEWARE = "proxy_auth_middleware"
 DAEPLOY_AUTH_MIDDLEWARE_IDENTIFIER = f"{DAEPLOY_AUTH_MIDDLEWARE}_configuration"
 
