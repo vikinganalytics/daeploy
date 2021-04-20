@@ -1,0 +1,22 @@
+name: Push examples
+
+on:
+  release:
+    types: [published]
+
+jobs:
+    examples:
+      name: Push examples to another repository
+      runs-on: "ubuntu-latest"
+      steps:
+        - uses: actions/checkout@v2
+        - name: Pushes to another repository
+          uses: cpina/github-action-push-to-another-repository@master
+          env:
+            API_TOKEN_GITHUB: ${{ secrets.VA_GITHUB_TOKEN }}
+          with:
+            source-directory: 'examples'
+            destination-github-username: 'vikinganalytics'
+            destination-repository-name: 'daeploy-examples'
+            target-branch: 'master'
+            user-email: develop@vikinganalytics.se
