@@ -344,7 +344,6 @@ def test_call_service_multiple_cases(
     upstream_logs = logs("upstream")
     assert "Not Found" in upstream_logs
 
-
     # Call get method
     resp = requests.request(
         "POST",
