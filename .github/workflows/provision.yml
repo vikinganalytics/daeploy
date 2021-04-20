@@ -1,4 +1,4 @@
-name: Provision MV Integrator
+name: Provision Daeploy Manager
 
 on:
   workflow_dispatch:
@@ -6,7 +6,7 @@ on:
       host_name:
         description: 'Host name of server'     
         required: true
-        default: 'demo.integrator.multiviz.com'
+        default: 'demo.nodes.daeploy.com'
       version:
         description: 'Version to be provisioned'
         required: true
@@ -16,9 +16,9 @@ on:
         required: false
         default: ''
       secured:
-        description: 'Use HTTPS (SSL)'
+        description: 'Use HTTPS (SSL), -H for yes, empty for no'
         required: false
-        default: 'false'
+        default: ''
       admin_password:
         description: 'Password for admin user'
         required: true
@@ -49,8 +49,6 @@ jobs:
       uses: appleboy/ssh-action@master
       env:
         HOST: ${{ github.event.inputs.host_name }}
-        DOCKER_USER: va-integrator
-        DOCKER_TOKEN: ${{ secrets.VA_GITHUB_TOKEN }}
         ACTIVATION_KEY: ${{ github.event.inputs.activation_key }}
         SECURED: ${{ github.event.inputs.secured }}
         VERSION: ${{ github.event.inputs.version }}
@@ -60,5 +58,5 @@ jobs:
         username: manager
         key: ${{ secrets.MANAGER_SSH_KEY }}
         port: 22
-        envs: HOST,DOCKER_USER,DOCKER_TOKEN,ACTIVATION_KEY,SECURED,VERSION,ADMIN_PASSWORD
-        script: bash configuration-scripts/start-daeploy-manager.sh -u $DOCKER_USER -t $DOCKER_TOKEN -h $HOST -a $ACTIVATION_KEY -s $SECURED -v $VERSION -w $ADMIN_PASSWORD
+        envs: HOST,ACTIVATION_KEY,SECURED,VERSION,ADMIN_PASSWORD
+        script: bash start_manager -n $HOST -k $ACTIVATION_KEY $SECURED -v $VERSION -w $ADMIN_PASSWORD -A

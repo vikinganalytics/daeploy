@@ -134,7 +134,7 @@ while [[ -n $1 ]]; do
       echo "SMTP server port, usually 465 or 587"; shift; environ="$environ -e DAEPLOY_NOTIFICATION_SMTP_PORT=$1" ;;
     -k | --activation-key)
       echo "License activation key"; shift; environ="$environ -e DAEPLOY_ACTIVATION_KEY=$1" ;;
-    -w | -- admin-password)
+    -w | --admin-password)
       echo "Admin password"; shift; environ="$environ -e DAEPLOY_ADMIN_PASSWORD=$1" ;;
     -* | --*)
       usage
@@ -155,14 +155,14 @@ fi
 # Download the image from docker or get it from a file
 if [[ -z $docker_username || -z $docker_token ]]; then
   if [[ -z $image_path ]]; then
-    echo "Could not load the image. Either give docker username and token, or the path to an image tar-file."
-    echo "Will try to use an already loaded image."
+    echo "No image path or docker credentials given."
+    echo "Will pull manager image with without logging in"
   else
     docker load -i $image_path
   fi
 else
-  echo "Pulling the latest version of the image"
-  docker pull daeploy/manager:$version
+  echo "Logging in to docker account"
+  docker login -u $docker_username -p $docker_token
 fi
 
 echo "Stopping and removing current Docker container:"
