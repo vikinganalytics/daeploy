@@ -111,9 +111,9 @@ while [[ -n $1 ]]; do
     -n | --host-name)
       echo "Host name"; shift; environ="$environ -e DAEPLOY_HOST_NAME=$1" ;;
     -p | --http-port)
-      echo "Proxy HTTP port"; shift; http_port=${1:=80}; environ="$environ -e DAEPLOY_PROXY_HTTP_PORT=$http_port" ;;
+      echo "Proxy HTTP port"; shift; http_port="$1"; environ="$environ -e DAEPLOY_PROXY_HTTP_PORT=$http_port" ;;
     -P | --https-port)
-      echo "Proxy HTTPS port"; shift; https_port=${1:=443}; environ="$environ -e DAEPLOY_PROXY_HTTPS_PORT=$https_port" ;;
+      echo "Proxy HTTPS port"; shift; https_port="$1"; environ="$environ -e DAEPLOY_PROXY_HTTPS_PORT=$https_port" ;;
     -A | --auth-enabled)
       echo "Authentication enabled"; environ="$environ -e DAEPLOY_AUTH_ENABLED=true" ;;
     -l | --log-level)
@@ -147,9 +147,15 @@ done
 
 # Main logic
 
-# Mandatory arguments
+# Setting default values
+if [[ -z $http_port ]]; then
+  http_port=80
+fi
+if [[ -z $https_port ]]; then
+  https_port=443
+fi
 if [[ -z $version ]]; then
-  error_exit "Mandatory argument -v|--version not set"
+  version=latest
 fi
 
 # Download the image from docker or get it from a file
@@ -170,13 +176,6 @@ docker rm -f daeploy_manager
 
 echo "Creating docker volume for persistent db storage:"
 docker volume create daeploy_data
-
-if [[ -z $http_port ]]; then
-  http_port=80
-fi
-if [[ -z $https_port ]]; then
-  https_port=443
-fi
 
 echo "Running version $version of the daeploy Manager"
 docker run \
