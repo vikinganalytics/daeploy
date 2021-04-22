@@ -101,7 +101,7 @@ class _Service:
                 this entrypoint.
                 These logs are genereated from uvicorn. Defaults to False.
                 Example of http entry log:
-                    "POST /services/service_1.0.0//entrypoint_name HTTP/1.1" 200 OK
+                    "POST /services/service_1.0.0/entrypoint_name HTTP/1.1" 200 OK
             **fastapi_kwargs: Keyword arguments for the resulting API endpoint.
                 See FastAPI for keyword arguments of the ``FastAPI.api_route()``
                 function.
