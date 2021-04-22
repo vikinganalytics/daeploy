@@ -119,7 +119,7 @@ Changing Ports
 --------------
 
 If you want to change the port that the manager is running on, you have to set the
-environment variable ``DAEPLOY_PROXY_HTTP_PORT`` or ``DAEPLOY_PROXY_HTTP_PORT`` as
+environment variable ``DAEPLOY_PROXY_HTTP_PORT`` or ``DAEPLOY_PROXY_HTTPS_PORT`` as
 well as changing the published port of the container with
 ``docker run -p external:internal ...``. The manager application assumes that the
 external and internal ports are the same.
