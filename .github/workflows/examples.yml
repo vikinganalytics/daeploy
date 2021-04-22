@@ -10,7 +10,10 @@ jobs:
       runs-on: "ubuntu-latest"
       steps:
         - uses: actions/checkout@v2
-        - name: Pushes to another repository
+        - name: Copy start_manager script to examples directory
+          run: |
+            cp start_manager examples/start_manager
+        - name: Push examples to examples repository
           uses: cpina/github-action-push-to-another-repository@master
           env:
             API_TOKEN_GITHUB: ${{ secrets.VA_GITHUB_TOKEN }}
