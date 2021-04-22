@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 import pydantic
 import pytest
+import logging
 from fastapi.exceptions import FastAPIError
 from fastapi.testclient import TestClient
 from daeploy._service import db

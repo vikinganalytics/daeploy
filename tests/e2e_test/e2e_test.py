@@ -250,6 +250,23 @@ def test_reaching_daeploy_entrypoint_with_basemodel_args(
     }
 
 
+def test_disable_http_logs_in_entrypoint(
+    dummy_manager, cli_auth_login, services, logs, headers
+):
+    http_logs_url = "http://localhost/services/downstream/http_logs"
+    http_no_logs_url = "http://localhost/services/downstream/http_logs_2"
+
+    # Call the entrypoint that allows http logs.
+    requests.request("POST", url=http_logs_url, headers=headers)
+    # Call the entrypoint that does not allow http logs.
+    requests.request("POST", url=http_no_logs_url, headers=headers)
+    logs = logs("downstream")
+    # Check that the logs from inside the entrypoint are logged.
+    assert "This is a correct log!" in logs
+    assert '"POST /services/downstream_0.1.0/http_logs_2 HTTP/1.1" 200 OK' in logs
+    assert '"POST /services/downstream_0.1.0/http_logs HTTP/1.1" 200 OK' not in logs
+
+
 def test_call_service_multiple_cases(
     dummy_manager, cli_auth_login, services, logs, headers
 ):

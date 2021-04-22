@@ -77,6 +77,7 @@ class _Service:
         func: Callable = None,
         method: str = "POST",
         monitor: bool = False,
+        disable_http_logs: bool = False,
         **fastapi_kwargs,
     ) -> Callable:
         """Registers a function as an entrypoint, which will make it reachable
@@ -96,6 +97,11 @@ class _Service:
             method (str): HTTP method for entrypoint. Defauts to "POST"
             monitor (bool): Set if the input and output to this entrypoint should
                 be saved to the service's monitoring database. Defaults to False.
+            disable_http_logs (bool): Set if the http entry logs should be disabled for
+                this entrypoint.
+                These logs are genereated from uvicorn. Defaults to False.
+                Example of http entry log:
+                    "POST /services/service_1.0.0/entrypoint_name HTTP/1.1" 200 OK
             **fastapi_kwargs: Keyword arguments for the resulting API endpoint.
                 See FastAPI for keyword arguments of the ``FastAPI.api_route()``
                 function.
@@ -166,6 +172,14 @@ class _Service:
             self.app.api_route(path, methods=[method], tags=["Entrypoints"], **kwargs)(
                 wrapper
             )
+
+            if disable_http_logs:
+                logging.getLogger("uvicorn.access").addFilter(
+                    # Add a space to the path to make sure that we
+                    # only filter out this entrypoints HTTP logs.
+                    lambda record: f"{path} "
+                    not in record.getMessage()
+                )
 
             # Wrap the original func in a pydantic validation wrapper and return that
             return validate_arguments(deco_func)
