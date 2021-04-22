@@ -41,7 +41,7 @@ The Manager is highly configurable using environment variables.
 +--------------------------------------------+-----------------------+-------------------------------------------------------------+
 
 Secure Manager Connection
-^^^^^^^^^^^^^^^^^^^^^^^^^
+-------------------------
 
 It is possible to get a secure HTTPS connection to the Manager using automatically
 created certificates from `Let's Encrypt <https://letsencrypt.org>`_. To enable HTTPS you must
@@ -59,7 +59,7 @@ notified if the certificate is about to run out.
 .. _email-config-reference:
 
 Email notifications
-^^^^^^^^^^^^^^^^^^^
+-------------------
 
 The first step is to set up an email address that the Daeploy Manager can use to send
 the notification emails. For this you need an
@@ -88,7 +88,8 @@ as long as the Manager could still start, any issues with the email configuratio
 will be viewable on the notification tab in the dashboard.
 
 Log configuration
-^^^^^^^^^^^^^^^^^
+-----------------
+
 All logging in Daeploy is done directly to stdout and stderr and relies heavily on the
 built-in logging features of the docker daemon. As such, any configuration of log
 rotation etc needs to be done on the docker daemon level.
@@ -114,12 +115,26 @@ files no larger than 10 megabytes each using the JSON log handler (the docker da
     originating from a full HDD, we highly recommend setting a specific log configuration
     for the Manager container when starting.
 
+Changing Ports
+--------------
+
+If you want to change the port that the manager is running on, you have to set the
+environment variable ``DAEPLOY_PROXY_HTTP_PORT`` or ``DAEPLOY_PROXY_HTTPS_PORT`` as
+well as changing the published port of the container with
+``docker run -p external:internal ...``. The manager application assumes that the
+external and internal ports are the same.
 
 Typical production setup
-^^^^^^^^^^^^^^^^^^^^^^^^
+------------------------
 
-The example below starts a Manager instance that is listening on ``my.domain.com``, enforcing traffic over https with access
-control enabled and being activated using a provided activation key:
+Below we show an example of a typical production setup using the Docker CLI
+and the
+`start_manager script <https://github.com/vikinganalytics/daeploy-examples/blob/master/start_manager>`_.
+In the example we start a Manager instance listening on ``my.domain.com``, with HTTPS,
+authentication, an activated license and email notifications enabled.
+
+Docker CLI
+^^^^^^^^^^
 
 .. code-block:: shell
 
@@ -151,3 +166,25 @@ control enabled and being activated using a provided activation key:
     of the ``--env-file`` parameter to ``docker run``. 
     See `here <https://docs.docker.com/engine/reference/commandline/run/#set-environment-variables--e---env---env-file>`_
     for details on syntax etc.
+
+start_manager script
+^^^^^^^^^^^^^^^^^^^^
+
+To reduce the complexity of launching the manager we have created a simple script
+``start_manager`` that hides much of the complexity while still leaving all
+manager settings available.
+
+    bash start_manager \
+        --version ... \
+        --host-name my.domain.com \
+        --auth-enabled \
+        --https-enabled \
+        --activation-key ... \
+        --admin-password ... \
+        --config-email ... \
+        --config-password ... \
+        --smtp-server ... \
+        --smtp-port ... \
+
+.. tip:: You can use ``start_manager --help`` to get a short description of the
+    available options.

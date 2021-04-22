@@ -23,7 +23,11 @@ on:
         description: 'Password for admin user'
         required: true
         default: 'admin'
-      
+      extra_options:
+        description: 'Extra options to pass to start_manager'
+        required: false
+        default: ''
+
 
 jobs:
 
@@ -42,7 +46,7 @@ jobs:
         username: manager
         key: ${{ secrets.MANAGER_SSH_KEY }}
         port: 22
-        source: "start-manager"
+        source: "start_manager"
         target: "."
       
     - name: Login to DockerHub account and start a daeploy Manager
@@ -53,10 +57,11 @@ jobs:
         SECURED: ${{ github.event.inputs.secured }}
         VERSION: ${{ github.event.inputs.version }}
         ADMIN_PASSWORD: ${{ github.event.inputs.admin_password }}
+        EXTRA_OPTIONS: ${{ github.event.inputs.extra_options }}
       with:
         host: ${{ github.event.inputs.host_name }}
         username: manager
         key: ${{ secrets.MANAGER_SSH_KEY }}
         port: 22
         envs: HOST,ACTIVATION_KEY,SECURED,VERSION,ADMIN_PASSWORD
-        script: bash start_manager -n $HOST -k $ACTIVATION_KEY $SECURED -v $VERSION -w $ADMIN_PASSWORD -A
+        script: bash start_manager -n $HOST -k $ACTIVATION_KEY $SECURED -v $VERSION -w $ADMIN_PASSWORD -A $EXTRA_OPTIONS
