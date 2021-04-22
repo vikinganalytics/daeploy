@@ -71,7 +71,7 @@ def get_service_root_path() -> str:
     if name == UNKNOWN_NAME and version == UNKNOWN_VERSION:
         return ""
 
-    return f"/services/{name}_{version}/"
+    return f"/services/{name}_{version}"
 
 
 def get_headers() -> dict:

@@ -175,7 +175,10 @@ class _Service:
 
             if disable_http_logs:
                 logging.getLogger("uvicorn.access").addFilter(
-                    lambda record: path not in record.getMessage()
+                    # Add a space to the path to make sure that we
+                    # only filter out this entrypoints HTTP logs.
+                    lambda record: f"{path} "
+                    not in record.getMessage()
                 )
 
             # Wrap the original func in a pydantic validation wrapper and return that

@@ -73,14 +73,14 @@ def store_variable_vz_10_times():
         service.store(vz=i)
 
 
-@service.entrypoint(disable_http_logs=False)
-def http_logs():
-    pass
-
-
 @service.entrypoint(disable_http_logs=True)
-def no_http_logs():
+def http_logs():
     logger.info("This is a correct log!")
+
+
+@service.entrypoint(disable_http_logs=False)
+def http_logs_2():
+    pass
 
 
 if __name__ == "__main__":
