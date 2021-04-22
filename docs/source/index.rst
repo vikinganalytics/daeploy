@@ -30,6 +30,7 @@ If you want to get in contact, you can reach us at info@vikinganalytics.se
    :caption: Overview
 
    content/overview/daeploy_description
+   content/overview/compatibility
 
 .. toctree::
    :maxdepth: 1
