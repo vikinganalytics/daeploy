@@ -1,7 +1,7 @@
 .. _daeploy-compatibility-reference:
 
-Compatibility
-=============
+Version compatibility
+=====================
 Daeploy consists of three parts, a Manager, an SDK, and an CLI. The matrices below show the compatible SDK/CLI versions for a specific Manager version.
 
 .. tip:: You can use ``daeploy --version`` from the CLI to get your current versions!
