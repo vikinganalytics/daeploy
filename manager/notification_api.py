@@ -177,14 +177,14 @@ def check_email_config():
     if not SENDER_EMAIL:
         msg = (
             "No sender email configured. Should be set as environment variable"
-            '"DAEPLOY_NOTIFICATION_SENDER_EMAIL" when starting manager.'
+            '"DAEPLOY_CONFIG_EMAIL" when starting manager.'
         )
         register_notification(_manager_notification(msg))
 
     if not SENDER_PASS:
         msg = (
             "No sender email password configured. Should be set as environment"
-            'variable "DAEPLOY_NOTIFICATION_SENDER_EMAIL_PASSWORD" when starting'
+            'variable "DAEPLOY_CONFIG_EMAIL_PASSWORD" when starting'
             "manager."
         )
         register_notification(_manager_notification(msg))
