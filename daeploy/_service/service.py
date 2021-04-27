@@ -47,6 +47,10 @@ class _Service:
         )
 
         self.parameters = {}
+        self.schema = {
+            "entrypoints": {},
+            "parameters": {},
+        }
 
         # daeploy-specific setup
         self.app.on_event("startup")(initialize_db)
@@ -75,6 +79,7 @@ class _Service:
     def entrypoint(
         self,
         func: Callable = None,
+        ui: bool = False,
         method: str = "POST",
         monitor: bool = False,
         disable_http_logs: bool = False,
@@ -94,6 +99,8 @@ class _Service:
 
         Args:
             func (Callable): The decorated function to make an entrypoint for.
+            ui (bool): Should the entrypoint be added to the UI.
+                Defaults to False.
             method (str): HTTP method for entrypoint. Defauts to "POST"
             monitor (bool): Set if the input and output to this entrypoint should
                 be saved to the service's monitoring database. Defaults to False.
@@ -124,6 +131,10 @@ class _Service:
             funcname = deco_func.__name__
             path = f"/{funcname}"
             signature = inspect.signature(deco_func)
+            entrypoint_schema = {
+                "ui": ui,
+                "path": path,
+            }
 
             # Update default values to fastapi Body parameters to force all parameters
             # in a json body for the resulting HTTP method
@@ -132,16 +143,22 @@ class _Service:
                 "_request", Parameter.POSITIONAL_OR_KEYWORD, annotation=Request
             )
             new_params.append(request_sig)
+            field_definitions = dict()
             for parameter in signature.parameters.values():
                 if parameter.default == inspect._empty:
                     default = Ellipsis
                 else:
                     default = parameter.default
                 new_params.append(parameter.replace(default=Body(default, embed=True)))
+                field_definitions[parameter.name] = (parameter.annotation, default)
+
+            # Use the pydantic object schema
+            input_schema = create_model("input_schema", **field_definitions).schema()
+            entrypoint_schema["input_schema"] = input_schema
 
             @functools.wraps(deco_func)
             # async is required for the request.body() method.
-            async def wrapper(_request: Request, *args, **kwargs):
+            async def wrapper(_request: Request, *args, **kwargs) -> Any:
                 result = await run_in_threadpool(deco_func, *args, **kwargs)
 
                 if monitor:
@@ -167,6 +184,12 @@ class _Service:
             # Give priority to explicitly given response_model
             kwargs = dict(response_model=return_type)
             kwargs.update(fastapi_kwargs)
+
+            output_schema = create_model(
+                "output_schema", output=(return_type, ...)
+            ).schema()
+            entrypoint_schema["output_schema"] = output_schema
+            self.schema["entrypoints"][funcname] = entrypoint_schema
 
             # Create API endpoint
             self.app.api_route(path, methods=[method], tags=["Entrypoints"], **kwargs)(
@@ -208,7 +231,7 @@ class _Service:
         self,
         seconds: float,
         wait_first: bool = False,
-    ):
+    ) -> Callable:
         """Returns a decorator that converts a function to an awaitable that runs
         every `seconds`.
 
@@ -310,6 +333,7 @@ class _Service:
         self,
         parameter: str,
         value: Any,
+        ui: bool = False,
         expose: bool = True,
         monitor: bool = False,
     ):
@@ -318,17 +342,25 @@ class _Service:
         Args:
             parameter (str): The name of the parameter
             value (Any): The value of the parameter
+            ui (bool): Should the parameter be added to the UI.
+                Defaults to False.
             expose (bool): Should parameter update be exposed to the API.
                 Defaults to True.
             monitor (bool): Stores updates to this parameter in the monitoring
                 database if True. Will try to coerce non-numeric types to
                 string Defaults to False.
         """
+        path = f"/~parameters/{parameter}"
+        parameter_schema = {
+            "ui": ui,
+            "path": path,
+        }
+
         if isinstance(value, Number):
             value = float(value)
 
         @validate_arguments()
-        def update_parameter(value: value.__class__) -> Any:
+        def update_parameter(value: value.__class__) -> value.__class__:
             logger.info(f"Parameter {parameter} changed to {value}")
             self.parameters[parameter]["value"] = value
             if monitor:
@@ -343,23 +375,27 @@ class _Service:
         update_parameter(value)
 
         # Register GET endpoint for the new parameter
-        def get_parameter():
+        def get_parameter() -> value.__class__:
             return self.parameters[parameter]["value"]
 
-        path = f"/~parameters/{parameter}"
         self.app.get(path, tags=["Parameters"])(get_parameter)
+
+        update_request_model = create_model(
+            f"{parameter}_schema", value=(value.__class__, ...)
+        )
 
         # Register POST endpoint for the new parameter
         if expose:
-            update_request_model = create_model(
-                f"{parameter}_schema", value=(value.__class__, ...)
-            )
 
             def post_update_parameter(model: update_request_model):
                 update_parameter(model.value)
                 return "OK"
 
             self.app.post(path, tags=["Parameters"])(post_update_parameter)
+
+        # Set schema
+        parameter_schema["parameter_schema"] = update_request_model.schema()
+        self.schema["parameters"][parameter] = parameter_schema
 
     def run(self):
         """Runs the service
