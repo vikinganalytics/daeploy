@@ -28,16 +28,16 @@ TABLES = {}
 LOCK = threading.Lock()
 
 ROW_TRIGGER = """\
-CREATE TRIGGER {name}_limit_n_rows AFTER INSERT ON {name}
+CREATE TRIGGER [{name}_limit_n_rows] AFTER INSERT ON [{name}]
 BEGIN
-    DELETE FROM {name} WHERE timestamp NOT IN
-        (SELECT timestamp FROM {name} ORDER BY timestamp DESC LIMIT {n_rows});
+    DELETE FROM [{name}] WHERE timestamp NOT IN
+        (SELECT timestamp FROM [{name}] ORDER BY timestamp DESC LIMIT {n_rows});
 END"""
 
 TIME_TRIGGER = """\
-CREATE TRIGGER {name}_delete_old_records AFTER INSERT ON {name}
+CREATE TRIGGER [{name}_delete_old_records] AFTER INSERT ON [{name}]
 BEGIN
-    DELETE FROM {name}
+    DELETE FROM [{name}]
     WHERE DATETIME(timestamp) < DATETIME('now', '-{duration} {timescale}');
 END"""
 

@@ -723,6 +723,7 @@ def test_edge_case_type_storing(database):
     db.write_to_ts("my_stringified_int", "10", timestamp)
     db.write_to_ts("my_stringified_float", "12.0", timestamp)
     db.write_to_ts("my_normal_float", 10.10, timestamp)
+    db.write_to_ts("my.normal.float", 10.10, timestamp)
 
     time.sleep(1)
 
@@ -730,6 +731,7 @@ def test_edge_case_type_storing(database):
     assert db.read_from_ts("my_stringified_int")[-1].value == "10"
     assert db.read_from_ts("my_stringified_float")[-1].value == "12.0"
     assert db.read_from_ts("my_normal_float")[-1].value == 10.10
+    assert db.read_from_ts("my.normal.float")[-1].value == 10.10
 
 
 def test_read_timerange(database):
