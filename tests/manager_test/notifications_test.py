@@ -5,6 +5,7 @@ import time
 
 from manager import notification_api
 from manager.data_models.request_models import NotificationRequest
+from concurrent.futures import ThreadPoolExecutor
 
 TEST_EMAIL_ADDRESS = "notify@multiviz.se"
 
@@ -58,19 +59,6 @@ notification_3 = NotificationRequest(
     timestamp=str(datetime.datetime.utcnow()),
 )
 
-# Notificaiton with 60s timer and active email.
-notification_4 = NotificationRequest(
-    service_name="service4",
-    service_version="0.0.1",
-    msg="This is a test notification!",
-    severity=0,
-    dashboard=True,
-    emails=[TEST_EMAIL_ADDRESS],
-    timer=0,
-    timestamp=str(datetime.datetime.utcnow()),
-)
-
-
 @pytest.fixture
 def notifications_dict():
     try:
@@ -97,7 +85,7 @@ def test_register_two_of_the_same_notification_same_key(notifications_dict):
     assert notification_api.NOTIFICATIONS[notification_hash]["counter"] == 2
 
 
-def test_new_notification_freezed(notifications_dict):
+def test_new_notification_frozen(notifications_dict):
     notification_api.new_notification(notification_2)
     notification_api.NOTIFICATIONS[notification_2.__hash__()][
         "frozen_until"
@@ -105,7 +93,7 @@ def test_new_notification_freezed(notifications_dict):
 
 
 @patch("manager.notification_api._send_notification_as_email")
-def test_email_notification_not_send_when_freezed(email_func, notifications_dict):
+def test_email_notification_not_send_when_frozen(email_func, notifications_dict):
     notification_api.new_notification(notification_3)
     notification_api.new_notification(notification_3)
     # The email func is only called once!
@@ -113,12 +101,20 @@ def test_email_notification_not_send_when_freezed(email_func, notifications_dict
 
 
 @patch("manager.notification_api._send_notification_as_email")
-def test_email_notification_send_when_not_freezed(email_func, notifications_dict):
-    notification_api.new_notification(notification_4)
-    notification_api.new_notification(notification_4)
-    time.sleep(2)
+def test_email_notification_send_when_not_frozen(email_func, notifications_dict):
+    # This first notification should be send
+    notification_api.new_notification(notification_3)
+    # This 2nd notification should be blocked since frozen
+    notification_api.new_notification(notification_3)
+    # Wait out the freeze time
+    time.sleep(5)
+    # This third notification should be send
+    notification_api.new_notification(notification_3)
+    # Grace period for joining threads etc
+    time.sleep(1)
     assert email_func.call_count == 2
 
 
+
 def test_email_sent():
-    notification_api._send_notification_as_email(notification_4)
+    notification_api._send_notification_as_email(notification_3)
