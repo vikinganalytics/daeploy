@@ -5,7 +5,6 @@ import time
 
 from manager import notification_api
 from manager.data_models.request_models import NotificationRequest
-from concurrent.futures import ThreadPoolExecutor
 
 TEST_EMAIL_ADDRESS = "notify@multiviz.se"
 
