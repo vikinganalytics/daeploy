@@ -28,6 +28,7 @@ from daeploy.utilities import (
     get_service_root_path,
     HTTP_METHODS,
 )
+from daeploy.ui.dash_ui import start_ui
 
 setup_logging()
 logger = logging.getLogger(__name__)
@@ -134,6 +135,8 @@ class _Service:
             entrypoint_schema = {
                 "ui": ui,
                 "path": path,
+                "method": method,
+                "name": funcname,
             }
 
             # Update default values to fastapi Body parameters to force all parameters
@@ -150,7 +153,11 @@ class _Service:
                 else:
                     default = parameter.default
                 new_params.append(parameter.replace(default=Body(default, embed=True)))
-                field_definitions[parameter.name] = (parameter.annotation, default)
+
+                annotation = parameter.annotation
+                if parameter.annotation == inspect._empty:
+                    annotation = Any
+                field_definitions[parameter.name] = (annotation, default)
 
             # Use the pydantic object schema
             input_schema = create_model("input_schema", **field_definitions).schema()
@@ -178,8 +185,8 @@ class _Service:
 
             # Get response_model from return type hint
             return_type = signature.return_annotation
-            if return_type == inspect._empty:
-                return_type = None
+            if return_type == inspect._empty or return_type is None:
+                return_type = Any
 
             # Give priority to explicitly given response_model
             kwargs = dict(response_model=return_type)
@@ -353,7 +360,9 @@ class _Service:
         path = f"/~parameters/{parameter}"
         parameter_schema = {
             "ui": ui,
+            "expose": expose,
             "path": path,
+            "name": parameter,
         }
 
         if isinstance(value, Number):
@@ -401,9 +410,10 @@ class _Service:
         """Runs the service
 
         This method is usually called at the end of the module when all
-        entrypoints etc for the service has been specified
+        entrypoints etc for the service have been specified
         """
         logger.info(f"Service started at: {datetime.datetime.utcnow()}")
+        start_ui(self)
         uvicorn.run(self.app, host="0.0.0.0", port=8000)
 
 

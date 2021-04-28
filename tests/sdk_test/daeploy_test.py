@@ -11,7 +11,6 @@ import pandas as pd
 import pydantic
 import pytest
 import logging
-from fastapi.exceptions import FastAPIError
 from fastapi.testclient import TestClient
 from daeploy._service import db
 from daeploy._service.service import _Service
@@ -126,13 +125,13 @@ def test_valid_entrypoint_with_args_kwargs():
 
 def test_invalid_entrypoint_invalid_return_type():
     service = _Service()
-    with pytest.raises(FastAPIError):
+    with pytest.raises(RuntimeError):
         service.entrypoint()(invalid_entrypoint_return_type)
 
 
 def test_invalid_entrypoint_invalid_argument_type():
     service = _Service()
-    with pytest.raises(FastAPIError):
+    with pytest.raises(RuntimeError):
         service.entrypoint()(invalid_entrypoint_argument_type)
 
 

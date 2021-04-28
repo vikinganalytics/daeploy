@@ -48,7 +48,7 @@ class DataFrameInput(pd.DataFrame):
 
     @classmethod
     def __modify_schema__(cls, field_schema):
-        field_schema.update(type="object")
+        field_schema.update(type="object", extra="dataframe")
 
     @classmethod
     def validate(cls, value: Dict[str, Any]) -> pd.DataFrame:
@@ -65,7 +65,7 @@ class DataFrameOutput(pd.DataFrame):
 
     @classmethod
     def __modify_schema__(cls, field_schema):
-        field_schema.update(type="object")
+        field_schema.update(type="object", extra="dataframe")
 
     @classmethod
     def validate(cls, value: pd.DataFrame) -> Dict[str, Any]:

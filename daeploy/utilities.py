@@ -39,7 +39,7 @@ def get_service_name() -> str:
 
 
 def get_service_version() -> str:
-    """Versio of this service
+    """Version of this service
 
     Returns:
         str: Version string (ex. 1.2.3)
