@@ -58,6 +58,7 @@ notification_3 = NotificationRequest(
     timestamp=str(datetime.datetime.utcnow()),
 )
 
+
 @pytest.fixture
 def notifications_dict():
     try:
@@ -112,7 +113,6 @@ def test_email_notification_send_when_not_frozen(email_func, notifications_dict)
     # Grace period for joining threads etc
     time.sleep(1)
     assert email_func.call_count == 2
-
 
 
 def test_email_sent():
