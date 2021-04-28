@@ -12,7 +12,7 @@ from starlette.middleware.wsgi import WSGIMiddleware
 # We make sure to give it the correct path where it will be mounted
 app = dash.Dash(
     __name__,
-    requests_pathname_prefix=daeploy.utilities.get_service_root_path() + "dashboard/",
+    requests_pathname_prefix=daeploy.utilities.get_service_root_path() + "/dashboard/",
 )
 
 app.layout = html.Div(
