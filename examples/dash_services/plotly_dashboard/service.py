@@ -4,7 +4,7 @@ import daeploy
 
 app = dash.Dash(
     __name__,
-    requests_pathname_prefix=daeploy.utilities.get_service_root_path(),
+    requests_pathname_prefix=daeploy.utilities.get_service_root_path() + "/",
 )
 
 app.layout = html.Div(
