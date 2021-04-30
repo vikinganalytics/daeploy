@@ -51,7 +51,6 @@ def new_notification(notification: NotificationRequest):
     register_notification(notification)
 
     if not notification_is_frozen(notification):
-        LOGGER.warning("Notification is not frozen")
         if notification.emails and all(EMAIL_CONFIG):
             LOGGER.warning("Sending email notification")
             THREAD_POOL.submit(_send_notification_as_email, notification)
