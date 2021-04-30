@@ -38,7 +38,7 @@ def delete_notifications():
 def new_notification(notification: NotificationRequest):
     """Handles the incoming notification.
     Registers the notification and sends the notification
-    if it is not freezed.
+    if it is not frozen.
 
     \f
     Args:
@@ -47,18 +47,22 @@ def new_notification(notification: NotificationRequest):
     Returns:
         str: Response message.
     """
+    LOGGER.info("Register new notification")
     register_notification(notification)
 
-    if not notification_is_freezed(notification):
-        if notification.emails is not None and all(EMAIL_CONFIG):
+    if not notification_is_frozen(notification):
+        if notification.emails and all(EMAIL_CONFIG):
+            LOGGER.warning("Sending email notification")
             THREAD_POOL.submit(_send_notification_as_email, notification)
         update_freeze_time(notification)
+    else:
+        LOGGER.warning("Notification is frozen")
 
     return "Notification added"
 
 
 def register_notification(notification: NotificationRequest):
-    """Registers the notification in the local varibale 'notifications'.
+    """Registers the notification in the local variable 'notifications'.
     The hash of the notification is computed and used as the key.
 
     If the hash of the notification already exists,
@@ -76,27 +80,28 @@ def register_notification(notification: NotificationRequest):
         NOTIFICATIONS[notification_hash] = notification.dict()
         NOTIFICATIONS[notification_hash]["counter"] = 1
         # If the notification uses the timer, inititate the frozen_until field.
+        # We set the frozen_until time to current time since we do not want the
+        # freeze the first occurance of this notification.
         if notification.timer != 0:
             NOTIFICATIONS[notification_hash][
                 "frozen_until"
             ] = datetime.datetime.utcnow()
 
 
-def notification_is_freezed(notification: NotificationRequest):
-    """Checks if the 'notification' is freezed or not.
+def notification_is_frozen(notification: NotificationRequest):
+    """Checks if the 'notification' is frozen or not.
 
     Args:
         notification (NotificationRequest): The notification
 
     Returns:
-        bool: True if the notification is freezed, else False.
+        bool: True if the notification is frozen, else False.
     """
     notification_hash = hash(notification)
     if NOTIFICATIONS[notification_hash]["timer"] == 0:
         return False
-
     return (
-        NOTIFICATIONS[notification_hash]["frozen_until"] <= datetime.datetime.utcnow()
+        NOTIFICATIONS[notification_hash]["frozen_until"] >= datetime.datetime.utcnow()
     )
 
 
