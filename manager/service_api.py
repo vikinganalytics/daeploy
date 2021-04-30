@@ -487,7 +487,13 @@ async def read_service_logs(
     """
     service = BaseService(name=name, version=version)
     logs_generator = RTE_CONN.service_logs(service, tail, follow, since)
-    return StreamingResponse(logs_generator, media_type="text/x-h")
+    return StreamingResponse(
+        logs_generator,
+        media_type="text/plain",
+        # We need to set this header to make sure that the
+        # logs show up instantly on chrome. Disable buffering.
+        headers={"X-Content-Type-Options": "nosniff"},
+    )
 
 
 @ROUTER.get("/~inspection", response_model=InspectResponse)
