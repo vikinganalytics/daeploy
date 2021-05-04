@@ -100,8 +100,7 @@ class _Service:
             disable_http_logs (bool): Set if the http entry logs should be disabled for
                 this entrypoint.
                 These logs are genereated from uvicorn. Defaults to False.
-                Example of http entry log:
-                    "POST /services/service_1.0.0/entrypoint_name HTTP/1.1" 200 OK
+                Example of http entry log: ``"POST /services/service_1.0.0/entrypoint_name HTTP/1.1" 200 OK``
             **fastapi_kwargs: Keyword arguments for the resulting API endpoint.
                 See FastAPI for keyword arguments of the ``FastAPI.api_route()``
                 function.
@@ -111,7 +110,7 @@ class _Service:
             ValueError: If method is not a valid HTTP method.
 
         Returns:
-            Callable: The decorated function: :obj:`func`.
+            Callable: The decorated function: :obj:`func`
         """
         method = method.upper()
         if method not in HTTP_METHODS:
@@ -196,7 +195,7 @@ class _Service:
 
         Args:
             **variables: Variables to save to the database. Non-numeric
-                variables will be saved as ``str(variable)``.
+                variables will be saved as JSON with :func:`json.dumps`
         """
         timestamp = datetime.datetime.utcnow()
         for variable, value in variables.items():
@@ -282,7 +281,7 @@ class _Service:
         return timed_task_decorator
 
     def get_parameter(self, parameter: str) -> Any:
-        """Get specific parameter
+        """Get parameter value
 
         Args:
             parameter (str): The name of the parameter
