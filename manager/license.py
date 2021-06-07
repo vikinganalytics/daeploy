@@ -77,6 +77,9 @@ async def validity_door_man(request: Request, call_next: Callable) -> Response:
         request (Request): Incoming request
         call_next (Callable): Handle to next function in line
 
+    Raises:
+        HTTPException: If variable in license has expired
+
     Returns:
         Response: Appropriate response depening on validity period
     """
