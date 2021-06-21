@@ -2,9 +2,16 @@
 
 All notable changes to this project will be documented in this file. This project adheres to [Semantic Versioning](https://semver.org/).
 
+## dev
+
+### UI changes
+
+- Updated dashboard with new logo
+- Updated documentation with new logo
+
 ## 1.0.1
 
-### Bugfixes:
+### Bugfixes
 
 - Fixed a bug with mail notifications when timer is active
 - Fixed a bug when service table names contain special characters
