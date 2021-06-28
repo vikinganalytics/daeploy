@@ -16,7 +16,7 @@ from fastapi.concurrency import run_in_threadpool
 from pydantic import create_model, validate_arguments
 
 from daeploy._service.logger import setup_logging
-from daeploy._service.db import initialize_db, remove_db, write_to_ts
+from daeploy._service.db import clean_database, initialize_db, remove_db, write_to_ts
 from daeploy._service.monitoring_api import (
     get_monitored_data_json,
     get_monitored_data_db,
@@ -27,7 +27,10 @@ from daeploy.utilities import (
     get_service_version,
     get_service_root_path,
     HTTP_METHODS,
+    get_db_clean_interval_seconds,
 )
+from daeploy.communication import notify, Severity
+
 
 setup_logging()
 logger = logging.getLogger(__name__)
@@ -51,6 +54,9 @@ class _Service:
         # daeploy-specific setup
         self.app.on_event("startup")(initialize_db)
         self.app.on_event("shutdown")(service_shutdown)
+
+        interval = get_db_clean_interval_seconds()
+        self.call_every(interval, True)(clean_database)
 
         # Monitoring API
         self.app.get("/~monitor", tags=["Monitoring"])(get_monitored_data_json)
@@ -263,11 +269,12 @@ class _Service:
                     # Timing check
                     remainder = seconds - (time.time() - t_0)
                     if remainder < 0:
-                        warnings.warn(
+                        msg = (
                             f"Function {func} has an execution time the exceeds"
-                            f" the requested execution interval of {seconds}s!",
-                            UserWarning,
+                            f" the requested execution interval of {seconds}s!"
                         )
+                        warnings.warn(msg, UserWarning)
+                        notify(msg, Severity.WARNING)
 
                     # Sleep until next time
                     await asyncio.sleep(max(remainder, 0))
