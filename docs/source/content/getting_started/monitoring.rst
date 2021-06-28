@@ -175,17 +175,21 @@ service database can be requested at the following entrypoint:
 Limiting the Number of Records in the Database
 ----------------------------------------------
 
-Service databases are not meant as permanent data storage. The records are kept for
-365 days by default, but if a service stores large amounts of data often there is a
+Service databases are not intended to be permanent data storage. Records are kept for
+90 days by default, but if a service stores large amounts of data often there is a
 risk of filling the disk of the host machine. To prevent this it's possible to change
 how many instances of each variable can be stored or to automatically remove old instances.
+The database is cleaned at even intervals.
 
-These options are set using an environment variable in the service's runtime. The easiest
-way to set these are in `.s2i/environment`:
+These options are set using a pair of environment variable in the service's runtime.
+The easiest way to set these are in `.s2i/environment`:
 
     * DAEPLOY_SERVICE_DB_TABLE_LIMIT
         * Should have the format <number><limiter>
         * Limiter options: rows, days, hours, minutes or seconds.
+    * DAEPLOY_SERVICE_DB_CLEAN_INTERVAL
+        * Should have the format <number><limiter>
+        * Limiter options: days, hours, minutes or seconds.
 
 To limit the number of days to store variables to 30 we would add the following
 to `.s2i/environment`::

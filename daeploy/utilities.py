@@ -1,6 +1,8 @@
 import logging
 import os
 import re
+from typing import List, Tuple
+from datetime import timedelta
 
 LOGGER = logging.getLogger(__name__)
 
@@ -96,29 +98,75 @@ def get_authorized_domains() -> list:
     return [get_daeploy_manager_hostname()]
 
 
-def get_db_table_limit() -> int:
+def match_limit_and_unit(string: str, accepted_units: List[str]) -> Tuple[str]:
+    limit_pattern = r"\d+"
+    unit_pattern = r"[A-Za-z]+"
+    if re.fullmatch(limit_pattern + unit_pattern, string):
+        number = int(re.search(limit_pattern, string).group(0))
+        setting = re.search(unit_pattern, string).group(0).lower()
+
+        if setting in accepted_units:
+            return number, setting
+
+    raise ValueError(
+        "Invalid format of environment variable {env_var}."
+        " It should be a number followed by 'rows', 'days', 'hours', 'minutes' or"
+        " 'seconds'. Using standard value {default_limit}{default_unit}."
+    )
+
+
+def get_db_table_limit() -> Tuple[int]:
     """Limit of rows or duration to keep records in service database.
     Reads from the environment variable DAEPLOY_SERVICE_DB_TABLE_LIMIT.
+    Data will be cleaned in intervals, defined by the environment variable
+    DAEPLOY_SERVICE_DB_CLEAN_INTERVAL.
 
     Returns:
         tuple:
 
-            - int: Maximum rows/days etc. of database. Defaults to 365
+            - int: Maximum rows/days etc. of database. Defaults to 90
             - str: One of rows, days, hours, minutes, seconds. Defaults to "days"
     """
-    number_pattern = r"\d+"
-    setting_pattern = r"[A-Za-z]+"
-    table_limit = os.environ.get("DAEPLOY_SERVICE_DB_TABLE_LIMIT", "365days")
-    if re.fullmatch(number_pattern + setting_pattern, table_limit):
-        number = int(re.search(number_pattern, table_limit).group(0))
-        setting = re.search(setting_pattern, table_limit).group(0).lower()
+    default_limit = 90
+    default_unit = "days"
+    env_var = "DAEPLOY_SERVICE_DB_TABLE_LIMIT"
 
-        if setting in ["rows", "days", "hours", "minutes", "seconds"]:
-            return number, setting
+    table_limit = os.environ.get(env_var, f"{default_limit}{default_unit}")
+    try:
+        return match_limit_and_unit(
+            table_limit, ["rows", "days", "hours", "minutes", "seconds"]
+        )
+    except ValueError as exc:
+        msg = str(exc).format(
+            env_var=env_var, default_limit=default_limit, default_unit=default_unit
+        )
+        LOGGER.error(msg)
+    return default_limit, default_unit
 
-    LOGGER.error(
-        "Wrong format of environment variable DAEPLOY_SERVICE_DB_TABLE_LIMIT."
-        " It should be a number followed by rows, days, hours, minutes or"
-        " seconds. Using standard value 365days."
-    )
-    return 365, "days"
+
+def get_db_clean_interval_seconds() -> float:
+    """Converts the environment variable DAEPLOY_SERVICE_DB_CLEAN_INTERVAL,
+    that defines how often to clean the database from old records, into seconds
+    and returns that.
+
+    Returns:
+        float: Seconds between cleans. Defaults to 7 days
+    """
+
+    default_interval = 7
+    default_unit = "days"
+    env_var = "DAEPLOY_SERVICE_DB_CLEAN_INTERVAL"
+
+    table_limit = os.environ.get(env_var, f"{default_interval}{default_unit}")
+    try:
+        interval, unit = match_limit_and_unit(
+            table_limit, ["days", "hours", "minutes", "seconds"]
+        )
+    except ValueError as exc:
+        msg = str(exc).format(
+            env_var=env_var, default_limit=default_interval, default_unit=default_unit
+        )
+        LOGGER.error(msg)
+        interval, unit = default_interval, default_unit
+
+    return timedelta(**{unit: interval}).total_seconds()
