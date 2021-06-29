@@ -787,11 +787,11 @@ def test_database_limit_time(database, db_limit_second):
 
 def test_database_limit_invalid_limit(database, db_limit_invalid_limit):
     limit, limiter = get_db_table_limit()
-    assert limit == 30
+    assert limit == 90
     assert limiter == "days"
 
 
 def test_database_limit_invalid_unit(database, db_limit_invalid_unit):
     limit, limiter = get_db_table_limit()
-    assert limit == 30
+    assert limit == 90
     assert limiter == "days"
