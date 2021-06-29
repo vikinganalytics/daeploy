@@ -8,7 +8,7 @@ from typing import Union, Type, List
 from contextlib import contextmanager
 import json
 
-from sqlalchemy import create_engine, and_, event, DDL
+from sqlalchemy import create_engine, and_
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import sessionmaker, mapper, clear_mappers
 from sqlalchemy import Column, DateTime, Float, Text
@@ -26,20 +26,6 @@ Session = sessionmaker(bind=ENGINE)
 QUEUE = queue.Queue()
 TABLES = {}
 LOCK = threading.Lock()
-
-ROW_TRIGGER = """\
-CREATE TRIGGER [{name}_limit_n_rows] AFTER INSERT ON [{name}]
-BEGIN
-    DELETE FROM [{name}] WHERE timestamp NOT IN
-        (SELECT timestamp FROM [{name}] ORDER BY timestamp DESC LIMIT {n_rows});
-END"""
-
-TIME_TRIGGER = """\
-CREATE TRIGGER [{name}_delete_old_records] AFTER INSERT ON [{name}]
-BEGIN
-    DELETE FROM [{name}]
-    WHERE DATETIME(timestamp) < DATETIME('now', '-{duration} {timescale}');
-END"""
 
 
 def create_new_ts_table(name: str, dtype: Type) -> Type:
@@ -79,16 +65,6 @@ def create_new_ts_table(name: str, dtype: Type) -> Type:
             "value": Column(sql_type),
         },
     )
-
-    # Create a trigger for deleting old values in tables
-    limit, limiter = get_db_table_limit()
-    if limiter == "rows":
-        table_limit_trigger = DDL(ROW_TRIGGER.format(name=name, n_rows=limit))
-    else:
-        table_limit_trigger = DDL(
-            TIME_TRIGGER.format(name=name, duration=limit, timescale=limiter)
-        )
-    event.listen(MapperClass.__table__, "after_create", table_limit_trigger)
 
     # Create the actual table
     MapperClass.__table__.create(ENGINE, checkfirst=True)
@@ -218,6 +194,26 @@ def read_from_ts(
         )
         session.expunge_all()  # Detach record(s) from session
         return records
+
+
+def clean_database():
+    limit, limit_unit = get_db_table_limit()
+    with session_scope() as session:
+        for Item in TABLES.values():  # pylint: disable=invalid-name
+            if limit_unit == "rows":
+                # Get the limit:th largest timestamp
+                limit_date = (
+                    session.query(Item.timestamp)
+                    .order_by(Item.timestamp.desc())
+                    .offset(limit)
+                    .first()
+                )[0]
+                session.query(Item).filter(Item.timestamp <= limit_date).delete()
+            else:
+                from_time = datetime.datetime.utcnow() - datetime.timedelta(
+                    **{limit_unit: limit}
+                )
+                session.query(Item).filter(Item.timestamp <= from_time).delete()
 
 
 def initialize_db():
