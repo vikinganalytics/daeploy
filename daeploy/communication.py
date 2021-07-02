@@ -221,7 +221,7 @@ def call_service(
 
     logger.info(logger_msg)
     logger.debug(f"Arguments: {arguments}")
-    logger.info(f"Sending POST request to: {url}")
+    logger.info(f"Sending {entrypoint_method} request to: {url}")
 
     response = request(
         entrypoint_method,
