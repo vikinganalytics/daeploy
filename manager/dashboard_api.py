@@ -67,7 +67,7 @@ def build_banner():
             html.Div(
                 id="banner-text",
                 children=[
-                    html.Img(src=app.get_asset_url("multiviz.png")),
+                    html.Img(src=app.get_asset_url("daeploy_white_icon.png")),
                     dcc.Markdown(
                         """
                     ### Daeploy Dashboard
