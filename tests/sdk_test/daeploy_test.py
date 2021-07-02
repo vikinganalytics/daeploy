@@ -34,17 +34,15 @@ def database():
 @pytest.fixture
 def db_limit_fixture():
     try:
-        default_limit, default_limiter = get_db_table_limit()
+        default_limit, default_unit = get_db_table_limit()
         yield
     finally:
-        os.environ["DAEPLOY_SERVICE_DB_TABLE_LIMIT"] = (
-            str(default_limit) + default_limiter
-        )
+        os.environ["DAEPLOY_SERVICE_DB_TABLE_LIMIT"] = str(default_limit) + default_unit
 
 
 @pytest.fixture
 def db_limit_rows(db_limit_fixture):
-    os.environ["DAEPLOY_SERVICE_DB_TABLE_LIMIT"] = "100rows"
+    os.environ["DAEPLOY_SERVICE_DB_TABLE_LIMIT"] = "10rows"
 
 
 @pytest.fixture
@@ -58,7 +56,7 @@ def db_limit_invalid_limit(db_limit_fixture):
 
 
 @pytest.fixture
-def db_limit_invalid_limiter(db_limit_fixture):
+def db_limit_invalid_unit(db_limit_fixture):
     os.environ["DAEPLOY_SERVICE_DB_TABLE_LIMIT"] = "10avocados"
 
 
@@ -762,13 +760,15 @@ def test_read_timerange(database):
 
 def test_database_limit_rows(database, db_limit_rows):
     before = datetime.datetime.utcnow()
-    for i in range(120):
+    for i in range(12):
         db.write_to_ts("float", float(i), datetime.datetime.utcnow())
         time.sleep(0.01)
-        if i == 19:
+        if i == 1:
             mid = datetime.datetime.utcnow()
 
-    assert len(db.read_from_ts("float")) == 100
+    db.clean_database()
+
+    assert len(db.read_from_ts("float")) == 10
     assert len(db.read_from_ts("float", from_time=before, to_time=mid)) == 0
 
 
@@ -776,7 +776,9 @@ def test_database_limit_time(database, db_limit_second):
     before = datetime.datetime.utcnow()
     for i in range(2):
         db.write_to_ts("float", float(i), datetime.datetime.utcnow())
-        time.sleep(2)
+        time.sleep(0.6)
+
+    db.clean_database()
 
     values = db.read_from_ts("float")
     assert len(values) == 1
@@ -785,11 +787,11 @@ def test_database_limit_time(database, db_limit_second):
 
 def test_database_limit_invalid_limit(database, db_limit_invalid_limit):
     limit, limiter = get_db_table_limit()
-    assert limit == 365
+    assert limit == 90
     assert limiter == "days"
 
 
-def test_database_limit_invalid_limiter(database, db_limit_invalid_limiter):
+def test_database_limit_invalid_unit(database, db_limit_invalid_unit):
     limit, limiter = get_db_table_limit()
-    assert limit == 365
+    assert limit == 90
     assert limiter == "days"
