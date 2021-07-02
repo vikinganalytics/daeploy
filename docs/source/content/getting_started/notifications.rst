@@ -27,9 +27,8 @@ the manager has to be configured with an email and an SMTP server. Please refer 
 documentation on the manager configuration: :ref:`email-config-reference`.
 
 To send the emails we use the ``emails`` keyword argument of the :py:func:`~daeploy.communication.notify`
-function that takes a list of emails as input. So to send an email notification we could write:
+function that takes a list of emails as input. So to send an email notification we could write::
 
-.. testcode::
     notify(
             msg="Trying to greet world. Too time consuming!",
             severity=Severity.WARNING,
