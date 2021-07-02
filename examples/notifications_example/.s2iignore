@@ -1,0 +1,8 @@
+# In this file you can add files/folders to ignore when deploying
+# Works similar to a .gitignore file
+
+# Ignore the .git folder to not only use committed code
+.git/
+
+# Test directory is not needed in production
+tests/

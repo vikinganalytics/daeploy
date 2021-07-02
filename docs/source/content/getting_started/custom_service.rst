@@ -30,15 +30,12 @@ so we can get information about the service for debugging:
 
     import logging
     from daeploy import service
-    from daeploy.communication import Severity, notify
 
     logger = logging.getLogger(__name__)
 
 Only :py:obj:`service` is actually required, but we recommend to import
 and use the standard python `logging <https://docs.python.org/3/library/logging.html>`_ 
-package. :py:func:`~daeploy.communication.notify` and
-:py:class:`~daeploy.communication.Severity` in the :py:mod:`daeploy.communication`
-module are used for the notification functionality in Daeploy. 
+package.
 
 If any external packages are used, they must be specified in the `requirements.txt` file. 
 That way they will be installed the service is deployed. 
@@ -97,33 +94,6 @@ more detailed guide on how typing is handled in Daeploy.
     ``numpy.ndarray`` and ``pandas.DataFrame`` are not JSON-compatible and must be converted to
     lists or dictionaries. Read :ref:`sdk-typing-non-json-reference` on how to use such data types.
 
-
-Notifications
--------------
-
-Notifications is another feature of Daeploy. When a notification is raised it can be viewed
-on the dashboard at http://your-host or sent to an email address. To add a notification
-we use the :py:func:`~daeploy.communication.notify` function. They can be placed in a conditional
-statement to send a notification if it's true. 
-
-Let's say that we want to be notified if someone is greeting the world, because that
-would take a lot of time. Then we add an if-statement to check the input and then send
-the notification. With this added, the :py:func:`hello` function now looks like this:
-
-.. testcode::
-
-    @service.entrypoint
-    def hello(name: str) -> str:
-        greeting_phrase = service.get_parameter("greeting_phrase")
-        if name == "World":
-            notify(
-                msg="Someone is trying to greet the World, too time consuming. Skipping!",
-                severity=Severity.WARNING,
-            )
-            return "Greeting failed"
-        logger.info(f"Greeting someone with the name: {name}")
-        return f"{greeting_phrase} {name}"
-
 Starting the Service
 --------------------
 
@@ -139,13 +109,12 @@ Full Code
 ---------
 
 All together the full service contains fewer than 25 lines of code, including input
-validation, logging, notifications and configurable parameters:
+validation, logging and configurable parameters:
 
 .. testcode::
 
     import logging
     from daeploy import service
-    from daeploy.communication import Severity, notify
 
     logger = logging.getLogger(__name__)
 
@@ -154,12 +123,6 @@ validation, logging, notifications and configurable parameters:
     @service.entrypoint
     def hello(name: str) -> str:
         greeting_phrase = service.get_parameter("greeting_phrase")
-        if name == "World":
-            notify(
-                msg="Someone is trying to greet the World, too time consuming. Skipping!",
-                severity=Severity.WARNING,
-            )
-            return "Greeting failed"
         logger.info(f"Greeting someone with the name: {name}")
         return f"{greeting_phrase} {name}"
 
