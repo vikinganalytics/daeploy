@@ -225,7 +225,7 @@ def deploy_tar(host, name, version, port, source):
     with cliutils.sigint_ignored():
         post(
             f"{host}/services/~tar",
-            json=body,
+            data=body,
             files={
                 "file": (
                     "filename",

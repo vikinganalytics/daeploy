@@ -272,24 +272,23 @@ def test_deploy_tar_from_current_dir(
 
 
 @pytest.fixture
-def tmp_image():
+def test_image():
     image_tag = "traefik/whoami:latest"
     client = docker.from_env()
     client.images.pull(image_tag)
     yield image_tag
-    client.images.remove(image_tag)
 
 
-def test_save_image_tmp(tmp_image):
-    with save_image_tmp(tmp_image) as image_path:
+def test_save_image_tmp(test_image):
+    with save_image_tmp(test_image) as image_path:
         assert image_path.exists()
     assert not image_path.exists()
 
 
 def test_deploy_local_image(
-    dummy_manager, tmp_path, cli_auth_login, clean_services, tmp_image
+    dummy_manager, tmp_path, cli_auth_login, clean_services, test_image
 ):
-    result = runner.invoke(app, ["deploy", "local_image", "1.0.0", "-I", tmp_image])
+    result = runner.invoke(app, ["deploy", "local_image", "1.0.0", "-I", test_image])
     assert result.exit_code == 0
     assert not Path("tmpimage.tar").exists()
 
