@@ -174,6 +174,7 @@ def save_image_tmp(image_name: str) -> Iterator[Path]:
         typer.echo(f"Image {image_name} not found")
         raise typer.Exit(1)
 
+    # Save the image to file
     image_path = Path("tmpimage.tar")
     with open(image_path, "wb") as file_handle:
         for chunk in image.save():

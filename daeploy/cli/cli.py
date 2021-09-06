@@ -282,7 +282,7 @@ def deploy(
     ),
     local_image_flag: Optional[bool] = typer.Option(
         False,
-        "--local-image",
+        "--image-local",
         "-I",
         help="Deploy service from a local docker "
         "image (requires docker installation).",
