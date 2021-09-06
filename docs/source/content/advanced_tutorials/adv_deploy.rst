@@ -90,8 +90,8 @@ your development machine. The given image will be saved as a tar file and upload
 the manager and deployed from there. Assuming you have a project with a dockerfile,
 you could deploy that project as a service on daeploy with the following commands:
 
->>> docker build -t image_name:tag path/to/project
->>> daeploy deploy --image-local my_service 1.0.0 image_name:tag
+>>> docker build -t image_name:tag path/to/project # doctest: +SKIP
+>>> daeploy deploy --image-local my_service 1.0.0 image_name:tag # doctest: +SKIP
 Active host: http://your-host
 Deploying service...
 Service deployed successfully
