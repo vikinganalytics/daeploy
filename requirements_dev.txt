@@ -1,3 +1,4 @@
+-e .
 -r requirements_docs.txt
 wheel
 pytest
