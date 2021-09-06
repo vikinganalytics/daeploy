@@ -5,7 +5,6 @@ from unittest.mock import patch
 
 import pytest
 from fastapi import HTTPException
-from fastapi.responses import JSONResponse
 
 from manager.constants import DAEPLOY_REQUIRED_PASSWORD_LENGTH
 import manager.license as lic
@@ -38,7 +37,7 @@ async def test_door_man():
         with pytest.raises(HTTPException) as exc_info:
             call_next = AsyncMock()
             await lic.validity_door_man(request, call_next)
-        
+
         assert exc_info.value.status_code == 403
 
     finally:
