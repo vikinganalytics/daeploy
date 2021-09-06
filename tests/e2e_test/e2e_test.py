@@ -610,38 +610,6 @@ def test_service_from_daeploy_init(dummy_manager, init_service, headers):
     )
     assert resp.json() == "Wazzup Rune Skejp"
 
-    # Check notification
-    world = {"name": "World"}
-    resp = requests.request(
-        "POST",
-        url="http://localhost/services/test_project/hello",
-        json=world,
-        headers=headers,
-    )
-
-    resp = requests.request(
-        "GET",
-        url="http://localhost/notifications",
-        headers=headers,
-    )
-
-    assert resp.status_code == 200
-    # We should only have one notification
-    expected_notification = {
-        "service_name": "test_project",
-        "service_version": "0.1.0",
-        "msg": "Someone is trying to greet the World, too time consuming. Skipping!",
-        "severity": 1,
-        "dashboard": True,
-        "emails": None,
-        "timer": 0,
-        "counter": 1,
-    }
-    notification = list(resp.json().values())[-1]
-    del notification["timestamp"]
-    print(notification)
-    assert expected_notification == notification
-
     # Test documentation started properly
     response = requests.get("http://localhost/services/test_project/openapi.json")
     assert response.status_code == 200

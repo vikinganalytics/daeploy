@@ -58,8 +58,6 @@ If the manager has authentication enabled, you will be prompted for a username a
 
 >>> daeploy login  # doctest: +SKIP
 Enter Daeploy host: http://localhost
-Username: <username>
-Password: <password>
 
 Once you have logged in you are connected to your specified host and able to
 communicate with the Manager running there. Logins last for a week, before you

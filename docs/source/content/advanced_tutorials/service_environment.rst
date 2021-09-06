@@ -28,15 +28,12 @@ Daeploy Service Configuration
 -----------------------------
 
 There are some special environment variables that are used for Daeploy service
-configuration.
+configuration:
 
-.. list-table::
-   :widths: 25 25 25
-   :header-rows: 1
+    * DAEPLOY_SERVICE_DB_TABLE_LIMIT
+        * Number of rows or length of time to keep data in database, cleaned at even intervals. Format ``<number><unit>``. Unit options: ``"rows"``, ``"days"``, ``"hours"``, ``"minutes"`` or ``"seconds"``.
+        * Example: ``DAEPLOY_SERVICE_DB_TABLE_LIMIT=30days``
 
-   * - Environment Variable
-     - Explanation
-     - Example
-   * - ``DAEPLOY_SERVICE_DB_TABLE_LIMIT``
-     - Format ``<number><limiter>``. Limiter options: ``"rows"``, ``"days"``, ``"hours"``, ``"minutes"`` or ``"seconds"``.
-     - ``DAEPLOY_SERVICE_DB_TABLE_LIMIT=30days``
+    * DAEPLOY_SERVICE_DB_CLEAN_INTERVAL
+        * Interval between database cleans. Format ``<number><unit>``. Unit options: ``"days"``, ``"hours"``, ``"minutes"`` or ``"seconds"``
+        * Example: ``DAEPLOY_SERVICE_DB_CLEAN_INTERVAL=7days``

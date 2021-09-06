@@ -41,6 +41,7 @@ If you want to get in contact, you can reach us at info@vikinganalytics.se
    content/getting_started/dashboard
    content/getting_started/service_logs
    content/getting_started/autodocs
+   content/getting_started/notifications
    content/getting_started/shadow_deployment
    content/getting_started/reaching_service_from_external_applications
    content/getting_started/ticker
@@ -53,7 +54,6 @@ If you want to get in contact, you can reach us at info@vikinganalytics.se
 
    content/advanced_tutorials/sdk_typing
    content/advanced_tutorials/using_multiple_hosts
-   content/advanced_tutorials/email_notifications
    content/advanced_tutorials/manager_api
    content/advanced_tutorials/adv_deploy
    content/advanced_tutorials/cli_autocompletion

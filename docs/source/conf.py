@@ -68,7 +68,7 @@ html_theme = "sphinx_rtd_theme"
 html_theme_options = {
     "logo_only": True,
 }
-html_logo = "content/img/VA_Symbol_DarkBlue.png"
+html_logo = "content/img/daeploy_white.png"
 
 
 # -- Options for Sphinx-multiversion -----------------------------------------
