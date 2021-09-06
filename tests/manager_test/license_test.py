@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 from unittest.mock import patch
 
 import pytest
-from fastapi.responses import JSONResponse
+from fastapi import HTTPException
 
 from manager.constants import DAEPLOY_REQUIRED_PASSWORD_LENGTH
 import manager.license as lic
@@ -33,12 +33,12 @@ async def test_door_man():
         # Sleep for a second
         await asyncio.sleep(1)
 
-        # Try again, this time we should not be allowed in
-        call_next = AsyncMock()
-        res = await lic.validity_door_man(request, call_next)
-        call_next.assert_not_awaited()
-        assert isinstance(res, JSONResponse)
-        assert res.status_code == 403
+        # Try again, this time it should raise HTTPException
+        with pytest.raises(HTTPException) as exc_info:
+            call_next = AsyncMock()
+            await lic.validity_door_man(request, call_next)
+
+        assert exc_info.value.status_code == 403
 
     finally:
         lic.EXPIRATION_TIME = old_exp

@@ -2,8 +2,9 @@ import logging
 from typing import Callable
 from datetime import datetime, timedelta, timezone
 
+from fastapi import HTTPException
 from fastapi.requests import Request
-from fastapi.responses import JSONResponse, Response
+from fastapi.responses import Response
 from sqlalchemy.exc import IntegrityError
 
 from manager.constants import get_activation_key, DAEPLOY_DEFAULT_VALIDITY
@@ -76,6 +77,9 @@ async def validity_door_man(request: Request, call_next: Callable) -> Response:
         request (Request): Incoming request
         call_next (Callable): Handle to next function in line
 
+    Raises:
+        HTTPException: If variable in license has expired
+
     Returns:
         Response: Appropriate response depening on validity period
     """
@@ -85,6 +89,8 @@ async def validity_door_man(request: Request, call_next: Callable) -> Response:
         LOGGER.info(
             "Activation key is expired, intercepting all HTTP calls to manager!"
         )
-        return JSONResponse("Your activation key has expired!", status_code=403)
+        raise HTTPException(
+            status_code=403, detail=str("Your activation key has expired!")
+        )
 
     return await call_next(request)
