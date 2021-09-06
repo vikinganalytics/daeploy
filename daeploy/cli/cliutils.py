@@ -1,12 +1,18 @@
-import tarfile
 import re
 import signal
+import tarfile
+from typing import Iterator
+import warnings
 from contextlib import contextmanager
 from datetime import datetime
 from functools import partial
-import warnings
-from requests.exceptions import ConnectionError as ReqConnectionError, HTTPError
+from pathlib import Path
+
+import docker
 import typer
+from docker.errors import DockerException, ImageNotFound
+from requests.exceptions import ConnectionError as ReqConnectionError
+from requests.exceptions import HTTPError
 
 import daeploy.communication
 
@@ -152,3 +158,29 @@ def sigint_ignored():
     finally:
         # Resetting original SIGINT handler
         signal.signal(signal.SIGINT, original_sigint_handler)
+
+
+@contextmanager
+def save_image_tmp(image_name: str) -> Iterator[Path]:
+    try:
+        client = docker.from_env()
+    except DockerException:
+        typer.echo("Error connecting to docker. Is it installed on your system?")
+        raise typer.Exit(1)
+
+    try:
+        image = client.images.get(image_name)
+    except ImageNotFound:
+        typer.echo(f"Image {image_name} not found")
+        raise typer.Exit(1)
+
+    # Save the image to file
+    image_path = Path("tmpimage.tar")
+    with open(image_path, "wb") as file_handle:
+        for chunk in image.save():
+            file_handle.write(chunk)
+
+    try:
+        yield image_path
+    finally:
+        image_path.unlink()

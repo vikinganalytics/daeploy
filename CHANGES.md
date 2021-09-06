@@ -2,9 +2,13 @@
 
 All notable changes to this project will be documented in this file. This project adheres to [Semantic Versioning](https://semver.org/).
 
-## 1.0.2
-
 ## Dev
+
+### New Features
+
+- Added the option to deploy from a local docker image with the CLI.
+
+## 1.0.2
 
 - Changed database cleaning to be made periodically to keep database writes fast
 - Added `DAEPLOY_SERVICE_DB_CLEAN_INTERVAL` service environment variable to control clean interval
