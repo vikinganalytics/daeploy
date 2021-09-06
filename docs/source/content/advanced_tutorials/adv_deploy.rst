@@ -12,18 +12,20 @@ those, to make sure you have a good idea of the options you have available.
     have. If you are unsure how and what-for a certain command is used, it should
     be your go-to option.
 
-Daeploy supports three separate service sources; A local source (directory or tarball),
-a git repository or a container image. By default ``deploy`` will expect a local
+Daeploy supports several service sources; A local source (directory or tarball),
+a git repository or docker images. By default ``deploy`` will expect a local
 source and to deploy from another source you need to add a flag with your ``deploy``
 command:
 
-+-------------+--------------+
-| Long Option | Short option |
-+=============+==============+
-| --git       | -g           |
-+-------------+--------------+
-| --image     | -i           |
-+-------------+--------------+
++---------------+--------------+
+| Long Option   | Short option |
++===============+==============+
+| --git         | -g           |
++---------------+--------------+
+| --image       | -i           |
++---------------+--------------+
+| --image-local | -I           |
++---------------+--------------+
 
 .. note:: Daeploy uses `Source-To-Image <https://github.com/openshift/source-to-image>`_
     to automatically convert source code into container images. There are advanced
@@ -62,6 +64,7 @@ Container Image
 ---------------
 
 The ``--image`` option can be used to deploy any container image as a Daeploy service.
+The manager will look for the image first in it's local system, then on docker hub.
 This can be useful for deploying applications that are not written using the
 SDK within the Daeploy framework. Keep in mind that most pre-build images will not
 support the automatic interactive documentation:
@@ -77,6 +80,24 @@ MAIN    NAME         VERSION    STATUS    RUNNING
 In the last command we used an optional argument to change the internal port of
 the service container. This is not required when deploying services locally or
 from git repositories, but it might be necessary when deploying from an image.
+
+Local Container Image
+---------------------
+
+To avoid having to manually upload images from your development setup to the manager
+you can use the ``--image-local`` flag. For this you need to have docker installed on
+your development machine. The given image will be saved as a tar file and uploaded to
+the manager and deployed from there. Assuming you have a project with a dockerfile,
+you could deploy that project as a service on daeploy with the following commands:
+
+>>> docker build -t image_name:tag path/to/project # doctest: +SKIP
+>>> daeploy deploy --image-local my_service 1.0.0 image_name:tag # doctest: +SKIP
+Active host: http://your-host
+Deploying service...
+Service deployed successfully
+MAIN    NAME         VERSION    STATUS    RUNNING
+------  -----------  ---------  --------  -----------------------------------
+*       my_service   1.0.0      running   Running (since 2021-09-06 15:53:55)
 
 Advanced Deployment of Docker Images
 ------------------------------------

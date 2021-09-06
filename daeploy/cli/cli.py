@@ -1,16 +1,18 @@
-from typing import Optional
-from pathlib import Path
+import datetime
 import json
 import sys
-import datetime
+from pathlib import Path
+from typing import Optional
+
 import click
 import pkg_resources
+import pytest
 import requests
 import typer
-import pytest
-from tabulate import tabulate
-from cookiecutter.main import cookiecutter
 from cookiecutter.exceptions import FailedHookException, OutputDirExistsException
+from cookiecutter.main import cookiecutter
+from tabulate import tabulate
+
 import daeploy.cli.cliutils as cliutils
 import daeploy.cli.config as config
 import daeploy.communication
@@ -194,6 +196,64 @@ def _callback(
     typer.echo(f"Active host: {_get_active_host()}")
 
 
+def deploy_image(host, name, version, port, source):
+    body = dict(name=name, version=version, port=port, image=source)
+    with cliutils.sigint_ignored():
+        post(
+            f"{host}/services/~image",
+            json=body,
+            headers=cliutils.get_request_auth_header(_get_token_for_active_host()),
+        )
+
+
+def deploy_git(host, name, version, port, source):
+    body = dict(name=name, version=version, port=port, git_url=source)
+    with cliutils.sigint_ignored():
+        post(
+            f"{host}/services/~git",
+            json=body,
+            headers=cliutils.get_request_auth_header(_get_token_for_active_host()),
+        )
+
+
+def deploy_tar(host, name, version, port, source):
+    body = dict(
+        name=name,
+        version=version,
+        port=port,
+    )
+    with cliutils.sigint_ignored():
+        post(
+            f"{host}/services/~tar",
+            data=body,
+            files={
+                "file": (
+                    "filename",
+                    open(str(source), "rb").read(),
+                    "application/x-gzip",
+                )
+            },
+            headers=cliutils.get_request_auth_header(_get_token_for_active_host()),
+        )
+
+
+def deploy_local_image(host, name, version, port, source):
+    with cliutils.save_image_tmp(source) as image_path:
+        post(
+            f"{host}/services/~upload-image",
+            files={
+                "image": (
+                    image_path.name,
+                    open(image_path, "rb").read(),
+                    "application/x-gzip",
+                )
+            },
+            headers=cliutils.get_request_auth_header(_get_token_for_active_host()),
+        )
+
+    deploy_image(host, name, version, port, source)
+
+
 @app.command()
 def deploy(
     name: str = typer.Argument(
@@ -220,6 +280,13 @@ def deploy(
     image_flag: Optional[bool] = typer.Option(
         False, "--image", "-i", help="Deploy service from an docker image."
     ),
+    local_image_flag: Optional[bool] = typer.Option(
+        False,
+        "--image-local",
+        "-I",
+        help="Deploy service from a local docker "
+        "image (requires docker installation).",
+    ),
     git_flag: Optional[bool] = typer.Option(
         False, "--git", "-g", help="Deploy service from a git repository URL."
     ),
@@ -235,6 +302,8 @@ def deploy(
         port (int, optional): Internal port for the service.
         image_flag (bool, optional): Indicate that an image is
             being used for creating the service. Default False.
+        local_image_flag (bool, optional): Indicate that a local image
+            is being used for creating the service. Default False.
         git_flag (bool, optional): Indicate that a git repository
             is being used for creating the service. Default False.
 
@@ -245,71 +314,42 @@ def deploy(
     cleanup = False
     host = _get_active_host()
 
-    if git_flag and image_flag:
-        typer.echo("Error: Cannot use both -i and -g, choose one.")
+    if sum([image_flag, local_image_flag, git_flag]) > 1:
+        typer.echo("Error: You can only select one source flag.")
         raise typer.Exit(1)
-
-    request = {}
-    request["name"] = name
-    request["version"] = version
-    request["port"] = port
 
     typer.echo("Deploying service...")
     if image_flag:
-        request["image"] = source
-
-        with cliutils.sigint_ignored():
-            post(
-                f"{host}/services/~image",
-                json=request,
-                headers=cliutils.get_request_auth_header(_get_token_for_active_host()),
-            )
+        deploy_image(host, name, version, port, source)
+    elif local_image_flag:
+        deploy_local_image(host, name, version, port, source)
     elif git_flag:
-        request["git_url"] = source
-
-        with cliutils.sigint_ignored():
-            post(
-                f"{host}/services/~git",
-                json=request,
-                headers=cliutils.get_request_auth_header(_get_token_for_active_host()),
-            )
+        deploy_git(host, name, version, port, source)
     # If neither image or git flag is active we default to a tar request.
     else:
-        source = Path(source).resolve()
-        if not source.exists():
-            typer.echo(f"Could not find anything on the path {str(source)}")
+        source_path = Path(source).resolve()
+        if not source_path.exists():
+            typer.echo(f"Could not find anything on the path {str(source_path)}")
             raise typer.Exit(1)
 
-        if source.is_dir():
-            source = cliutils.make_tarball(source)
+        if source_path.is_dir():
+            source_path = cliutils.make_tarball(source_path)
             cleanup = True
 
-        if source.suffixes != [".tar", ".gz"]:
+        if source_path.suffixes != [".tar", ".gz"]:
             typer.echo(
                 "Error: Source must be a .tar.gz file or a "
                 "directory when deploying with --tar."
             )
             raise typer.Exit(1)
 
-        with cliutils.sigint_ignored():
-            post(
-                f"{host}/services/~tar",
-                data=request,
-                files={
-                    "file": (
-                        "filename",
-                        open(str(source), "rb").read(),
-                        "application/x-gzip",
-                    )
-                },
-                headers=cliutils.get_request_auth_header(_get_token_for_active_host()),
-            )
+        deploy_tar(host, name, version, port, source_path)
+
+        if cleanup:
+            source_path.unlink()
 
     typer.echo("Service deployed successfully")
-    ls(request["name"], request["version"])  # Show the started service
-
-    if cleanup:
-        source.unlink()
+    ls(name, version)  # Show the started service
 
 
 # pylint: disable=invalid-name

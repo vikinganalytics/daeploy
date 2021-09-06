@@ -3,13 +3,13 @@ from pathlib import Path
 import time
 import tarfile
 import subprocess
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 from random import choice
 from string import ascii_uppercase
 
-import pkg_resources
 import pytest
 import docker
+import docker.errors
 import threading
 from typer.testing import CliRunner
 
@@ -17,6 +17,7 @@ from daeploy.cli.cliutils import (
     filter_services_by_name_version,
     sort_main_service_last,
     make_tarball,
+    save_image_tmp,
 )
 from daeploy.cli.cli import app, _get_services_for_autocompletion
 import daeploy.cli.cli as cli
@@ -268,6 +269,45 @@ def test_deploy_tar_from_current_dir(
     )
     os.chdir(original_wd)
     assert result.exit_code == 0
+
+
+@pytest.fixture
+def test_image():
+    image_tag = "traefik/whoami:latest"
+    client = docker.from_env()
+    client.images.pull(image_tag)
+    yield image_tag
+
+
+def test_save_image_tmp(test_image):
+    with save_image_tmp(test_image) as image_path:
+        assert image_path.exists()
+    assert not image_path.exists()
+
+
+def test_deploy_local_image(
+    dummy_manager, tmp_path, cli_auth_login, clean_services, test_image
+):
+    result = runner.invoke(app, ["deploy", "local_image", "1.0.0", "-I", test_image])
+    assert result.exit_code == 0
+    assert not Path("tmpimage.tar").exists()
+
+
+def test_deploy_local_image_not_found(dummy_manager, cli_auth_login, clean_services):
+    result = runner.invoke(app, ["deploy", "local_image", "1.0.0", "-I", "notanimage"])
+    assert result.exit_code == 1
+
+
+def test_deploy_local_image_no_docker(dummy_manager, cli_auth_login, clean_services):
+    with patch(
+        "daeploy.cli.cliutils.docker.from_env",
+        side_effect=docker.errors.DockerException("No docker"),
+    ):
+        result = runner.invoke(
+            app, ["deploy", "local_image", "1.0.0", "-I", "notanimage"]
+        )
+    assert result.exit_code == 1
+    assert "Error connecting to docker" in result.stdout
 
 
 def test_deploy_two_flags_error(dummy_manager, cli_auth_login, tar_file):
