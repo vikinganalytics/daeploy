@@ -365,6 +365,28 @@ def test_deploy_and_kill(dummy_manager, cli_auth_login, clean_services):
     assert "Service test_service 1.2.3 killed." in result.stdout
 
 
+def test_kill_keep_image(dummy_manager, cli_auth_login, clean_services):
+    result = runner.invoke(
+        app,
+        [
+            "deploy",
+            "--image",
+            "test_service",
+            "1.2.3",
+            "traefik/whoami:latest",
+        ],
+    )
+
+    result = runner.invoke(app, ["kill", "-i", "test_service", "1.2.3", "--yes"])
+    print(result.output)
+    assert result.exit_code == 0
+
+    client = docker.from_env()
+    client.images.get("traefik/whoami:latest")
+    with pytest.raises(docker.errors.NotFound):
+        client.containers.get(create_container_name("test_service", "1.2.3"))
+
+
 def test_ls_without_services(dummy_manager, cli_auth_login):
     result = runner.invoke(app, ["ls"])
     assert result.exit_code == 0
