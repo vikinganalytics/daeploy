@@ -366,7 +366,7 @@ def get_base_service_config(service_name: str) -> dict:
     Returns:
         dict: Routing and prefix configuration
     """
-    path_prefix = f"/services/{service_name}/"
+    path_prefix = f"/services/{service_name}"
     prefix_strip_middleware = f"{service_name}_prefix_stripper"
     rule = f"Host(`{get_proxy_domain_name()}`) && PathPrefix(`{path_prefix}`)"
 
