@@ -262,7 +262,7 @@ def test_remove_image_if_exists_false_if_image_being_used(local_docker_connectio
     assert not res
 
 
-def test_remove_service_both_image_and_container_removed(local_docker_connection):
+def test_remove_service(local_docker_connection):
     local_docker_connection.create_service(
         image="traefik/whoami:latest",
         name="test",
@@ -280,13 +280,10 @@ def test_remove_service_both_image_and_container_removed(local_docker_connection
     images_after = local_docker_connection.CLIENT.images.list()
     containers_after = local_docker_connection.CLIENT.containers.list()
 
-    assert len(images_before) > len(images_after)
+    assert len(images_before) == len(images_after)
     assert len(containers_before) > len(containers_after)
 
     assert container_name not in [c.name for c in containers_after]
-    # Check that the image is removed.
-    with pytest.raises(docker.errors.ImageNotFound):
-        local_docker_connection.CLIENT.images.get("traefik/whoami:latest")
 
 
 def test_manager_logs_no_container(local_docker_connection):
