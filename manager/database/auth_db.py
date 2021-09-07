@@ -46,6 +46,17 @@ def get_user_record(username: str) -> User:
         return record
 
 
+def clear_user_database():
+    """Clear all users to get a clean slate on startup.
+    This prevents old users and passwords from persisting
+    """
+    with session_scope() as session:
+        try:
+            session.query(User).delete()
+        except NoResultFound:
+            pass
+
+
 def add_token_record(uuid: UUID):
     """Add a new token to the database
 

@@ -1,16 +1,18 @@
 import os
 from base64 import b64encode
 from contextlib import contextmanager
+import logging
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey
 
 from manager.constants import DAEPLOY_DATA_DIR, get_admin_password
 
 MANAGER_DB_PATH = DAEPLOY_DATA_DIR / "daeploy_manager_db.db"
+
+logger = logging.getLogger(__name__)
 
 engine = create_engine(f"sqlite:///{str(MANAGER_DB_PATH)}")
 Base = declarative_base()
@@ -107,18 +109,16 @@ def initialize_db():
     """Initializes the database."""
     Base.metadata.create_all(engine)
 
-    # Try adding an token secret
+    # Try adding a token secret
     from manager.database.config_db import set_jwt_token_secret
 
     set_jwt_token_secret(b64encode(os.urandom(64)).decode())
 
     # Add our base set of users
-    from manager.database.auth_db import add_user_record
+    from manager.database.auth_db import add_user_record, clear_user_database
 
-    try:
-        add_user_record(username="admin", password=get_admin_password())
-    except IntegrityError:
-        pass
+    clear_user_database()
+    add_user_record(username="admin", password=get_admin_password())
 
 
 def remove_db():
