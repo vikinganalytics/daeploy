@@ -62,7 +62,7 @@ def get_service_access_token() -> str:
 
 def get_service_root_path() -> str:
     """Returns the root path at which this service is running.
-    Can be for example `/services/<service_name>_<service_version>`
+    Can be for example `/services/<service_name>_<service_version>/`
 
     Returns:
         str: Root path
@@ -73,7 +73,7 @@ def get_service_root_path() -> str:
     if name == UNKNOWN_NAME and version == UNKNOWN_VERSION:
         return ""
 
-    return f"/services/{name}_{version}"
+    return f"/services/{name}_{version}/"
 
 
 def get_headers() -> dict:

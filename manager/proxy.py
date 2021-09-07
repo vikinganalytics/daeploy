@@ -366,7 +366,7 @@ def get_base_service_config(service_name: str) -> dict:
     Returns:
         dict: Routing and prefix configuration
     """
-    path_prefix = f"/services/{service_name}"
+    path_prefix = f"/services/{service_name}/"
     prefix_strip_middleware = f"{service_name}_prefix_stripper"
     rule = f"Host(`{get_proxy_domain_name()}`) && PathPrefix(`{path_prefix}`)"
 
@@ -431,7 +431,7 @@ def create_mirror_configuration(
     name: str, main_version: str, shadow_versions: List[str] = None
 ):
     """Sets up a configuration file for shadow deployment. Where any calls sent
-    to /services/service_version is mirrored to all services with that name.
+    to /services/service_version/ is mirrored to all services with that name.
 
     Args:
         name (str): Name of the service

@@ -104,7 +104,7 @@ The application will be available according to the following:
 - Docker container listens on ports 80 (http) and 433 (https)
 - Proxy listens on ports 5080 (http) (and 5443 (https), NOT fully implemented yet)
 - Manager is available at ```/``` (or locally on port 8000)
-- Any started services are available at ```/services/{service_name}``` (or locally on ports 8001 and upwards)
+- Any started services are available at ```/services/{service_name}/``` (or locally on ports 8001 and upwards)
 - Proxy built-in dashboard is available at ```/proxy/dashboard/```
 
 ## Docs

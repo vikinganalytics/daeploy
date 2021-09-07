@@ -160,7 +160,6 @@ def generate_table_services():
     """
     services = read_services()
     headers = ["Main", "Service name", "Version", "State", "Logs", "Documentation"]
-    keys = ["name", "version"]
 
     return html.Table(
         # Header
@@ -176,8 +175,10 @@ def generate_table_services():
                     else html.Td("")
                 ]
                 +
-                # Name and Version
-                [html.Td(str(service[key])) for key in keys]
+                # Name
+                [html.Td(get_service_link(service))]
+                # Version
+                + [html.Td(service["version"])]
                 # Service state
                 + [html.Td(get_service_state(service))]
                 # Log link
@@ -215,6 +216,10 @@ def get_service_state(service):
     return f" {running_msg} (since {timestamp})"
 
 
+def get_link_style():
+    return {"color": "white"}
+
+
 def get_service_docs_link(service):
     """Create the link to the docs from a service
 
@@ -228,6 +233,7 @@ def get_service_docs_link(service):
     return html.A(
         "Docs",
         href=(f"{proxy_url}/services/{service['name']}_{service['version']}/docs"),
+        style=get_link_style(),
     )
 
 
@@ -245,7 +251,15 @@ def get_service_log_link(service):
         "Logs",
         href=f"{logs_end_point}?name={service['name']}&version={service['version']}"
         f"&follow=true&tail={DEFAULT_NUMBER_OF_LOGS}",
+        style=get_link_style(),
     )
+
+
+def get_service_link(service):
+    service_endpoint = (
+        f"{get_external_proxy_url()}/services/{service['name']}_{service['version']}/"
+    )
+    return html.A(service["name"], href=service_endpoint, style=get_link_style())
 
 
 def generate_table_notifications():
