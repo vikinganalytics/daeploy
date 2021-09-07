@@ -50,7 +50,6 @@ EXPOSE 443
 
 # Set some labels
 LABEL daeploy.type="manager"
-LABEL daeploy.version="0.1.0"
 LABEL maintainer="Viking Analytics AB"
 
 ENTRYPOINT ["uvicorn", "manager.app:app"]

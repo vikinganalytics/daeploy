@@ -58,14 +58,14 @@ def test_starting_new_service(local_docker_connection):
     assert version == "0.1.0"
 
 
-def test_start_image_service_with_docker_run_args(local_docker_connection):
+def test_start_image_service_with_run_args(local_docker_connection):
 
     local_docker_connection.create_service(
         image="traefik/whoami:latest",
         name="test",
         version="0.1.0",
         internal_port=80,
-        docker_run_args={
+        run_args={
             "name": "test_2",
             "privileged": True,
         },
@@ -118,7 +118,7 @@ def test_with_failing_services_port_allocation(local_docker_connection):
         name="failing",
         version="0.1.0",
         internal_port=80,
-        docker_run_args={"command": ["sh", "-c", "exit 1"]},
+        run_args={"command": ["sh", "-c", "exit 1"]},
     )
 
     assert int(first_url.split(":")[-1]) == DAEPLOY_FIRST_EXTERNAL_PORT
@@ -144,7 +144,7 @@ def test_with_failing_services_port_allocation(local_docker_connection):
         name="failing",
         version="0.2.0",
         internal_port=80,
-        docker_run_args={"command": ["sh", "-c", "exit 1"]},
+        run_args={"command": ["sh", "-c", "exit 1"]},
     )
 
     assert int(third_url.split(":")[-1]) == DAEPLOY_FIRST_EXTERNAL_PORT + 1
@@ -173,7 +173,7 @@ def test_with_failing_services_restart(local_docker_connection):
         name="late_failer",
         version="0.1.0",
         internal_port=80,
-        docker_run_args={"command": ["sh", "-c", "sleep 6; exit 1"]},
+        run_args={"command": ["sh", "-c", "sleep 6; exit 1"]},
     )
 
     local_docker_connection.create_service(
@@ -181,7 +181,7 @@ def test_with_failing_services_restart(local_docker_connection):
         name="early_failer",
         version="0.1.0",
         internal_port=80,
-        docker_run_args={"command": ["sh", "-c", "sleep 3; exit 1"]},
+        run_args={"command": ["sh", "-c", "sleep 3; exit 1"]},
     )
 
     time.sleep(6)
