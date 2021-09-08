@@ -358,6 +358,7 @@ def test_service_delete(mocked_docker_connection, database):
     mocked_docker_connection.configure_mock(
         **{
             "remove_service.return_value": True,
+            "remove_image_if_exists.return_value": True,
         }
     )
     service_name = SERVICE_NAME
@@ -371,6 +372,33 @@ def test_service_delete(mocked_docker_connection, database):
     mocked_docker_connection.remove_service.assert_called_with(
         BaseService(name=service_name, version=service_version)
     )
+    mocked_docker_connection.remove_image_if_exists.assert_called_with(
+        service_name, service_version
+    )
+
+
+@patch.object(service_api, "RTE_CONN")
+def test_service_delete_keep_image(mocked_docker_connection, database):
+    mocked_docker_connection.configure_mock(
+        **{
+            "remove_service.return_value": True,
+            "remove_image_if_exists.return_value": True,
+        }
+    )
+    service_name = SERVICE_NAME
+    service_version = SERVICE_VERSION
+    response = client.delete(
+        "/services/",
+        json={"name": service_name, "version": service_version},
+        params={"remove_image": False},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == "OK"
+    mocked_docker_connection.remove_service.assert_called_with(
+        BaseService(name=service_name, version=service_version)
+    )
+    mocked_docker_connection.remove_image_if_exists.assert_not_called()
 
 
 @patch.object(service_api, "RTE_CONN")

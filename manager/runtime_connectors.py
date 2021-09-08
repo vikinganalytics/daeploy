@@ -190,22 +190,16 @@ class LocalDockerConnector(ConnectorBase):
         Args:
             name (str): The name of the image to remove
             version (str): The version of the image to remove
-
-        Returns:
-            bool: True if the image existed and was removed, else False
         """
         image_name = create_image_name(name, version)
         try:
             image = self.CLIENT.images.get(image_name)
             self.CLIENT.images.remove(image.id, force=True)
             LOGGER.info(f"Deleted image: {image_name}")
-            return True
         except docker.errors.ImageNotFound:
             LOGGER.info(f"Image: {image_name} did not already exist.")
-            return False
-        except docker.errors.APIError as exc:
-            LOGGER.exception(exc)
-            return False
+        except docker.errors.APIError:
+            LOGGER.exception(f"Failed to delete image {image_name}")
 
     def create_service(
         self,
@@ -358,15 +352,7 @@ class LocalDockerConnector(ConnectorBase):
         )
         LOGGER.debug(f"Removing container with container_id: {container.id}")
 
-        image = container.image
-        # Remove the container
-        container.remove(force=True)
-        # Remove the image
-        try:
-            self.CLIENT.images.remove(image.id, force=True)
-            LOGGER.info(f"Deleted image: {image}")
-        except docker.errors.APIError:
-            LOGGER.exception(f"Failed to delete image {image}")
+        container.remove(force=True)  # Remove the container
 
     def inspect_service(self, service: BaseService) -> dict:
         """Inspect the container of the service
