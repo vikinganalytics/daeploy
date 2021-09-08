@@ -391,7 +391,7 @@ def new_service_from_image(service_request: ServiceImageRequest):
             environment_variables={
                 DAEPLOY_SERVICE_AUTH_TOKEN_KEY: token["Token"],
             },
-            docker_run_args=service_request.docker_run_args,
+            run_args=service_request.run_args,
         )
     except ImageNotFound as exc:
         raise HTTPException(

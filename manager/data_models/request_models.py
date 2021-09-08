@@ -39,7 +39,7 @@ class BaseNewServiceRequest(BaseService):
 
 class ServiceImageRequest(BaseNewServiceRequest):
     image: str
-    docker_run_args: Dict = {}
+    run_args: Dict = {}
 
     class Config:
         schema_extra = {
@@ -48,7 +48,7 @@ class ServiceImageRequest(BaseNewServiceRequest):
                 "version": "0.0.1",
                 "port": 8000,
                 "image": "myimage",
-                "docker_run_args": {},
+                "run_args": {},
             }
         }
 

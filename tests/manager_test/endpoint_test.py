@@ -258,7 +258,7 @@ def test_post_services_image_request(
         "version": SERVICE_VERSION,
         "port": 80,
         "image": "my_image",
-        "docker_run_args": {"privileged": True},
+        "run_args": {"privileged": True},
     }
 
     response = client.post("/services/~image", json=req)
@@ -275,7 +275,7 @@ def test_post_services_image_request(
         version=SERVICE_VERSION,
         internal_port=80,
         environment_variables=ANY,
-        docker_run_args={"privileged": True},
+        run_args={"privileged": True},
     )
 
 
