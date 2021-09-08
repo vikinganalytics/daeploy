@@ -57,7 +57,7 @@ class ConnectorBase(ABC):
         version,
         internal_port,
         environment_variables=None,
-        docker_run_args=None,
+        run_args=None,
     ):
         pass
 
@@ -208,7 +208,7 @@ class LocalDockerConnector(ConnectorBase):
         version: str,
         internal_port: int,
         environment_variables: Dict[str, str] = None,
-        docker_run_args: Dict = None,
+        run_args: Dict = None,
     ) -> str:
         """Starts a container using the provided image in detached mode
 
@@ -219,7 +219,7 @@ class LocalDockerConnector(ConnectorBase):
             internal_port (int): Internal port in container that should
                 be exposed to external access
             environment_variables (dict): Extra needed environment variables.
-            docker_run_args (Dict): Extra key-value arguments for docker run command.
+            run_args (Dict): Extra key-value arguments for docker run command.
 
         Returns:
             str: URL to the service.
@@ -251,7 +251,7 @@ class LocalDockerConnector(ConnectorBase):
         }
 
         # Assemble inputs
-        run_kwargs = docker_run_args or {}
+        run_kwargs = run_args or {}
 
         # Basics
         run_kwargs.update(
