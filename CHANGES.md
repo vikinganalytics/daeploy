@@ -9,6 +9,10 @@ All notable changes to this project will be documented in this file. This projec
 - Added the option to deploy from a local docker image with the CLI.
 - Added the option to keep the docker image when killing services
 
+### Bugfixes
+
+- Solved critical authentication bug when restarting manager with new settings
+
 ## 1.0.2
 
 - Changed database cleaning to be made periodically to keep database writes fast

@@ -16,4 +16,4 @@ class DatabaseConflictException(Exception):
 
 
 class DatabaseNoMatchException(Exception):
-    """Raised when there are not matches for a database query"""
+    """Raised when there are no matches for a database query"""
