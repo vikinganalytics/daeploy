@@ -500,8 +500,15 @@ def kill(
     validation: Optional[bool] = typer.Option(
         False,
         "--yes",
-        help="Give confirmation to kill services at runtime."
+        help="Give confirmation to kill services."
         " Skips prompt, so use with caution.",
+    ),
+    keep_image: Optional[bool] = typer.Option(
+        False,
+        "-i",
+        "--keep-image",
+        help="Keep the image(s) of the killed service(s). "
+        "Might result in dangling images.",
     ),
 ):
     """Kill one or multiple services by name and version.
@@ -513,6 +520,7 @@ def kill(
         all_ (bool, optional): Kill all services. Defaults to False.
         validation (bool, optional): Give confirmation to kill services at runtime.
             Skips prompt, so use with caution. Defaults to False.
+        keep_image (bool, optional): Keep the image(s) of the killed service(s).
 
     Raises:
         Exit: If there are no services to kill matching the given description.
@@ -544,6 +552,7 @@ def kill(
         delete(
             f"{_get_active_host()}/services/",
             json={"name": service["name"], "version": service["version"]},
+            params={"remove_image": not keep_image},
             headers=cliutils.get_request_auth_header(_get_token_for_active_host()),
         )
         typer.echo(f"Service {service['name']} {service['version']} killed.")
@@ -564,7 +573,7 @@ def assign(
     validation: Optional[bool] = typer.Option(
         False,
         "--yes",
-        help="Give confirmation to kill services at runtime."
+        help="Give confirmation to assign service."
         " Skips prompt, so use with caution.",
     ),
 ):
@@ -574,7 +583,7 @@ def assign(
     Args:
         name (str): Name of the service to change to primary.
         version (str): Version of the service to change to primary.
-        validation (bool, optional): Give confirmation to kill services at runtime.
+        validation (bool, optional): Give confirmation to assign service.
             Skips prompt, so use with caution.
 
     Raises:

@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file. This projec
 ### New Features
 
 - Added the option to deploy from a local docker image with the CLI.
+- Added the option to keep the docker image when killing services
 - Added links to service paths to the dashboard
 
 ## 1.0.2
