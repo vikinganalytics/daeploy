@@ -10,6 +10,10 @@ All notable changes to this project will be documented in this file. This projec
 - Added the option to keep the docker image when killing services
 - Added links to service paths to the dashboard
 
+### Bugfixes
+
+- Solved critical authentication bug when restarting manager with new settings
+
 ## 1.0.2
 
 - Changed database cleaning to be made periodically to keep database writes fast
