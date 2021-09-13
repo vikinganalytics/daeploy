@@ -263,8 +263,8 @@ def test_disable_http_logs_in_entrypoint(
     logs = logs("downstream")
     # Check that the logs from inside the entrypoint are logged.
     assert "This is a correct log!" in logs
-    assert '"POST /services/downstream_0.1.0/http_logs_2/ HTTP/1.1" 200 OK' in logs
-    assert '"POST /services/downstream_0.1.0/http_logs/ HTTP/1.1" 200 OK' not in logs
+    assert '"POST /services/downstream_0.1.0/http_logs_2 HTTP/1.1" 200 OK' in logs
+    assert '"POST /services/downstream_0.1.0/http_logs HTTP/1.1" 200 OK' not in logs
 
 
 def test_call_service_multiple_cases(
