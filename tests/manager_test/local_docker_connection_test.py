@@ -58,14 +58,14 @@ def test_starting_new_service(local_docker_connection):
     assert version == "0.1.0"
 
 
-def test_start_image_service_with_docker_run_args(local_docker_connection):
+def test_start_image_service_with_run_args(local_docker_connection):
 
     local_docker_connection.create_service(
         image="traefik/whoami:latest",
         name="test",
         version="0.1.0",
         internal_port=80,
-        docker_run_args={
+        run_args={
             "name": "test_2",
             "privileged": True,
         },
@@ -118,7 +118,7 @@ def test_with_failing_services_port_allocation(local_docker_connection):
         name="failing",
         version="0.1.0",
         internal_port=80,
-        docker_run_args={"command": ["sh", "-c", "exit 1"]},
+        run_args={"command": ["sh", "-c", "exit 1"]},
     )
 
     assert int(first_url.split(":")[-1]) == DAEPLOY_FIRST_EXTERNAL_PORT
@@ -144,7 +144,7 @@ def test_with_failing_services_port_allocation(local_docker_connection):
         name="failing",
         version="0.2.0",
         internal_port=80,
-        docker_run_args={"command": ["sh", "-c", "exit 1"]},
+        run_args={"command": ["sh", "-c", "exit 1"]},
     )
 
     assert int(third_url.split(":")[-1]) == DAEPLOY_FIRST_EXTERNAL_PORT + 1
@@ -173,7 +173,7 @@ def test_with_failing_services_restart(local_docker_connection):
         name="late_failer",
         version="0.1.0",
         internal_port=80,
-        docker_run_args={"command": ["sh", "-c", "sleep 6; exit 1"]},
+        run_args={"command": ["sh", "-c", "sleep 6; exit 1"]},
     )
 
     local_docker_connection.create_service(
@@ -181,7 +181,7 @@ def test_with_failing_services_restart(local_docker_connection):
         name="early_failer",
         version="0.1.0",
         internal_port=80,
-        docker_run_args={"command": ["sh", "-c", "sleep 3; exit 1"]},
+        run_args={"command": ["sh", "-c", "sleep 3; exit 1"]},
     )
 
     time.sleep(6)
@@ -262,7 +262,7 @@ def test_remove_image_if_exists_false_if_image_being_used(local_docker_connectio
     assert not res
 
 
-def test_remove_service_both_image_and_container_removed(local_docker_connection):
+def test_remove_service(local_docker_connection):
     local_docker_connection.create_service(
         image="traefik/whoami:latest",
         name="test",
@@ -280,13 +280,10 @@ def test_remove_service_both_image_and_container_removed(local_docker_connection
     images_after = local_docker_connection.CLIENT.images.list()
     containers_after = local_docker_connection.CLIENT.containers.list()
 
-    assert len(images_before) > len(images_after)
+    assert len(images_before) == len(images_after)
     assert len(containers_before) > len(containers_after)
 
     assert container_name not in [c.name for c in containers_after]
-    # Check that the image is removed.
-    with pytest.raises(docker.errors.ImageNotFound):
-        local_docker_connection.CLIENT.images.get("traefik/whoami:latest")
 
 
 def test_manager_logs_no_container(local_docker_connection):

@@ -391,7 +391,7 @@ def new_service_from_image(service_request: ServiceImageRequest):
             environment_variables={
                 DAEPLOY_SERVICE_AUTH_TOKEN_KEY: token["Token"],
             },
-            docker_run_args=service_request.docker_run_args,
+            run_args=service_request.run_args,
         )
     except ImageNotFound as exc:
         raise HTTPException(
@@ -406,7 +406,7 @@ def new_service_from_image(service_request: ServiceImageRequest):
 
 @ROUTER.delete("/")
 @check_service_exists_json_body
-def kill_service(service: BaseService):
+def kill_service(service: BaseService, remove_image: bool = True):
     """
     Kill a running service.
 
@@ -428,6 +428,8 @@ def kill_service(service: BaseService):
         )
 
     RTE_CONN.remove_service(service)
+    if remove_image:
+        RTE_CONN.remove_image_if_exists(service.name, service.version)
 
     try:
         with session_scope() as session:

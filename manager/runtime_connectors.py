@@ -57,7 +57,7 @@ class ConnectorBase(ABC):
         version,
         internal_port,
         environment_variables=None,
-        docker_run_args=None,
+        run_args=None,
     ):
         pass
 
@@ -190,22 +190,16 @@ class LocalDockerConnector(ConnectorBase):
         Args:
             name (str): The name of the image to remove
             version (str): The version of the image to remove
-
-        Returns:
-            bool: True if the image existed and was removed, else False
         """
         image_name = create_image_name(name, version)
         try:
             image = self.CLIENT.images.get(image_name)
             self.CLIENT.images.remove(image.id, force=True)
             LOGGER.info(f"Deleted image: {image_name}")
-            return True
         except docker.errors.ImageNotFound:
             LOGGER.info(f"Image: {image_name} did not already exist.")
-            return False
-        except docker.errors.APIError as exc:
-            LOGGER.exception(exc)
-            return False
+        except docker.errors.APIError:
+            LOGGER.exception(f"Failed to delete image {image_name}")
 
     def create_service(
         self,
@@ -214,7 +208,7 @@ class LocalDockerConnector(ConnectorBase):
         version: str,
         internal_port: int,
         environment_variables: Dict[str, str] = None,
-        docker_run_args: Dict = None,
+        run_args: Dict = None,
     ) -> str:
         """Starts a container using the provided image in detached mode
 
@@ -225,7 +219,7 @@ class LocalDockerConnector(ConnectorBase):
             internal_port (int): Internal port in container that should
                 be exposed to external access
             environment_variables (dict): Extra needed environment variables.
-            docker_run_args (Dict): Extra key-value arguments for docker run command.
+            run_args (Dict): Extra key-value arguments for docker run command.
 
         Returns:
             str: URL to the service.
@@ -257,7 +251,7 @@ class LocalDockerConnector(ConnectorBase):
         }
 
         # Assemble inputs
-        run_kwargs = docker_run_args or {}
+        run_kwargs = run_args or {}
 
         # Basics
         run_kwargs.update(
@@ -358,15 +352,7 @@ class LocalDockerConnector(ConnectorBase):
         )
         LOGGER.debug(f"Removing container with container_id: {container.id}")
 
-        image = container.image
-        # Remove the container
-        container.remove(force=True)
-        # Remove the image
-        try:
-            self.CLIENT.images.remove(image.id, force=True)
-            LOGGER.info(f"Deleted image: {image}")
-        except docker.errors.APIError:
-            LOGGER.exception(f"Failed to delete image {image}")
+        container.remove(force=True)  # Remove the container
 
     def inspect_service(self, service: BaseService) -> dict:
         """Inspect the container of the service
