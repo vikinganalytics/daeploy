@@ -121,6 +121,10 @@ def test_with_dynamic_service(traefik, dummy_service, pinned):
     response = requests.get("http://localhost:5080/services/dummy_service_1.0.0")
     assert response.status_code == 200
 
+    # Check that service is reachable through proxy with trailing slash
+    response = requests.get("http://localhost:5080/services/dummy_service_1.0.0/")
+    assert response.status_code == 200
+
 
 def test_shadow_deploy_routing(traefik, dummy_service, dummy_service_2):
     pr.create_new_service_configuration(
@@ -131,19 +135,19 @@ def test_shadow_deploy_routing(traefik, dummy_service, dummy_service_2):
     response = requests.get("http://localhost:6000")
     assert response.status_code == 200
 
-    response_100 = requests.get("http://localhost:5080/services/dummy_service_1.0.0")
+    response_100 = requests.get("http://localhost:5080/services/dummy_service_1.0.0/")
     assert response_100.status_code == 200
 
     pr.create_new_service_configuration(
         "dummy_service", "2.0.0", "http://localhost:6001"
     )
     time.sleep(1)
-    response_200 = requests.get("http://localhost:5080/services/dummy_service_2.0.0")
+    response_200 = requests.get("http://localhost:5080/services/dummy_service_2.0.0/")
     assert response_200.status_code == 200
 
     pr.create_mirror_configuration("dummy_service", "1.0.0", ["2.0.0"])
     time.sleep(1)
-    response = requests.get("http://localhost:5080/services/dummy_service")
+    response = requests.get("http://localhost:5080/services/dummy_service/")
     assert response.status_code == 200
 
     assert response.content[:30] == response_100.content[:30]

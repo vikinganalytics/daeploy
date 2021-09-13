@@ -431,7 +431,7 @@ def create_mirror_configuration(
     name: str, main_version: str, shadow_versions: List[str] = None
 ):
     """Sets up a configuration file for shadow deployment. Where any calls sent
-    to /services/service_version is mirrored to all services with that name.
+    to /services/service_version/ is mirrored to all services with that name.
 
     Args:
         name (str): Name of the service
