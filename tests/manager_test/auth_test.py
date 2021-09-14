@@ -48,7 +48,7 @@ def exclude_middleware():
 
 def test_login_page(exclude_middleware):
     response = client.get("/auth/login")
-    assert response.status_code == 200
+    assert response.status_code == 403
 
 
 def test_verification_without_auth(database):

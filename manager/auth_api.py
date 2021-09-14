@@ -107,7 +107,7 @@ def show_login_page(request: Request, destination: Optional[str] = "/"):
     return TEMPLATES.TemplateResponse(
         "login.html",
         {"request": request, "ACTION": f"/auth/login?destination={destination}"},
-        status_code=403,
+        status_code=401,
     )
 
 
@@ -199,7 +199,8 @@ def verify_request(
         # browser, lets redirect the user to the login page
         if is_cookie:
             return RedirectResponse(
-                url=f"{get_external_proxy_url()}/auth/login?destination={x_forwarded_uri}",
+                url=f"{get_external_proxy_url()}/auth/login"
+                f"?destination={x_forwarded_uri}",
                 status_code=303,
             )
 
