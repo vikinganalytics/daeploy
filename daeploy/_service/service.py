@@ -334,8 +334,9 @@ class _Service:
                 Defaults to True.
             monitor (bool): Stores updates to this parameter in the monitoring
                 database if True. Will try to coerce non-numeric types to
-                string Defaults to False.
-            kwargs (Any): Additional keyword arguments to pass to fastapi.api_route
+                string. Defaults to False.
+            disable_http_logs (bool): Disable logs when getting and
+                setting paramter with API. Defaults to False
         """
         path = f"/~parameters/{parameter}"
 
