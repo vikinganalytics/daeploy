@@ -36,6 +36,15 @@ setup_logging()
 logger = logging.getLogger(__name__)
 
 
+def _disable_http_logs(path: str):
+    logging.getLogger("uvicorn.access").addFilter(
+        # Add a space to the path to make sure that we
+        # only filter out this entrypoints HTTP logs.
+        lambda record: f"{path} "
+        not in record.getMessage()
+    )
+
+
 class _Service:
     def __init__(self):
         self.app = FastAPI(
@@ -180,12 +189,7 @@ class _Service:
             )
 
             if disable_http_logs:
-                logging.getLogger("uvicorn.access").addFilter(
-                    # Add a space to the path to make sure that we
-                    # only filter out this entrypoints HTTP logs.
-                    lambda record: f"{path} "
-                    not in record.getMessage()
-                )
+                _disable_http_logs(path)
 
             # Wrap the original func in a pydantic validation wrapper and return that
             return validate_arguments(deco_func)
@@ -319,6 +323,7 @@ class _Service:
         value: Any,
         expose: bool = True,
         monitor: bool = False,
+        disable_http_logs: bool = False,
     ):
         """Adds a parameter to the parameter endpoints.
 
@@ -330,7 +335,10 @@ class _Service:
             monitor (bool): Stores updates to this parameter in the monitoring
                 database if True. Will try to coerce non-numeric types to
                 string Defaults to False.
+            kwargs (Any): Additional keyword arguments to pass to fastapi.api_route
         """
+        path = f"/~parameters/{parameter}"
+
         if isinstance(value, Number):
             value = float(value)
 
@@ -341,6 +349,9 @@ class _Service:
             if monitor:
                 self.store(**{parameter: value})
             return value
+
+        if disable_http_logs:
+            _disable_http_logs(path)
 
         # Set initial value
         self.parameters[parameter] = {
@@ -353,7 +364,6 @@ class _Service:
         def get_parameter():
             return self.parameters[parameter]["value"]
 
-        path = f"/~parameters/{parameter}"
         self.app.get(path, tags=["Parameters"])(get_parameter)
 
         # Register POST endpoint for the new parameter

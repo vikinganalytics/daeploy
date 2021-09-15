@@ -374,6 +374,18 @@ def test_call_service_multiple_cases(
     assert resp.status_code == 200
     assert resp.json() == "Get - Got - Gotten"
 
+    # Test disable_http_logs
+    resp = requests.get(
+        url="http://localhost/services/downstream/~parameters/silent_log",
+        headers=headers,
+    )
+    assert resp.json() == True
+    logs = requests.get(
+        url="http://localhost/services/~logs?name=downstream&version=0.1.0",
+        headers=headers,
+    )
+    assert "GET /services/downstream_0.1.0/~parameters/silent_log" not in logs
+
 
 def test_raised_notification_from_service_ends_up_at_manager(
     dummy_manager, cli_auth_login, services, headers
