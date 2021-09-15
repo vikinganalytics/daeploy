@@ -453,10 +453,12 @@ def test_docs_page_from_service_shows_correct_docs(
     )
 
     # Test documentation started properly
-    response = requests.get("http://localhost/services/downstream/openapi.json")
+    response = requests.get(
+        "http://localhost/services/downstream/openapi.json", headers=headers
+    )
     assert response.status_code == 200
 
-    response = requests.get("http://localhost/openapi.json")
+    response = requests.get("http://localhost/openapi.json", headers=headers)
     assert response.status_code == 200
 
     assert service_docs.status_code == manager_docs.status_code == 200
@@ -481,7 +483,9 @@ def test_service_from_pickle_endpoint(dummy_manager, pickle_service, headers):
     assert resp.status_code == 200
 
     # Test documentation started properly
-    response = requests.get("http://localhost/services/pickle/openapi.json")
+    response = requests.get(
+        "http://localhost/services/pickle/openapi.json", headers=headers
+    )
     assert response.status_code == 200
 
 
@@ -611,7 +615,9 @@ def test_service_from_daeploy_init(dummy_manager, init_service, headers):
     assert resp.json() == "Wazzup Rune Skejp"
 
     # Test documentation started properly
-    response = requests.get("http://localhost/services/test_project/openapi.json")
+    response = requests.get(
+        "http://localhost/services/test_project/openapi.json", headers=headers
+    )
     assert response.status_code == 200
 
 

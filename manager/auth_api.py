@@ -98,19 +98,25 @@ def verify_token(auth_token: str, secret: str) -> Union[dict, bool]:
 
 # Login handling
 @ROUTER.get("/login", response_class=HTMLResponse, include_in_schema=False)
-def show_login_page(request: Request):
+def show_login_page(request: Request, destination: Optional[str] = "/"):
     """Show login page
 
     \f
     # noqa: DAR101,DAR201,DAR401
     """
     return TEMPLATES.TemplateResponse(
-        "login.html", {"request": request, "ACTION": "/auth/login"}
+        "login.html",
+        {"request": request, "ACTION": f"/auth/login?destination={destination}"},
+        status_code=401,
     )
 
 
 @ROUTER.post("/login", include_in_schema=False)
-def login_user(username: str = Form(...), password: SecretStr = Form(...)):
+def login_user(
+    username: str = Form(...),
+    password: SecretStr = Form(...),
+    destination: Optional[str] = "/",
+):
     """Login user using 'username' and 'password' provided through form data.
     Sets a session cookie with a JWT in the response.
 
@@ -125,10 +131,10 @@ def login_user(username: str = Form(...), password: SecretStr = Form(...)):
         record = auth_db.get_user_record(username)
     except DatabaseNoMatchException:
         LOGGER.exception(f"User {username} failed to login!")
-        return RedirectResponse(url="/", status_code=303)
+        return RedirectResponse(url=destination, status_code=303)
 
     if not bcrypt.checkpw(password.get_secret_value().encode(), record.password):
-        return RedirectResponse(url="/", status_code=303)
+        return RedirectResponse(url=destination, status_code=303)
 
     # Construct token
     expire_in = datetime.timedelta(days=7)
@@ -141,7 +147,7 @@ def login_user(username: str = Form(...), password: SecretStr = Form(...)):
     )
 
     # Add token to cookie and set to response
-    response = RedirectResponse(url="/", status_code=303)
+    response = RedirectResponse(url=destination, status_code=303)
     response.set_cookie("daeploy", token)
 
     return response
@@ -163,7 +169,9 @@ def logout_user():
 # Verification endpoint, to be exposed to Traefik
 @ROUTER.get("/verify", include_in_schema=False)
 def verify_request(
-    daeploy: Optional[str] = Cookie(None), authorization: Optional[str] = Header(None)
+    daeploy: Optional[str] = Cookie(None),
+    authorization: Optional[str] = Header(None),
+    x_forwarded_uri: Optional[str] = Header("/"),
 ):
     """Verify request using token from either cookie or Authorization header.
 
@@ -191,7 +199,9 @@ def verify_request(
         # browser, lets redirect the user to the login page
         if is_cookie:
             return RedirectResponse(
-                url=f"{get_external_proxy_url()}/auth/login", status_code=303
+                url=f"{get_external_proxy_url()}/auth/login"
+                f"?destination={x_forwarded_uri}",
+                status_code=303,
             )
 
         # Else we fetched the token from an Auth header and, assuming use from a
