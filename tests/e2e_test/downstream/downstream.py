@@ -12,6 +12,7 @@ logging.getLogger("daeploy").setLevel(logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 service.add_parameter("greeting_phrase", "Hello")
+service.add_parameter("silent_log", True, disable_http_logs=True)
 
 
 @service.entrypoint
