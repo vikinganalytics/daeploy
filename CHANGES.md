@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. This project adheres to [Semantic Versioning](https://semver.org/).
 
+## Dev
+
+### Bugfixes
+
+- Fixed bug where sometimes the image tag would not be saved in the image tar file when deploying local images
+
 ## 1.1.0
 
 ### New Features

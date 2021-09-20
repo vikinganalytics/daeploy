@@ -271,7 +271,9 @@ def deploy(
         help=(
             "Path to the source of the service. "
             "Depending on [OPTIONS], (default): [Local directory or tar.gz archive]"
-            ", (--image): [name of docker image], (--git): [URL to git repository]"
+            ", (--image): [name of docker image]"
+            ", (--local-image): [name of docker image on your machine]"
+            ", (--git): [URL to git repository]"
         ),
     ),
     port: Optional[int] = typer.Option(
