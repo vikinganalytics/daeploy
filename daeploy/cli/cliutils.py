@@ -177,7 +177,7 @@ def save_image_tmp(image_name: str) -> Iterator[Path]:
     # Save the image to file
     image_path = Path("tmpimage.tar")
     with open(image_path, "wb") as file_handle:
-        for chunk in image.save():
+        for chunk in image.save(named=True):
             file_handle.write(chunk)
 
     try:
