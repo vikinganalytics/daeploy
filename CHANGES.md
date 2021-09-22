@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file. This projec
 
 ## Dev
 
+### New Features
+
+- Daeploy now uses a custom s2i builder image which makes daeploy images much smaller.
+
 ### Bugfixes
 
 - Fixed bug where sometimes the image tag would not be saved in the image tar file when deploying local images
