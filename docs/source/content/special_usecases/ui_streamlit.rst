@@ -39,7 +39,7 @@ file called `app.sh` that runs the shell command:
 
 .. literalinclude:: ../../../../examples/streamlit_service/app.sh
 
-When a Daeploy service is deployed it will at the environment variable ``APP_SCRIPT``
+When a Daeploy service is deployed it will look for the environment variable ``APP_SCRIPT``
 to decide which file should be run on start-up. It is `service.py` by default but it
 can be changed by modifying the value of ``APP_SCRIPT`` in `.s2i/environment`:
 
