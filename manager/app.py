@@ -42,7 +42,9 @@ app.mount("/dashboard", WSGIMiddleware(dashboard_api.app.server))
 app.include_router(logging_api.ROUTER, prefix="/logs", tags=["Logging"])
 
 # Authentication subapi
-app.include_router(auth_api.ROUTER, prefix="/auth", tags=["Auth"])
+app.include_router(
+    auth_api.ROUTER, prefix="/auth", tags=["Auth"], include_in_schema=False
+)
 
 
 # Root

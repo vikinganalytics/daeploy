@@ -13,7 +13,7 @@ from docker.errors import ImageNotFound
 from fastapi.testclient import TestClient
 from manager import logging_api, notification_api, service_api, proxy
 from manager.app import app
-from manager.constants import DAEPLOY_DOCKER_BUILD_IMAGE, get_manager_version
+from manager.constants import DAEPLOY_DEFAULT_S2I_BUILD_IMAGE, get_manager_version
 from manager.data_models.request_models import BaseService
 from manager.database.database import initialize_db, remove_db
 
@@ -206,7 +206,7 @@ def test_post_services_git_request(
     assert response.status_code == 202
     service_api.run_s2i.assert_called_with(
         url="https://github.com/sclorg/django-ex",
-        build_image=DAEPLOY_DOCKER_BUILD_IMAGE,
+        build_image=DAEPLOY_DEFAULT_S2I_BUILD_IMAGE,
         name=SERVICE_NAME,
         version=SERVICE_VERSION,
     )

@@ -1,7 +1,7 @@
 import pytest
 
 from manager.service_api import run_s2i
-from manager.constants import DAEPLOY_DOCKER_BUILD_IMAGE
+from manager.constants import DAEPLOY_DEFAULT_S2I_BUILD_IMAGE
 from manager.runtime_connectors import LocalDockerConnector
 from manager.exceptions import S2iException
 
@@ -18,7 +18,7 @@ def test_run_s2i_valid():
 
     image_name = run_s2i(
         url=git_url_public,
-        build_image=DAEPLOY_DOCKER_BUILD_IMAGE,
+        build_image=DAEPLOY_DEFAULT_S2I_BUILD_IMAGE,
         name=name,
         version=version,
     )
@@ -35,7 +35,7 @@ def test_run_s2i_git_repo_without_access_s2iException():
     with pytest.raises(S2iException):
         run_s2i(
             url=git_url_inaccessible,
-            build_image=DAEPLOY_DOCKER_BUILD_IMAGE,
+            build_image=DAEPLOY_DEFAULT_S2I_BUILD_IMAGE,
             name=name,
             version=version,
         )
