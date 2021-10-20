@@ -3,19 +3,22 @@ import tempfile
 import logging
 import subprocess
 from datetime import datetime
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 from pathlib import Path
 from pydantic import ValidationError
+import json
 
 from cookiecutter.main import cookiecutter
 from fastapi import APIRouter, HTTPException, File, UploadFile, Form
 from fastapi.responses import StreamingResponse
 from docker.errors import ImageNotFound, ImageLoadError
+from pydantic.types import Json
 
 from manager.exceptions import (
     DatabaseConflictException,
     DatabaseNoMatchException,
     DatabaseOutOfSyncException,
+    DeploymentError,
     S2iException,
 )
 from manager.runtime_connectors import create_image_name, RTE_CONN
@@ -30,6 +33,7 @@ from manager.data_models.request_models import (
 )
 from manager.data_models.response_models import ServiceResponse, InspectResponse
 from manager.constants import (
+    DAEPLOY_DEFAULT_S2I_BUILD_IMAGE,
     DAEPLOY_SERVICE_AUTH_TOKEN_KEY,
     DAEPLOY_PICKLE_FILE_NAME,
     DAEPLOY_PREFIX,
@@ -96,6 +100,8 @@ def new_service_from_tar_file(
     name: str = Form(...),
     version: str = Form(...),
     port: int = Form(DAEPLOY_DEFAULT_INTERNAL_PORT),
+    run_args: Json = Form(None),  # JSON string parsed as dict
+    s2i_build_image: str = Form(DAEPLOY_DEFAULT_S2I_BUILD_IMAGE),
     file: UploadFile = File(...),
 ):
     """
@@ -110,6 +116,8 @@ def new_service_from_tar_file(
             name=name,
             version=version,
             port=port,
+            s2i_build_image=s2i_build_image,
+            run_args=run_args or {},
             file=file,
         )
     except ValidationError as exc:
@@ -465,6 +473,10 @@ def start_service_from_image(image: str, service_request: BaseNewServiceRequest)
         raise HTTPException(
             status_code=404,
             detail=f"{str(exc)}",
+        )
+    except DeploymentError as exc:
+        raise HTTPException(
+            status_code=422, detail=f"Invalid argument in run_args: {str(exc)}"
         )
 
     new_service_configuration(

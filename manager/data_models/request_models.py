@@ -70,6 +70,7 @@ class ServiceGitRequest(BaseNewS2IServiceRequest):
                 "version": "0.0.1",
                 "port": 8000,
                 "git_url": "https://github.com/sclorg/django-ex",
+                "run_args": {},
             }
         }
 
@@ -84,6 +85,7 @@ class ServiceTarRequest(BaseNewS2IServiceRequest):
                 "version": "0.0.1",
                 "port": 8000,
                 "file": "mytar.gz.tar",
+                "run_args": {},
             }
         }
 

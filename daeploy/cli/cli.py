@@ -2,7 +2,7 @@ import datetime
 import json
 import sys
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
 
 import click
 import pkg_resources
@@ -196,8 +196,14 @@ def _callback(
     typer.echo(f"Active host: {_get_active_host()}")
 
 
-def deploy_image(host, name, version, port, source):
-    body = dict(name=name, version=version, port=port, image=source)
+def deploy_image(host, name, version, port, source, envvars):
+    body = dict(
+        name=name,
+        version=version,
+        port=port,
+        image=source,
+        run_args={"environment": envvars},
+    )
     with cliutils.sigint_ignored():
         post(
             f"{host}/services/~image",
@@ -206,8 +212,16 @@ def deploy_image(host, name, version, port, source):
         )
 
 
-def deploy_git(host, name, version, port, source):
-    body = dict(name=name, version=version, port=port, git_url=source)
+def deploy_git(host, name, version, port, source, envvars, build_image):
+    body = dict(
+        name=name,
+        version=version,
+        port=port,
+        git_url=source,
+        run_args={"environment": envvars},
+    )
+    if build_image:
+        body["s2i_build_image"] = build_image
     with cliutils.sigint_ignored():
         post(
             f"{host}/services/~git",
@@ -216,12 +230,16 @@ def deploy_git(host, name, version, port, source):
         )
 
 
-def deploy_tar(host, name, version, port, source):
+def deploy_tar(host, name, version, port, source, envvars, build_image):
     body = dict(
         name=name,
         version=version,
         port=port,
+        run_args=json.dumps({"environment": envvars}),  # Form data doesn't support dict
     )
+    if build_image:
+        body["s2i_build_image"] = build_image
+
     with cliutils.sigint_ignored():
         post(
             f"{host}/services/~tar",
@@ -237,7 +255,7 @@ def deploy_tar(host, name, version, port, source):
         )
 
 
-def deploy_local_image(host, name, version, port, source):
+def deploy_local_image(host, name, version, port, source, envvars):
     with cliutils.save_image_tmp(source) as image_path:
         post(
             f"{host}/services/~upload-image",
@@ -251,7 +269,37 @@ def deploy_local_image(host, name, version, port, source):
             headers=cliutils.get_request_auth_header(_get_token_for_active_host()),
         )
 
-    deploy_image(host, name, version, port, source)
+    deploy_image(host, name, version, port, source, envvars)
+
+
+def parse_var(string):
+    """
+    Parse a key, value pair, separated by '='
+
+    On the command line a declaration will typically look like:
+        foo=hello
+    or
+        foo="hello world"
+    """
+    items = string.split("=")
+    key = items[0].strip()  # we remove blanks around keys, as is logical
+    if len(items) > 1:
+        # rejoin the rest:
+        value = "=".join(items[1:])
+    return (key, value)
+
+
+def parse_vars(items):
+    """
+    Parse a series of key-value pairs and return a dictionary
+    """
+    keyvalue = {}
+
+    if items:
+        for item in items:
+            key, value = parse_var(item)
+            keyvalue[key] = value
+    return keyvalue
 
 
 @app.command()
@@ -278,6 +326,17 @@ def deploy(
     ),
     port: Optional[int] = typer.Option(
         8000, "--port", "-p", help="Internal port for the service."
+    ),
+    envvars: Optional[List[str]] = typer.Option(
+        None,
+        "--environment",
+        "-e",
+        help="Set an environment variable in the service as NAME=VALUE",
+    ),
+    build_image: Optional[str] = typer.Option(
+        None,
+        "--build-image",
+        help="S2I build image to use when building the service image",
     ),
     image_flag: Optional[bool] = typer.Option(
         False, "--image", "-i", help="Deploy service from an docker image."
@@ -320,13 +379,16 @@ def deploy(
         typer.echo("Error: You can only select one source flag.")
         raise typer.Exit(1)
 
+    # Parse environment variables
+    envvars_dict = parse_vars(envvars or [])
+
     typer.echo("Deploying service...")
     if image_flag:
-        deploy_image(host, name, version, port, source)
+        deploy_image(host, name, version, port, source, envvars_dict)
     elif local_image_flag:
-        deploy_local_image(host, name, version, port, source)
+        deploy_local_image(host, name, version, port, source, envvars_dict)
     elif git_flag:
-        deploy_git(host, name, version, port, source)
+        deploy_git(host, name, version, port, source, envvars_dict, build_image)
     # If neither image or git flag is active we default to a tar request.
     else:
         source_path = Path(source).resolve()
@@ -345,7 +407,7 @@ def deploy(
             )
             raise typer.Exit(1)
 
-        deploy_tar(host, name, version, port, source_path)
+        deploy_tar(host, name, version, port, source_path, envvars_dict, build_image)
 
         if cleanup:
             source_path.unlink()
@@ -749,7 +811,7 @@ def login(
             raise typer.Exit(1)
 
     # Make sure protocol is present
-    if not (host.startswith("http://") or host.startswith("https://")):
+    if not host.startswith(("http://", "https://")):
         typer.echo("Host URL must start with http:// or https://")
         raise typer.Exit(1)
 
@@ -823,3 +885,6 @@ def test(
 
 # Expose click object for automated documentation with sphinx-click
 typer_click_object = typer.main.get_command(app)
+if __name__ == "__main__":
+    c = parse_vars(['a="abc"', "b=c"])
+    print(c)

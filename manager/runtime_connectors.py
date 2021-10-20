@@ -27,6 +27,7 @@ from manager.constants import (
     get_proxy_http_port,
 )
 from manager.data_models.request_models import BaseService
+from manager.exceptions import DeploymentError
 
 LOGGER = logging.getLogger(__name__)
 
@@ -330,6 +331,10 @@ class LocalDockerConnector(ConnectorBase):
                     external_port += 1
                 else:
                     raise
+            except TypeError as exc:
+                if "run() got an unexpected keyword argument" in str(exc):
+                    LOGGER.warning("Invalid argument in run_args")
+                    raise DeploymentError(str(exc))
 
         if manager_in_container():
             # As in a production setup! Manager container is part of the same
