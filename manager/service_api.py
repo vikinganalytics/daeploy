@@ -3,16 +3,14 @@ import tempfile
 import logging
 import subprocess
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 from pathlib import Path
-from pydantic import ValidationError
-import json
+from pydantic import ValidationError, Json
 
 from cookiecutter.main import cookiecutter
 from fastapi import APIRouter, HTTPException, File, UploadFile, Form
 from fastapi.responses import StreamingResponse
 from docker.errors import ImageNotFound, ImageLoadError
-from pydantic.types import Json
 
 from manager.exceptions import (
     DatabaseConflictException,
@@ -450,7 +448,7 @@ def build_service_image_s2i(
     except S2iException as exc:
         raise HTTPException(
             status_code=422,
-            detail=f"S2i failed with error: {exc}",
+            detail=f"S2i failed with error:\n{exc}",
         )
 
     return image

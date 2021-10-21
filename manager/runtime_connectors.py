@@ -227,6 +227,7 @@ class LocalDockerConnector(ConnectorBase):
 
         Raises:
             docker.errors.APIError: If the shit hits the fan when trying to use docker
+            DeploymentError: If there is an argument error when running container
         """
         environment_variables = environment_variables or {}
         container_name = create_container_name(name, version)

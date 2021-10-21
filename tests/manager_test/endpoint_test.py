@@ -213,6 +213,90 @@ def test_post_services_git_request(
     assert response.json() == "Accepted"
 
 
+@patch.object(service_api, "RTE_CONN")
+def test_post_services_git_request_changed_builder_image(
+    mocked_docker_connection, database, clean_proxy_config
+):
+    # Mock, Mock and Mock!
+    mocked_docker_connection.configure_mock(
+        **{
+            "image_exists_in_running_service.return_value": False,
+            "service_version_exists.return_value": False,
+            "create_service.return_value": False,
+        }
+    )
+    service_api.run_s2i = MagicMock(return_value=True)
+    req = {
+        "name": SERVICE_NAME,
+        "version": SERVICE_VERSION,
+        "port": 80,
+        "git_url": "https://github.com/sclorg/django-ex",
+        "s2i_build_image": "centos/python-38-centos7",
+    }
+
+    response = client.post("/services/~git", json=req)
+
+    assert response.status_code == 202
+    service_api.run_s2i.assert_called_with(
+        url="https://github.com/sclorg/django-ex",
+        build_image="centos/python-38-centos7",
+        name=SERVICE_NAME,
+        version=SERVICE_VERSION,
+    )
+    assert response.json() == "Accepted"
+
+
+@patch.object(service_api, "RTE_CONN")
+def test_post_services_git_request_run_args(
+    mocked_docker_connection, database, clean_proxy_config
+):
+    # Mock, Mock and Mock!
+    mocked_docker_connection.configure_mock(
+        **{
+            "image_exists_in_running_service.return_value": False,
+            "service_version_exists.return_value": False,
+            "create_service.return_value": False,
+        }
+    )
+    service_api.run_s2i = MagicMock(return_value="mockimage")
+    req = {
+        "name": SERVICE_NAME,
+        "version": SERVICE_VERSION,
+        "port": 80,
+        "git_url": "https://github.com/sclorg/django-ex",
+        "run_args": {"environment": {"TESTVAR": "TESTVAL"}},
+    }
+
+    response = client.post("/services/~git", json=req)
+
+    assert response.status_code == 202
+    mocked_docker_connection.create_service.assert_called_with(
+        image="mockimage",
+        name=SERVICE_NAME,
+        version=SERVICE_VERSION,
+        internal_port=80,
+        environment_variables=ANY,
+        run_args={"environment": {"TESTVAR": "TESTVAL"}},
+    )
+    assert response.json() == "Accepted"
+
+
+def test_post_services_git_request_run_args_nonexistent(database, clean_proxy_config):
+    service_api.run_s2i = MagicMock(return_value="mockimage")
+    req = {
+        "name": SERVICE_NAME,
+        "version": SERVICE_VERSION,
+        "port": 80,
+        "git_url": "https://github.com/sclorg/django-ex",
+        "run_args": {"notavalidargument": 123},
+    }
+
+    response = client.post("/services/~git", json=req)
+
+    assert response.status_code == 422
+    assert "Invalid argument" in response.json()["detail"]
+
+
 def test_upload_local_image_request(database, remove_image_tar):
     image = service_api.RTE_CONN.CLIENT.images.pull("hello-world")
     # If hello-world image does not exists (pull failed) we get an error
