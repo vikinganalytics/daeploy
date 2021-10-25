@@ -93,11 +93,11 @@ jobs:
                 wget -c https://github.com/traefik/traefik/releases/download/v2.3.1/traefik_v2.3.1_linux_amd64.tar.gz
                 tar -zxvf traefik_v2.3.1_linux_amd64.tar.gz
                 sudo cp traefik /usr/local/bin
-        -   name: "Running base tests with pytest"
+        -   name: "Running manager tests with pytest"
             run: "python -m pytest --verbose tests/manager_test/"
     pytest-sdk: 
         runs-on: [self-hosted, ubuntu, ibm]
-        needs: [black, pylint, flake8, sdk-manager]
+        needs: [black, pylint, flake8, pytest-manager]
         strategy:
             matrix:
               python-version: [3.6, 3.7, 3.8, 3.9]
