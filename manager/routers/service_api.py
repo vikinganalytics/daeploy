@@ -44,7 +44,7 @@ from manager.checks import (
 from manager import proxy
 from manager.database import service_db
 from manager.database.database import session_scope
-from manager.auth_api import new_api_token, delete_token
+from manager.routers.auth_api import new_api_token, delete_token
 
 THIS_DIR = Path(__file__).parent
 

@@ -5,16 +5,19 @@ from fastapi import FastAPI
 from starlette.responses import RedirectResponse
 from starlette.middleware.wsgi import WSGIMiddleware
 
-from manager import service_api
-from manager import dashboard_api
-from manager import notification_api
-from manager import auth_api
+from manager.routers import (
+    service_api,
+    dashboard_api,
+    notification_api,
+    auth_api,
+    logging_api,
+)
 from manager import proxy
 from manager.license import activation_key_reader_on_startup, validity_door_man
-from manager import logging_api
 from manager.database.database import initialize_db
 from manager.database import service_db
 from manager.constants import get_manager_version
+
 
 # Setup logger
 logging_api.setup_logging()
@@ -42,7 +45,9 @@ app.mount("/dashboard", WSGIMiddleware(dashboard_api.app.server))
 app.include_router(logging_api.ROUTER, prefix="/logs", tags=["Logging"])
 
 # Authentication subapi
-app.include_router(auth_api.ROUTER, prefix="/auth", tags=["Auth"])
+app.include_router(
+    auth_api.ROUTER, prefix="/auth", tags=["Auth"], include_in_schema=False
+)
 
 
 # Root

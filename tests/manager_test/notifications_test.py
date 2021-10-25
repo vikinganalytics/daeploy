@@ -3,7 +3,7 @@ from unittest.mock import patch
 import datetime
 import time
 
-from manager import notification_api
+from manager.routers import notification_api
 from manager.data_models.request_models import NotificationRequest
 
 TEST_EMAIL_ADDRESS = "notify@multiviz.se"

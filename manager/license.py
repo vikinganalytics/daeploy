@@ -8,9 +8,12 @@ from fastapi.responses import Response
 from sqlalchemy.exc import IntegrityError
 
 from manager.constants import get_activation_key, DAEPLOY_DEFAULT_VALIDITY
-from manager.auth_api import verify_token, generate_random_password
+from manager.routers.auth_api import verify_token, generate_random_password
+from manager.routers.notification_api import (
+    _manager_notification,
+    register_notification,
+)
 from manager.database.auth_db import add_user_record
-from manager.notification_api import _manager_notification, register_notification
 
 LOGGER = logging.getLogger(__name__)
 
