@@ -92,7 +92,7 @@ def test_new_notification_frozen(notifications_dict):
     ] > datetime.datetime.utcnow()
 
 
-@patch("manager.notification_api._send_notification_as_email")
+@patch("manager.routers.notification_api._send_notification_as_email")
 def test_email_notification_not_send_when_frozen(email_func, notifications_dict):
     notification_api.new_notification(notification_3)
     notification_api.new_notification(notification_3)
@@ -100,7 +100,7 @@ def test_email_notification_not_send_when_frozen(email_func, notifications_dict)
     email_func.called_once()
 
 
-@patch("manager.notification_api._send_notification_as_email")
+@patch("manager.routers.notification_api._send_notification_as_email")
 def test_email_notification_send_when_not_frozen(email_func, notifications_dict):
     # This first notification should be send
     notification_api.new_notification(notification_3)

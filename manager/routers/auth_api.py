@@ -1,5 +1,3 @@
-import string
-import random
 import logging
 import datetime
 from uuid import uuid4, UUID
@@ -16,26 +14,15 @@ from manager.data_models.response_models import TokenResponse
 from manager.constants import (
     auth_enabled,
     get_external_proxy_url,
-    DAEPLOY_REQUIRED_PASSWORD_LENGTH,
 )
 from manager.database import auth_db, config_db
-from manager.exceptions import DatabaseNoMatchException
+from manager.exceptions import AuthError, DatabaseNoMatchException
 
 ROUTER = APIRouter()
 
 LOGGER = logging.getLogger(__name__)
 
 TEMPLATES = Jinja2Templates(directory="manager/templates")
-
-
-def generate_random_password() -> str:
-    """Generate a random password consisting of alphanumerical characters
-
-    Returns:
-        str: Generated password
-    """
-    letters_and_digits = string.ascii_letters + string.digits
-    return "".join(random.sample(letters_and_digits, DAEPLOY_REQUIRED_PASSWORD_LENGTH))
 
 
 class TokenPayloadInput(TypedDict):
@@ -54,7 +41,7 @@ def create_token(
     token can optionally be configured to expire in a certain time using 'expire_in'.
 
     Args:
-        payload (dict): Additional payload to be added to token.
+        payload (TokenPayloadInput): Additional payload to be added to token.
         secret (str): Secret used for signing the token.
         expires_in (datetime.timedelta, optional): Time in which token expires.
             Defaults to None.
@@ -85,6 +72,9 @@ def verify_token(auth_token: str, secret: str) -> TokenPayload:
         auth_token (str): Token to be verified
         secret (str): Secret used for signing the token
 
+    Raises:
+        AuthError: If token cannot be verified
+
     Returns:
         TokenPayload: Payload of token (dict) if successful verification
             otherwise bool.
@@ -99,18 +89,18 @@ def verify_token(auth_token: str, secret: str) -> TokenPayload:
     except jwt.ExpiredSignatureError:
         # Token has expired, ask user to log in again
         LOGGER.info(f"Token has expired: {auth_token}")
-        return False
+        raise AuthError("Expired token")
 
     except jwt.InvalidTokenError:
         # Invalid token! User must login!
         LOGGER.info(f"Token not valid: {auth_token}")
-        return False
+        raise AuthError("Invalid token")
 
 
 def select_cookie_or_header(cookie: str, header: str) -> str:
     if cookie:
         return cookie
-    elif header:
+    if header:
         return header.replace("Bearer ", "")
     return ""
 
@@ -201,15 +191,20 @@ def verify_request(
     if not auth_enabled():
         return "OK"
 
+    # If token (from cookie) is empty and we have an Authorization token in the header
+    is_cookie = True
+    if not daeploy and authorization and "Bearer" in authorization:
+        is_cookie = False
+
     token = select_cookie_or_header(daeploy, authorization)
 
     # Try to verify the token
-    payload = verify_token(token, config_db.get_jwt_token_secret())
-
-    if not payload:
+    try:
+        payload = verify_token(token, config_db.get_jwt_token_secret())
+    except AuthError:
         # If we fetched token from a cookie, assuming the user is sitting at a
         # browser, lets redirect the user to the login page
-        if daeploy:
+        if is_cookie:
             return RedirectResponse(
                 url=f"{get_external_proxy_url()}/auth/login"
                 f"?destination={x_forwarded_uri}",

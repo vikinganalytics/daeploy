@@ -8,8 +8,6 @@ from sqlalchemy.exc import IntegrityError
 from manager.database.database import (
     session_scope,
     Service,
-    initialize_db,
-    remove_db,
 )
 from manager.database import service_db, auth_db, config_db
 from manager.exceptions import (
@@ -26,15 +24,6 @@ myservice_dict = {
     "url": "http://myurl.com",
     "main": True,
 }
-
-
-@pytest.fixture
-def database():
-    try:
-        initialize_db()
-        yield
-    finally:
-        remove_db()
 
 
 def test_get_service_record(database):
@@ -256,6 +245,23 @@ def test_auth_db_add_existing_user(database):
 def test_auth_db_get_non_existing_user(database):
     with pytest.raises(DatabaseNoMatchException):
         record = auth_db.get_user_record("user")
+
+
+def test_auth_db_get_all_users(database):
+    assert auth_db.get_all_users() == ["admin"]
+
+    auth_db.add_user_record("user", "password")
+    assert auth_db.get_all_users() == ["admin", "user"]
+
+
+def test_auth_db_delete_user_record(database):
+    auth_db.delete_user_record("admin")
+    assert auth_db.get_all_users() == []
+
+
+def test_auth_db_delete_non_existing_record(database):
+    with pytest.raises(DatabaseNoMatchException):
+        auth_db.delete_user_record("nope")
 
 
 def test_auth_db_get_set_delete_token(database):

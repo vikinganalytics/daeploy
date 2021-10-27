@@ -1,5 +1,9 @@
 class S2iException(Exception):
-    pass
+    """Raised if there has been an error with source to image"""
+
+
+class AuthError(Exception):
+    """Exception raised on authorization and authentication errors"""
 
 
 class TraefikError(Exception):

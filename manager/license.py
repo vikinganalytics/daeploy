@@ -5,15 +5,14 @@ from datetime import datetime, timedelta, timezone
 from fastapi import HTTPException
 from fastapi.requests import Request
 from fastapi.responses import Response
-from sqlalchemy.exc import IntegrityError
 
 from manager.constants import get_activation_key, DAEPLOY_DEFAULT_VALIDITY
-from manager.routers.auth_api import verify_token, generate_random_password
+from manager.routers.auth_api import verify_token
 from manager.routers.notification_api import (
     _manager_notification,
     register_notification,
 )
-from manager.database.auth_db import add_user_record
+from manager.exceptions import AuthError
 
 LOGGER = logging.getLogger(__name__)
 
@@ -42,27 +41,15 @@ def activate(token: str):
     """
     global EXPIRATION_TIME  # pylint: disable=global-statement
 
-    payload = verify_token(token, PUBLIC_KEY)
-
-    if not payload:
+    try:
+        payload = verify_token(token, PUBLIC_KEY)
+    except AuthError:
         LOGGER.warning("Could not read activation key successfully!")
         return
 
     expiration = payload.get("exp")
     if expiration:
         EXPIRATION_TIME = datetime.fromtimestamp(expiration, tz=timezone.utc)
-
-    for username in payload.get("usernames", list()):
-        password = generate_random_password()
-        try:
-            add_user_record(username, password)
-            register_notification(
-                _manager_notification(
-                    f"New user added with Username: {username} Password: {password}"
-                )
-            )
-        except IntegrityError:
-            LOGGER.exception(f"User with username: {username} is already registered!")
 
     msg = (
         "Activation code read successfully,"

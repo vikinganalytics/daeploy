@@ -2,9 +2,10 @@ import re
 from typing import List, Dict, Union
 
 import semver
-
-from fastapi import Path, UploadFile
+from pydantic.types import SecretStr
 from pydantic import BaseModel, validator, HttpUrl
+from fastapi import Path, UploadFile
+
 from manager.constants import DAEPLOY_DEFAULT_INTERNAL_PORT
 
 
@@ -117,3 +118,7 @@ class NotificationRequest(BaseModel):
                 self.timer,
             )
         )
+
+
+class UserRequest(BaseModel):
+    password: SecretStr

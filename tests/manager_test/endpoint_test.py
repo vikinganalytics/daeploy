@@ -31,15 +31,6 @@ SERVICE_VERSION = "0.0.1"
 
 
 @pytest.fixture
-def database():
-    try:
-        initialize_db()
-        yield
-    finally:
-        remove_db()
-
-
-@pytest.fixture
 def python_file(tmp_path):
     filepath = tmp_path / PYTHON_FILE_NAME
     with open(filepath, "w") as file_handle:

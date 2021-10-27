@@ -6,6 +6,7 @@ from starlette.responses import RedirectResponse
 from starlette.middleware.wsgi import WSGIMiddleware
 
 from manager.routers import (
+    admin_api,
     service_api,
     dashboard_api,
     notification_api,
@@ -47,6 +48,11 @@ app.include_router(logging_api.ROUTER, prefix="/logs", tags=["Logging"])
 # Authentication subapi
 app.include_router(
     auth_api.ROUTER, prefix="/auth", tags=["Auth"], include_in_schema=False
+)
+
+# Admin subapi
+app.include_router(
+    admin_api.ROUTER, prefix="/admin", tags=["Admin"], include_in_schema=False
 )
 
 

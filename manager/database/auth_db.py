@@ -17,7 +17,6 @@ def add_user_record(username: str, password: str):
         username (str): Username of new user
         password (str): encrypted password of new user
     """
-
     with session_scope() as session:
         new_user = User(
             name=username, password=bcrypt.hashpw(password.encode(), bcrypt.gensalt())
@@ -46,15 +45,33 @@ def get_user_record(username: str) -> User:
         return record
 
 
-def clear_user_database():
-    """Clear all users to get a clean slate on startup.
-    This prevents old users and passwords from persisting
+def get_all_users() -> List[str]:
+    """Get a list of all registered users
+
+    Returns:
+        List[str]: List of usernames
+    """
+    with session_scope() as session:
+        records = session.query(User.name)
+        session.expunge_all()  # Detach record(s) from session
+        return [record[0] for record in records]
+
+
+def delete_user_record(username: str):
+    """Delete a user from the database
+
+    Args:
+        username (str): Username of of user to be deleted
+
+    Raises:
+        DatabaseNoMatchException: Raised if username cannot be found
     """
     with session_scope() as session:
         try:
-            session.query(User).delete()
-        except NoResultFound:
-            pass
+            record = session.query(User).filter_by(name=username).one()
+        except NoResultFound as exc:
+            raise DatabaseNoMatchException from exc
+        session.delete(record)
 
 
 def add_token_record(uuid: UUID):

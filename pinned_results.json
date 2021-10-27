@@ -1,6 +1,6 @@
 {
-    "tests/manager_test/license_test.py::test_with_dev_token_1": "INFO     manager.license:license.py:68 Activation code read successfully, validity time updated to: 2030-01-01 00:00:00+00:00\n",
-    "tests/manager_test/license_test.py::test_with_mumbojumbo_token_1": "INFO     manager.auth_api:auth_api.py:95 Token not valid: skjdnblaknsk\nWARNING  manager.license:license.py:45 Could not read activation key successfully!\n",
+    "tests/manager_test/license_test.py::test_with_dev_token_1": "INFO     manager.license:license.py:60 Activation code read successfully, validity time updated to: 2030-01-01 00:00:00+00:00\n",
+    "tests/manager_test/license_test.py::test_with_mumbojumbo_token_1": "INFO     manager.routers.auth_api:auth_api.py:106 Token not valid: skjdnblaknsk\nWARNING  manager.license:license.py:49 Could not read activation key successfully!\n",
     "tests/manager_test/proxy_test.py::test_default_config_middlewares_1": [
         {
             "forwardAuth": {

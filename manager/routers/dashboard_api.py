@@ -14,7 +14,12 @@ from manager.constants import get_external_proxy_url, get_manager_version
 LOGGER = logging.getLogger(__name__)
 DEFAULT_NUMBER_OF_LOGS = 100
 
-app = dash.Dash(__name__, requests_pathname_prefix="/dashboard/", update_title=None)
+app = dash.Dash(
+    __name__,
+    requests_pathname_prefix="/dashboard/",
+    update_title=None,
+    assets_folder="../assets",
+)
 app.title = "Daeploy"
 
 

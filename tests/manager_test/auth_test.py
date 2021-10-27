@@ -1,29 +1,9 @@
-import os
 import pytest
 from fastapi.testclient import TestClient
 
 from manager.app import app
-from manager.database.database import initialize_db, remove_db
 
 client = TestClient(app)
-
-
-@pytest.fixture
-def auth_enabled():
-    os.environ["DAEPLOY_AUTH_ENABLED"] = "true"
-    try:
-        yield
-    finally:
-        del os.environ["DAEPLOY_AUTH_ENABLED"]
-
-
-@pytest.fixture
-def database():
-    try:
-        initialize_db()
-        yield
-    finally:
-        remove_db()
 
 
 @pytest.fixture
