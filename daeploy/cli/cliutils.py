@@ -15,6 +15,7 @@ from requests.exceptions import ConnectionError as ReqConnectionError
 from requests.exceptions import HTTPError
 
 import daeploy.communication
+from daeploy.cli import config
 
 
 def filter_services(service_list, value, key):
@@ -91,11 +92,17 @@ def check_connection(func):
 
 
 def request(method):
-    req = partial(daeploy.communication.request, method, log_func=warnings.warn)
+    req = partial(
+        daeploy.communication.request,
+        method,
+        log_func=warnings.warn,
+    )
     return check_connection(req)
 
 
 def request_error_handling(func):
+    # This wrapper prevent exceptions because the server is offline or the IP
+    # is wrong and handles errors
     def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
@@ -103,6 +110,15 @@ def request_error_handling(func):
             raise FailedCLIRequest(exc)
 
     return wrapper
+
+
+@request_error_handling
+def cli_request(method, endpoint, *args, headers=None, **kwargs):
+    state = config.CliState()
+    headers = headers or get_request_auth_header(state.active_host_token())
+    return request(method)(
+        f"{state.active_host()}{endpoint}", headers=headers, *args, **kwargs
+    )
 
 
 class FailedCLIRequest(typer.Exit):
@@ -184,3 +200,8 @@ def save_image_tmp(image_name: str) -> Iterator[Path]:
         yield image_path
     finally:
         image_path.unlink()
+
+get = partial(cli_request, "GET")
+post = partial(cli_request, "POST")
+put = partial(cli_request, "PUT")
+delete = partial(cli_request, "DELETE")

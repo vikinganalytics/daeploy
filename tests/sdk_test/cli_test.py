@@ -19,7 +19,7 @@ from daeploy.cli.cliutils import (
     make_tarball,
     save_image_tmp,
 )
-from daeploy.cli.cli import app, _get_services_for_autocompletion
+from daeploy.cli.cli import app, _get_services
 import daeploy.cli.cli as cli
 import daeploy.cli.config as config
 from manager.runtime_connectors import create_container_name
@@ -626,12 +626,12 @@ def test_autocompletion_name():
         {"name": "myservice", "version": "3.1.0", "etc": "more_info", "main": False},
         {"name": "theirservice", "version": "2.1.0", "etc": "more_info", "main": True},
     ]
-    cli._get_services_for_autocompletion = MagicMock(return_value=services)
-    for name in cli._autocomplete_service_name("my"):
-        assert name == "myservice"
+    with patch("daeploy.cli.cli._get_services", return_value=services):
+        for name in cli._autocomplete_service_name("my"):
+            assert name == "myservice"
 
-    for name in cli._autocomplete_service_name("their"):
-        assert name == "theirservice"
+        for name in cli._autocomplete_service_name("their"):
+            assert name == "theirservice"
 
 
 def test_autocompletion_version():
@@ -640,25 +640,25 @@ def test_autocompletion_version():
         {"name": "myservice", "version": "3.1.0", "etc": "more_info", "main": False},
         {"name": "theirservice", "version": "2.1.0", "etc": "more_info", "main": True},
     ]
-    cli._get_services_for_autocompletion = MagicMock(return_value=services)
 
-    class Context:
-        def __init__(self, name):
-            self.params = {"name": name}
+    with patch("daeploy.cli.cli._get_services", return_value=services):
+        class Context:
+            def __init__(self, name):
+                self.params = {"name": name}
 
-    ctx = Context("myservice")
-    for name in cli._autocomplete_service_version(ctx, "1."):
-        assert name == "1.0.0"
+        ctx = Context("myservice")
+        for name in cli._autocomplete_service_version(ctx, "1."):
+            assert name == "1.0.0"
 
-    for name in cli._autocomplete_service_version(ctx, "3."):
-        assert name == "3.1.0"
+        for name in cli._autocomplete_service_version(ctx, "3."):
+            assert name == "3.1.0"
 
-    ctx = Context("theirservice")
-    for name in cli._autocomplete_service_version(ctx, "2."):
-        assert name == "2.1.0"
+        ctx = Context("theirservice")
+        for name in cli._autocomplete_service_version(ctx, "2."):
+            assert name == "2.1.0"
 
 
-def test_get_services_for_autocompletion(cli_auth_login, tar_file, clean_services):
+def test_get_services(cli_auth_login, tar_file, clean_services):
     result = runner.invoke(
         app,
         [
@@ -670,18 +670,18 @@ def test_get_services_for_autocompletion(cli_auth_login, tar_file, clean_service
     )
     assert result.exit_code == 0
 
-    services = _get_services_for_autocompletion()
+    services = _get_services()
     assert len(services) == 1
     assert services[0]["name"] == "test_service"
 
 
-def test_get_services_for_autocompletion_no_connection():
-    services = _get_services_for_autocompletion()
+def test_get_services_no_connection():
+    services = _get_services()
     assert services == []
 
 
 def test_logs_name_and_version_specified(cli_auth_login, clean_services):
-    runner.invoke(
+    deploy_result = runner.invoke(
         app,
         [
             "deploy",
@@ -691,6 +691,7 @@ def test_logs_name_and_version_specified(cli_auth_login, clean_services):
             "traefik/whoami:latest",
         ],
     )
+    assert deploy_result.exit_code == 0
     result_logs = runner.invoke(
         app,
         [
@@ -699,7 +700,6 @@ def test_logs_name_and_version_specified(cli_auth_login, clean_services):
             "1.0.0",
         ],
     )
-
     assert result_logs.exit_code == 0
     assert "Starting up on port 80" in result_logs.stdout
 
