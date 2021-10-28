@@ -34,6 +34,16 @@ class CliState:
         self._state["access_tokens"][host] = access_token
         self.save_state()
 
+    def logout(self, host: str):
+        if host not in self.list_hosts():
+            raise KeyError("Unregistered host")
+
+        if host == self.active_host():
+            self._state["active_host"] = None
+
+        del self._state["access_tokens"][host]
+        self.save_state()
+
     def activate_host(self, host: str):
         if host not in self.list_hosts():
             raise KeyError("Unregistered host")

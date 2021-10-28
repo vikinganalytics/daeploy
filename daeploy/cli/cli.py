@@ -90,10 +90,10 @@ def version_callback(value: bool):
                 "Manager version not available."
                 " Either the version is < 1.0.0 or it is unreachable."
             )
-            raise typer.Exit(1)
+            raise typer.Exit(0)
         typer.echo(f"Manager version: {manager_version.json()}")
 
-    raise typer.Exit()
+    raise typer.Exit(0)
 
 
 # pylint: disable=unused-argument
@@ -758,6 +758,26 @@ def test(
     sys.path.append(str(service_path))
     exit_code = pytest.main([str(service_path)])
     raise typer.Exit(exit_code)
+
+
+@app.command(help="Log out from a host")
+def logout(
+    host: Optional[str] = typer.Argument(
+        None,
+        help="Host to log out from and remove token. "
+        "Logs out from the active host unless specified",
+    )
+):
+    state = config.CliState()
+
+    logout_host = host or state.active_host()
+    try:
+        state.logout(logout_host)
+    except KeyError:
+        typer.echo(f"Not logged in to {logout_host}")
+        raise typer.Exit(1)
+
+    typer.echo(f"Logged out from {logout_host}")
 
 
 # Expose click object for automated documentation with sphinx-click

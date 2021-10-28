@@ -102,7 +102,7 @@ def clean_services():
 
 @pytest.fixture
 def cli_auth():
-    state = config.CliState("test_cli_config.json")
+    state = config.CliState()
     try:
         yield
     finally:
@@ -596,9 +596,9 @@ def test_login_token(dummy_manager, cli_auth_login):
 
 def test_invalid_access_token(dummy_manager, cli_auth_login):
     # Change the access token
-    configuration = config.read_cli_configuration()
-    configuration["access_tokens"][configuration["active_host"]] = ""
-    config.save_cli_configuration(configuration)
+    state = config.CliState()
+    state._state["access_tokens"][state.active_host()] = ""
+    state.save_state()
 
     # Test that it is invalid
     result = runner.invoke(app, ["ls"])
@@ -913,3 +913,34 @@ def test_change_password(cli_auth_login):
     result = runner.invoke(app, ["user", "update", "Rune", "-p", "Stone"])
     assert result.exit_code == 0
     assert "Changed password" in result.output
+
+
+def test_logout(cli_auth_login):
+    result = runner.invoke(app, ["logout"])
+    assert result.exit_code == 0
+    assert "Logged out" in result.output
+
+    result = runner.invoke(app, ["ls"])  # Check logged out
+    assert result.exit_code == 1
+
+
+def test_logout_other(cli_auth_login):
+    state = config.CliState()
+    state.add_host("test_host", "test_token")  # Login to host, not activated
+
+    result = runner.invoke(app, ["logout", "test_host"])
+    print(result.output)
+    assert result.exit_code == 0
+    assert "Logged out" in result.output
+
+    result = runner.invoke(app, ["ls"])  # Check still logged in
+    assert result.exit_code == 0
+
+
+def test_logout_not_found(cli_auth_login):
+    result = runner.invoke(app, ["logout", "nope"])
+    assert result.exit_code == 1
+    assert "Not logged in to" in result.output
+
+    result = runner.invoke(app, ["ls"])  # Check still logged in
+    assert result.exit_code == 0
