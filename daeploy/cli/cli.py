@@ -1,5 +1,4 @@
 import datetime
-import json
 import sys
 from pathlib import Path
 from typing import Optional
@@ -13,8 +12,8 @@ from cookiecutter.exceptions import FailedHookException, OutputDirExistsExceptio
 from cookiecutter.main import cookiecutter
 from tabulate import tabulate
 
-import daeploy.cli.cliutils as cliutils
-import daeploy.cli.config as config
+from daeploy.cli import cliutils
+from daeploy.cli import config
 from daeploy.cli.user import app as user_app
 import daeploy.communication
 
@@ -43,7 +42,7 @@ def _get_services():
     try:
         response = cliutils.get("/services/")
         return response.json()
-    except requests.exceptions.RequestException:
+    except requests.exceptions.MissingSchema:  # If we havent logged in
         return []
 
 
@@ -448,8 +447,7 @@ def kill(
     validation: Optional[bool] = typer.Option(
         False,
         "--yes",
-        help="Give confirmation to kill services."
-        " Skips prompt, so use with caution.",
+        help="Give confirmation to kill services." " Skips prompt, use with caution.",
     ),
     keep_image: Optional[bool] = typer.Option(
         False,
@@ -467,7 +465,7 @@ def kill(
         version (str, optional): Version of the service to kill. Defaults to None.
         all_ (bool, optional): Kill all services. Defaults to False.
         validation (bool, optional): Give confirmation to kill services at runtime.
-            Skips prompt, so use with caution. Defaults to False.
+            Skips prompt, use with caution. Defaults to False.
         keep_image (bool, optional): Keep the image(s) of the killed service(s).
 
     Raises:
@@ -494,7 +492,7 @@ def kill(
     )
     if not validation:
         typer.echo("Service(s) not killed")
-        raise typer.Exit()
+        raise typer.Exit(0)
 
     for service in cliutils.sort_main_service_last(services):
         cliutils.delete(
@@ -520,8 +518,7 @@ def assign(
     validation: Optional[bool] = typer.Option(
         False,
         "--yes",
-        help="Give confirmation to assign service."
-        " Skips prompt, so use with caution.",
+        help="Give confirmation to assign service." " Skips prompt, use with caution.",
     ),
 ):
     """Change main version of a service.
@@ -531,7 +528,7 @@ def assign(
         name (str): Name of the service to change to primary.
         version (str): Version of the service to change to primary.
         validation (bool, optional): Give confirmation to assign service.
-            Skips prompt, so use with caution.
+            Skips prompt, use with caution.
 
     Raises:
         Exit: If the user does not validate the assign.

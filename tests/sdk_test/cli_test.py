@@ -102,11 +102,11 @@ def clean_services():
 
 @pytest.fixture
 def cli_auth():
-    config.initialize_cli_configuration()
+    state = config.CliState("test_cli_config.json")
     try:
         yield
     finally:
-        config.CONFIG_FILE.unlink()
+        state.config_file.unlink()
 
 
 @pytest.fixture()
@@ -547,7 +547,7 @@ def test_login_failure(dummy_manager, cli_auth):
     result = runner.invoke(
         app, ["login"], input="http://localhost:5080\nadmin\nwrongpassword\n"
     )
-
+    # TODO: test output
     assert result.exit_code == 1
 
 
@@ -642,6 +642,7 @@ def test_autocompletion_version():
     ]
 
     with patch("daeploy.cli.cli._get_services", return_value=services):
+
         class Context:
             def __init__(self, name):
                 self.params = {"name": name}
@@ -879,3 +880,36 @@ def test_dae_test_command(tmp_path):
     result = runner.invoke(app, ["test", str(tmp_path / "test_project")])
     print(result.stdout)  # Keep this here!
     assert result.exit_code == 0
+
+
+def test_add_user(cli_auth_login):
+    result = runner.invoke(app, ["user", "add", "Rune", "-p", "Skejp"])
+    assert result.exit_code == 0
+    assert "Added user 'Rune'" in result.output
+
+
+def test_delete_user(cli_auth_login):
+    runner.invoke(app, ["user", "add", "Rune", "-p", "Skejp"])
+    # Not validated
+    result = runner.invoke(app, ["user", "rm", "Rune"], input="n")
+    assert result.exit_code == 0
+    assert "User 'Rune' not deleted" in result.output
+
+    # Validated
+    result = runner.invoke(app, ["user", "rm", "Rune"], input="y")
+    assert result.exit_code == 0
+    assert "User 'Rune' deleted" in result.output
+
+
+def test_list_users(cli_auth_login):
+    runner.invoke(app, ["user", "add", "Rune", "-p", "Skejp"])
+    result = runner.invoke(app, ["user", "ls"])
+    assert "admin" in result.output
+    assert "Rune" in result.output
+
+
+def test_change_password(cli_auth_login):
+    runner.invoke(app, ["user", "add", "Rune", "-p", "Skejp"])
+    result = runner.invoke(app, ["user", "update", "Rune", "-p", "Stone"])
+    assert result.exit_code == 0
+    assert "Changed password" in result.output

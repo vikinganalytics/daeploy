@@ -267,9 +267,8 @@ def new_service_from_tar_file(
                 detail="Only tar files are accepted at this endpoint!",
             )
 
-        tar = tarfile.open(tarfile_path)
-        tar.extractall(path=tmpdirname)
-        tar.close()
+        with tarfile.open(tarfile_path) as tar:
+            tar.extractall(path=tmpdirname)
         tarfile_path.unlink()
         new_service_from_tmpdir(tmpdirname, service_request)
 

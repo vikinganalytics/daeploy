@@ -103,6 +103,8 @@ def request(method):
 def request_error_handling(func):
     # This wrapper prevent exceptions because the server is offline or the IP
     # is wrong and handles errors
+    print("this happened")
+
     def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
@@ -200,6 +202,7 @@ def save_image_tmp(image_name: str) -> Iterator[Path]:
         yield image_path
     finally:
         image_path.unlink()
+
 
 get = partial(cli_request, "GET")
 post = partial(cli_request, "POST")
