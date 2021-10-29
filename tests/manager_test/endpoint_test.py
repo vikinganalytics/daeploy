@@ -13,7 +13,7 @@ from docker.errors import ImageNotFound
 from fastapi.testclient import TestClient
 from manager import logging_api, notification_api, service_api, proxy
 from manager.app import app
-from manager.constants import DAEPLOY_DOCKER_BUILD_IMAGE, get_manager_version
+from manager.constants import DAEPLOY_DEFAULT_S2I_BUILD_IMAGE, get_manager_version
 from manager.data_models.request_models import BaseService
 from manager.database.database import initialize_db, remove_db
 
@@ -206,11 +206,95 @@ def test_post_services_git_request(
     assert response.status_code == 202
     service_api.run_s2i.assert_called_with(
         url="https://github.com/sclorg/django-ex",
-        build_image=DAEPLOY_DOCKER_BUILD_IMAGE,
+        build_image=DAEPLOY_DEFAULT_S2I_BUILD_IMAGE,
         name=SERVICE_NAME,
         version=SERVICE_VERSION,
     )
     assert response.json() == "Accepted"
+
+
+@patch.object(service_api, "RTE_CONN")
+def test_post_services_git_request_changed_builder_image(
+    mocked_docker_connection, database, clean_proxy_config
+):
+    # Mock, Mock and Mock!
+    mocked_docker_connection.configure_mock(
+        **{
+            "image_exists_in_running_service.return_value": False,
+            "service_version_exists.return_value": False,
+            "create_service.return_value": False,
+        }
+    )
+    service_api.run_s2i = MagicMock(return_value=True)
+    req = {
+        "name": SERVICE_NAME,
+        "version": SERVICE_VERSION,
+        "port": 80,
+        "git_url": "https://github.com/sclorg/django-ex",
+        "s2i_build_image": "centos/python-38-centos7",
+    }
+
+    response = client.post("/services/~git", json=req)
+
+    assert response.status_code == 202
+    service_api.run_s2i.assert_called_with(
+        url="https://github.com/sclorg/django-ex",
+        build_image="centos/python-38-centos7",
+        name=SERVICE_NAME,
+        version=SERVICE_VERSION,
+    )
+    assert response.json() == "Accepted"
+
+
+@patch.object(service_api, "RTE_CONN")
+def test_post_services_git_request_run_args(
+    mocked_docker_connection, database, clean_proxy_config
+):
+    # Mock, Mock and Mock!
+    mocked_docker_connection.configure_mock(
+        **{
+            "image_exists_in_running_service.return_value": False,
+            "service_version_exists.return_value": False,
+            "create_service.return_value": False,
+        }
+    )
+    service_api.run_s2i = MagicMock(return_value="mockimage")
+    req = {
+        "name": SERVICE_NAME,
+        "version": SERVICE_VERSION,
+        "port": 80,
+        "git_url": "https://github.com/sclorg/django-ex",
+        "run_args": {"environment": {"TESTVAR": "TESTVAL"}},
+    }
+
+    response = client.post("/services/~git", json=req)
+
+    assert response.status_code == 202
+    mocked_docker_connection.create_service.assert_called_with(
+        image="mockimage",
+        name=SERVICE_NAME,
+        version=SERVICE_VERSION,
+        internal_port=80,
+        environment_variables=ANY,
+        run_args={"environment": {"TESTVAR": "TESTVAL"}},
+    )
+    assert response.json() == "Accepted"
+
+
+def test_post_services_git_request_run_args_nonexistent(database, clean_proxy_config):
+    service_api.run_s2i = MagicMock(return_value="mockimage")
+    req = {
+        "name": SERVICE_NAME,
+        "version": SERVICE_VERSION,
+        "port": 80,
+        "git_url": "https://github.com/sclorg/django-ex",
+        "run_args": {"notavalidargument": 123},
+    }
+
+    response = client.post("/services/~git", json=req)
+
+    assert response.status_code == 422
+    assert "Invalid argument" in response.json()["detail"]
 
 
 def test_upload_local_image_request(database, remove_image_tar):

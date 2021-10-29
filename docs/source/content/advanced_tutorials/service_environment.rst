@@ -24,6 +24,13 @@ available in standard python::
 
     envvar = os.environ.get("ENV_VAR")
 
+Setting Environment Variables at Deployment
+-------------------------------------------
+
+It is possible to set environment variables at deployment time using the CLI.
+It can be very convenient for deployment specific configuration. Check the 
+:ref:`cli-deploy-reference` section to read more.
+
 Daeploy Service Configuration
 -----------------------------
 

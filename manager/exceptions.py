@@ -1,19 +1,27 @@
-class S2iException(Exception):
+class DaeployException(Exception):
+    """Base exception class for Daeploy manager"""
+
+
+class S2iException(DaeployException):
     pass
 
 
-class TraefikError(Exception):
+class TraefikError(DaeployException):
     """Exception raised if problems in relation to Traefik proxy"""
 
 
-class DatabaseOutOfSyncException(Exception):
+class DatabaseOutOfSyncException(DaeployException):
     """Raised if database is out of sync with runtime environment"""
 
 
-class DatabaseConflictException(Exception):
+class DatabaseConflictException(DaeployException):
     """Raised on conflicts of multiple services with the same name
     and version in the database."""
 
 
-class DatabaseNoMatchException(Exception):
+class DatabaseNoMatchException(DaeployException):
     """Raised when there are no matches for a database query"""
+
+
+class DeploymentError(DaeployException):
+    """Raised when there is an exception with deployment"""
