@@ -5,7 +5,7 @@ import subprocess
 from datetime import datetime
 from typing import List, Optional
 from pathlib import Path
-from pydantic import ValidationError
+from pydantic import ValidationError, Json
 
 from cookiecutter.main import cookiecutter
 from fastapi import APIRouter, HTTPException, File, UploadFile, Form
@@ -16,10 +16,12 @@ from manager.exceptions import (
     DatabaseConflictException,
     DatabaseNoMatchException,
     DatabaseOutOfSyncException,
+    DeploymentError,
     S2iException,
 )
 from manager.runtime_connectors import create_image_name, RTE_CONN
 from manager.data_models.request_models import (
+    BaseNewS2IServiceRequest,
     BaseNewServiceRequest,
     ServiceImageRequest,
     ServiceGitRequest,
@@ -29,8 +31,8 @@ from manager.data_models.request_models import (
 )
 from manager.data_models.response_models import ServiceResponse, InspectResponse
 from manager.constants import (
+    DAEPLOY_DEFAULT_S2I_BUILD_IMAGE,
     DAEPLOY_SERVICE_AUTH_TOKEN_KEY,
-    DAEPLOY_DOCKER_BUILD_IMAGE,
     DAEPLOY_PICKLE_FILE_NAME,
     DAEPLOY_PREFIX,
     DAEPLOY_TAR_FILE_NAME,
@@ -75,61 +77,6 @@ def read_services():
     return db_services
 
 
-def check_service_exists(name: str, version: str):
-    """Check if a service exists and raise an HTTP exception if they do
-
-    Args:
-        name (str): Name of the service
-        version (str): Version of the service
-
-    Raises:
-        HTTPException: If service version exists in a running service
-        HTTPException: If the same image exists in a running service
-    """
-    if RTE_CONN.service_version_exists(service=BaseService(name=name, version=version)):
-        raise HTTPException(
-            status_code=409,
-            detail=f"Service with name: {name} and version: {version} already exists!",
-        )
-
-    if RTE_CONN.image_exists_in_running_service(name, version):
-        raise HTTPException(
-            status_code=409,
-            detail=f"Image with name: {name} and version: {version} already exists!",
-        )
-
-
-def new_service_configuration(
-    name: str, version: str, image: str, url: str, token: dict
-):
-    """Creates service configuration files for a new service
-
-    Args:
-        name (str): Name of the new service
-        version (str): Version of the new service
-        image (str): Image of the new service
-        url (str): URL of the new service
-        token (dict): Token of the new service
-    """
-
-    try:
-        service_db.add_new_service_record(
-            name=name,
-            version=version,
-            image=image,
-            url=url,
-            token_uuid=str(token["Id"]),
-        )
-    except DatabaseConflictException as exc:
-        # We catch this error to allow a user to get back to the database state
-        LOGGER.info(f"Service was not added to database because: {str(exc)}")
-    main_version, shadow_versions = service_db.get_main_and_shadow_versions(name)
-
-    # Configure proxy for service and mirroring
-    proxy.create_new_service_configuration(name=name, version=version, address=url)
-    proxy.create_mirror_configuration(name, main_version, shadow_versions)
-
-
 @ROUTER.post("/~git", status_code=202)
 def new_service_from_git_repo(service_request: ServiceGitRequest):
     """
@@ -139,92 +86,11 @@ def new_service_from_git_repo(service_request: ServiceGitRequest):
     # noqa: DAR101,DAR201,DAR401
 
     """
-
-    # Unpack
-    name = service_request.name
-    version = service_request.version
-    port = service_request.port
-
-    check_service_exists(name, version)
-
-    try:
-        # Since s2i does not overwrite existing images,
-        # remove the image if it exists.
-        RTE_CONN.remove_image_if_exists(name, version)
-
-        image = run_s2i(
-            url=service_request.git_url,
-            # TODO: We need to handle different build images.
-            build_image=DAEPLOY_DOCKER_BUILD_IMAGE,
-            name=name,
-            version=version,
-        )
-    except S2iException as exc:
-        raise HTTPException(
-            status_code=422,
-            detail=f"S2i failed with error: {exc}",
-        )
-
-    token = new_api_token()
-    # We have a built image, lets spin it up
-    url = RTE_CONN.create_service(
-        image=image,
-        name=name,
-        version=service_request.version,
-        internal_port=port,
-        environment_variables={
-            DAEPLOY_SERVICE_AUTH_TOKEN_KEY: token["Token"],
-        },
-    )
-
-    new_service_configuration(name, version, image, url, token)
+    check_service_exists(service_request.name, service_request.version)
+    image = build_service_image_s2i(service_request.git_url, service_request)
+    start_service_from_image(image, service_request)
 
     return "Accepted"
-
-
-def new_service_from_tmpdir(tmpdirname: str, service_request: BaseNewServiceRequest):
-    """Start a new service from a directory using s2i
-
-    Args:
-        tmpdirname (str): Path to the temporary directory
-        service_request (BaseNewServiceRequest): Request for the new service
-
-    Raises:
-        HTTPException: If s2i fails for some reason
-    """
-    name = service_request.name
-    version = service_request.version
-
-    check_service_exists(name, version)
-    try:
-        # Since s2i does not overwrite existing images,
-        # remove the image if it exists.
-        RTE_CONN.remove_image_if_exists(name, version)
-        image = run_s2i(
-            url=tmpdirname,
-            build_image=DAEPLOY_DOCKER_BUILD_IMAGE,
-            name=name,
-            version=version,
-        )
-    except S2iException as exc:
-        raise HTTPException(
-            status_code=422,
-            detail=f"S2i failed with error: {exc}",
-        )
-
-    token = new_api_token()
-    # We have a built image, lets start the service
-    url = RTE_CONN.create_service(
-        image=image,
-        name=name,
-        version=version,
-        internal_port=service_request.port,
-        environment_variables={
-            DAEPLOY_SERVICE_AUTH_TOKEN_KEY: token["Token"],
-        },
-    )
-
-    new_service_configuration(name, version, image, url, token)
 
 
 # pylint: disable=too-many-locals
@@ -233,6 +99,8 @@ def new_service_from_tar_file(
     name: str = Form(...),
     version: str = Form(...),
     port: int = Form(DAEPLOY_DEFAULT_INTERNAL_PORT),
+    run_args: Json = Form(None),  # JSON string parsed as dict
+    s2i_build_image: str = Form(DAEPLOY_DEFAULT_S2I_BUILD_IMAGE),
     file: UploadFile = File(...),
 ):
     """
@@ -247,12 +115,16 @@ def new_service_from_tar_file(
             name=name,
             version=version,
             port=port,
+            s2i_build_image=s2i_build_image,
+            run_args=run_args or {},
             file=file,
         )
     except ValidationError as exc:
         raise HTTPException(
             status_code=406, detail=f"Failed to validate input with error: {exc}"
         )
+
+    check_service_exists(service_request.name, service_request.version)
 
     with tempfile.TemporaryDirectory(prefix=f"{DAEPLOY_PREFIX}_") as tmpdirname:
         tarfile_path = Path(tmpdirname) / DAEPLOY_TAR_FILE_NAME
@@ -267,11 +139,13 @@ def new_service_from_tar_file(
                 detail="Only tar files are accepted at this endpoint!",
             )
 
-        tar = tarfile.open(tarfile_path)
-        tar.extractall(path=tmpdirname)
-        tar.close()
+        with tarfile.open(tarfile_path) as tar:
+            tar.extractall(path=tmpdirname)
         tarfile_path.unlink()
-        new_service_from_tmpdir(tmpdirname, service_request)
+
+        # Build and deploy the service image
+        image = build_service_image_s2i(tmpdirname, service_request)
+        start_service_from_image(image, service_request)
 
     return "Accepted"
 
@@ -311,6 +185,8 @@ def new_service_from_pickle(
             status_code=406, detail=f"Failed to validate input with error: {exc}"
         )
 
+    check_service_exists(service_request.name, service_request.version)
+
     with tempfile.TemporaryDirectory(prefix=f"{DAEPLOY_PREFIX}_") as tmpdirname:
         tmpdirname = Path(tmpdirname)
         pickle_path = tmpdirname / DAEPLOY_PICKLE_FILE_NAME
@@ -337,7 +213,9 @@ def new_service_from_pickle(
             for item in requirements:
                 file_handle.write(f"{item}\n")
 
-        new_service_from_tmpdir(project_dir, service_request)
+        # Build and deploy the service image
+        image = build_service_image_s2i(project_dir, service_request)
+        start_service_from_image(image, service_request)
 
     return "Accepted"
 
@@ -374,33 +252,8 @@ def new_service_from_image(service_request: ServiceImageRequest):
     # noqa: DAR101,DAR201,DAR401
 
     """
-    # Unpack
-    name = service_request.name
-    version = service_request.version
-    port = service_request.port
-
-    check_service_exists(name, version)
-
-    token = new_api_token()
-
-    try:
-        url = RTE_CONN.create_service(
-            image=service_request.image,
-            name=name,
-            version=service_request.version,
-            internal_port=port,
-            environment_variables={
-                DAEPLOY_SERVICE_AUTH_TOKEN_KEY: token["Token"],
-            },
-            run_args=service_request.run_args,
-        )
-    except ImageNotFound as exc:
-        raise HTTPException(
-            status_code=404,
-            detail=f"{str(exc)}",
-        )
-
-    new_service_configuration(name, version, service_request.image, url, token)
+    check_service_exists(service_request.name, service_request.version)
+    start_service_from_image(service_request.image, service_request)
 
     return "Accepted"
 
@@ -551,3 +404,111 @@ def run_s2i(url: str, build_image: str, name: str, version: str) -> str:
         raise S2iException(str(exc))
 
     return image_name
+
+
+def check_service_exists(name: str, version: str):
+    """Check if a service exists and raise an HTTP exception if they do
+
+    Args:
+        name (str): Name of the service
+        version (str): Version of the service
+
+    Raises:
+        HTTPException: If service version exists in a running service
+        HTTPException: If the same image exists in a running service
+    """
+    if RTE_CONN.service_version_exists(service=BaseService(name=name, version=version)):
+        raise HTTPException(
+            status_code=409,
+            detail=f"Service with name: {name} and version: {version} already exists!",
+        )
+
+    if RTE_CONN.image_exists_in_running_service(name, version):
+        raise HTTPException(
+            status_code=409,
+            detail=f"Image with name: {name} and version: {version} already exists!",
+        )
+
+
+def build_service_image_s2i(
+    source: str, service_request: BaseNewS2IServiceRequest
+) -> str:
+    name = service_request.name
+    version = service_request.version
+
+    try:
+        # Since s2i does not overwrite existing images,
+        # remove the image if it exists.
+        RTE_CONN.remove_image_if_exists(name, version)
+        image = run_s2i(
+            url=source,
+            build_image=service_request.s2i_build_image,
+            name=name,
+            version=version,
+        )
+    except S2iException as exc:
+        raise HTTPException(
+            status_code=422,
+            detail=f"S2i failed with error:\n{exc}",
+        )
+
+    return image
+
+
+def start_service_from_image(image: str, service_request: BaseNewServiceRequest):
+    token = new_api_token()
+    try:
+        url = RTE_CONN.create_service(
+            image=image,
+            name=service_request.name,
+            version=service_request.version,
+            internal_port=service_request.port,
+            environment_variables={
+                DAEPLOY_SERVICE_AUTH_TOKEN_KEY: token["Token"],
+            },
+            run_args=service_request.run_args,
+        )
+    except ImageNotFound as exc:
+        raise HTTPException(
+            status_code=404,
+            detail=f"{str(exc)}",
+        )
+    except DeploymentError as exc:
+        raise HTTPException(
+            status_code=422, detail=f"Invalid argument in run_args: {str(exc)}"
+        )
+
+    new_service_configuration(
+        service_request.name, service_request.version, image, url, token
+    )
+
+
+def new_service_configuration(
+    name: str, version: str, image: str, url: str, token: dict
+):
+    """Creates service configuration files for a new service
+
+    Args:
+        name (str): Name of the new service
+        version (str): Version of the new service
+        image (str): Image of the new service
+        url (str): URL of the new service
+        token (dict): Token of the new service
+    """
+
+    try:
+        service_db.add_new_service_record(
+            name=name,
+            version=version,
+            image=image,
+            url=url,
+            token_uuid=str(token["Id"]),
+        )
+    except DatabaseConflictException as exc:
+        # We catch this error to allow a user to get back to the database state
+        LOGGER.info(f"Service was not added to database because: {str(exc)}")
+    main_version, shadow_versions = service_db.get_main_and_shadow_versions(name)
+
+    # Configure proxy for service and mirroring
+    proxy.create_new_service_configuration(name=name, version=version, address=url)
+    proxy.create_mirror_configuration(name, main_version, shadow_versions)
