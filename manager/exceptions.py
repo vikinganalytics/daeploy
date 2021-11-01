@@ -1,23 +1,31 @@
-class S2iException(Exception):
-    """Raised if there has been an error with source to image"""
+class DaeployException(Exception):
+    """Base exception class for Daeploy manager"""
 
 
-class AuthError(Exception):
+class AuthError(DaeployException):
     """Exception raised on authorization and authentication errors"""
 
 
-class TraefikError(Exception):
+class S2iException(DaeployException):
+    """Raised on errors with s2i"""
+
+
+class TraefikError(DaeployException):
     """Exception raised if problems in relation to Traefik proxy"""
 
 
-class DatabaseOutOfSyncException(Exception):
+class DatabaseOutOfSyncException(DaeployException):
     """Raised if database is out of sync with runtime environment"""
 
 
-class DatabaseConflictException(Exception):
+class DatabaseConflictException(DaeployException):
     """Raised on conflicts of multiple services with the same name
     and version in the database."""
 
 
-class DatabaseNoMatchException(Exception):
+class DatabaseNoMatchException(DaeployException):
     """Raised when there are no matches for a database query"""
+
+
+class DeploymentError(DaeployException):
+    """Raised when there is an exception with deployment"""

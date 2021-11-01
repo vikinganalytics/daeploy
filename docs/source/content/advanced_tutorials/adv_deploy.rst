@@ -99,8 +99,24 @@ MAIN    NAME         VERSION    STATUS    RUNNING
 ------  -----------  ---------  --------  -----------------------------------
 *       my_service   1.0.0      running   Running (since 2021-09-06 15:53:55)
 
-Advanced Deployment of Docker Images
-------------------------------------
+Environment Variables
+---------------------
+
+.. _cli-deploy-envvar-reference:
+
+It is possible to set environment variables at deployment time using the CLI
+``--environment/-e`` option. The variables are given to the CLI in the format
+``VARIABLE=VALUE`` or simply ``VARIABLE`` to copy that variable from your
+development environment (if it exists). Multi-word variable values should be
+enclosed by quotation marks.
+
+.. note:: Setting environment variables at run time will overwrite any variables
+    defined in the `.s2i/environment` file.
+
+>>> daeploy deploy example_service 1.0.0 -e VAR=VAL -e LONGVAR="variable with spaces" ./service_path # doctest: +SKIP
+
+Container Run Arguments
+-----------------------
 
 Extra ``key: value`` arguments (beyond port number and environment variables) needed for the docker image
 to run properly can be specified when deploying the image via the ``/~image`` POST HTTP endpoint. These extra

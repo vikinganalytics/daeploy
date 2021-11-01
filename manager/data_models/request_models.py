@@ -6,7 +6,10 @@ from pydantic.types import SecretStr
 from pydantic import BaseModel, validator, HttpUrl
 from fastapi import Path, UploadFile
 
-from manager.constants import DAEPLOY_DEFAULT_INTERNAL_PORT
+from manager.constants import (
+    DAEPLOY_DEFAULT_INTERNAL_PORT,
+    DAEPLOY_DEFAULT_S2I_BUILD_IMAGE,
+)
 
 
 class BaseService(BaseModel):
@@ -36,11 +39,15 @@ class BaseService(BaseModel):
 
 class BaseNewServiceRequest(BaseService):
     port: int = Path(default=DAEPLOY_DEFAULT_INTERNAL_PORT, gt=0)
+    run_args: Dict = {}
+
+
+class BaseNewS2IServiceRequest(BaseNewServiceRequest):
+    s2i_build_image: str = DAEPLOY_DEFAULT_S2I_BUILD_IMAGE
 
 
 class ServiceImageRequest(BaseNewServiceRequest):
     image: str
-    run_args: Dict = {}
 
     class Config:
         schema_extra = {
@@ -54,7 +61,7 @@ class ServiceImageRequest(BaseNewServiceRequest):
         }
 
 
-class ServiceGitRequest(BaseNewServiceRequest):
+class ServiceGitRequest(BaseNewS2IServiceRequest):
     git_url: HttpUrl
 
     class Config:
@@ -64,11 +71,12 @@ class ServiceGitRequest(BaseNewServiceRequest):
                 "version": "0.0.1",
                 "port": 8000,
                 "git_url": "https://github.com/sclorg/django-ex",
+                "run_args": {},
             }
         }
 
 
-class ServiceTarRequest(BaseNewServiceRequest):
+class ServiceTarRequest(BaseNewS2IServiceRequest):
     file: UploadFile
 
     class Config:
@@ -78,6 +86,7 @@ class ServiceTarRequest(BaseNewServiceRequest):
                 "version": "0.0.1",
                 "port": 8000,
                 "file": "mytar.gz.tar",
+                "run_args": {},
             }
         }
 

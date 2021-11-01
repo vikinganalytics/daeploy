@@ -19,7 +19,7 @@ from daeploy.cli.cliutils import (
     make_tarball,
     save_image_tmp,
 )
-from daeploy.cli.cli import app, _get_services
+from daeploy.cli.cli import app, _get_services, parse_var, parse_vars
 import daeploy.cli.cli as cli
 import daeploy.cli.config as config
 from manager.runtime_connectors import create_container_name
@@ -179,6 +179,28 @@ def test_deploy_from_image_source(dummy_manager, cli_auth_login, clean_services)
     assert "Service deployed successfully" in result.stdout
 
 
+def test_deploy_from_image_source(dummy_manager, cli_auth_login, clean_services):
+    # Start a container
+
+    # Successful
+    result = runner.invoke(
+        app,
+        [
+            "deploy",
+            "--image",
+            "test_service",
+            "0.1.2",
+            "traefik/whoami:latest",
+            "-e",
+            "TESTVAR1=TESTVAL1",
+            "-e",
+            "TESTVAR2=TESTVAL2",
+        ],
+    )
+    assert result.exit_code == 0
+    assert "Service deployed successfully" in result.stdout
+
+
 def test_deploy_from_tar_source(
     dummy_manager, cli_auth_login, tar_file, clean_services
 ):
@@ -196,6 +218,44 @@ def test_deploy_from_tar_source(
     assert Path(tar_file).exists()
     assert result.exit_code == 0
     assert "Service deployed successfully" in result.stdout
+
+
+def test_deploy_from_tar_source_build_image(
+    dummy_manager, cli_auth_login, tar_file, clean_services
+):
+    # Start a container
+
+    # Successful
+    result = runner.invoke(
+        app,
+        [
+            "deploy",
+            "test_service",
+            "0.2.0",
+            tar_file,
+            "--build-image",
+            "centos/python-38-centos7",
+        ],
+    )
+    assert Path(tar_file).exists()
+    assert result.exit_code == 0
+    assert "Service deployed successfully" in result.stdout
+
+    # nonexisting build image
+    result = runner.invoke(
+        app,
+        [
+            "deploy",
+            "test_service",
+            "0.1.0",
+            tar_file,
+            "--build-image",
+            "builderimagethatdoesnotexist",
+        ],
+    )
+    assert Path(tar_file).exists()
+    assert result.exit_code == 1
+    assert "ERROR" in result.stdout
 
 
 def test_deploy_from_tar_wrong_path(dummy_manager):
@@ -378,7 +438,6 @@ def test_kill_keep_image(dummy_manager, cli_auth_login, clean_services):
     )
 
     result = runner.invoke(app, ["kill", "-i", "test_service", "1.2.3", "--yes"])
-    print(result.output)
     assert result.exit_code == 0
 
     client = docker.from_env()
@@ -944,3 +1003,15 @@ def test_logout_not_found(cli_auth_login):
 
     result = runner.invoke(app, ["ls"])  # Check still logged in
     assert result.exit_code == 0
+def test_parse_var():
+    assert parse_var("VAR=VAL") == ("VAR", "VAL")
+    assert parse_var("VAR") == ("VAR", "")
+    os.environ["VAR"] = "VAL_"
+    assert parse_var("VAR") == ("VAR", "VAL_")
+    assert parse_var('VAR="multi val"') == ("VAR", '"multi val"')
+    assert parse_var("VAR=VAL=VALCONT") == ("VAR", "VAL=VALCONT")
+
+
+def test_parse_vars():
+    assert parse_vars([]) == {}
+    assert parse_vars(["VAR=VAL", "ENVVAR"]) == {"VAR": "VAL", "ENVVAR": ""}

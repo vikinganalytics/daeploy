@@ -1,7 +1,8 @@
 import logging
 import datetime
 from uuid import uuid4, UUID
-from typing import Optional, TypedDict, List
+from typing import Optional, List
+from typing_extensions import TypedDict  # For compatability with python < 3.8
 
 import jwt
 import bcrypt
