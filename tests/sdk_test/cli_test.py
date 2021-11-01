@@ -1003,6 +1003,8 @@ def test_logout_not_found(cli_auth_login):
 
     result = runner.invoke(app, ["ls"])  # Check still logged in
     assert result.exit_code == 0
+
+
 def test_parse_var():
     assert parse_var("VAR=VAL") == ("VAR", "VAL")
     assert parse_var("VAR") == ("VAR", "")
