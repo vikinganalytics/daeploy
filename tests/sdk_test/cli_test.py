@@ -23,7 +23,7 @@ from daeploy.cli.cli import app, _get_services_for_autocompletion, parse_var, pa
 import daeploy.cli.cli as cli
 import daeploy.cli.config as config
 from manager.runtime_connectors import create_container_name
-from manager.auth_api import new_api_token, verify_request
+from manager.routers.auth_api import new_api_token, verify_request
 from manager.database.database import remove_db
 
 from manager.constants import (

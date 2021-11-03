@@ -7,7 +7,10 @@ from pathlib import Path
 
 import toml
 
-from manager.notification_api import _manager_notification, register_notification
+from manager.routers.notification_api import (
+    _manager_notification,
+    register_notification,
+)
 from manager.constants import (
     DAEPLOY_PROXY_DASHBOARD_IDENTIFIER,
     DAEPLOY_MANAGER_PROXY_CONFIG_FILE,

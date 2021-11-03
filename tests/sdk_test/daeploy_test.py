@@ -22,6 +22,7 @@ from daeploy.utilities import get_db_table_limit
 
 @pytest.fixture
 def database():
+    """Fixture for the service database, unlike the database fixture in conftest"""
     try:
         db.initialize_db()
         yield

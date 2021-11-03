@@ -46,9 +46,10 @@ from manager.checks import (
 from manager import proxy
 from manager.database import service_db
 from manager.database.database import session_scope
-from manager.auth_api import new_api_token, delete_token
+from manager.routers.auth_api import new_api_token, delete_token
 
 THIS_DIR = Path(__file__).parent
+PICKLE_TEMPLATE_DIR = THIS_DIR.parent / "templates" / "daeploy_pickle_template/"
 
 LOGGER = logging.getLogger(__name__)
 
@@ -195,7 +196,7 @@ def new_service_from_pickle(
         # Generate the service code
         project_name = f"{name}_{version.replace('.', '_')}"
         cookiecutter(
-            str(THIS_DIR / "templates" / "daeploy_pickle_template/"),
+            str(PICKLE_TEMPLATE_DIR),
             no_input=True,
             extra_context={"project_name": project_name},
             output_dir=str(tmpdirname),

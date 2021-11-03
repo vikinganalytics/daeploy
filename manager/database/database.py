@@ -9,6 +9,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey
 
 from manager.constants import DAEPLOY_DATA_DIR, get_admin_password
+from manager.exceptions import DatabaseNoMatchException
 
 MANAGER_DB_PATH = DAEPLOY_DATA_DIR / "daeploy_manager_db.db"
 
@@ -115,9 +116,13 @@ def initialize_db():
     set_jwt_token_secret(b64encode(os.urandom(64)).decode())
 
     # Add our base set of users
-    from manager.database.auth_db import add_user_record, clear_user_database
+    from manager.database.auth_db import add_user_record, delete_user_record
 
-    clear_user_database()
+    # Ensure admin user always has latest password
+    try:
+        delete_user_record("admin")
+    except DatabaseNoMatchException:
+        pass
     add_user_record(username="admin", password=get_admin_password())
 
 

@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. This project adheres to [Semantic Versioning](https://semver.org/).
 
+## Dev
+
+### New Features
+
+- New admin only API functionality to manage users. Users no longer tied to the license
+
 ## 1.1.1
 
 ### New Features

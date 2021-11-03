@@ -2,8 +2,12 @@ class DaeployException(Exception):
     """Base exception class for Daeploy manager"""
 
 
+class AuthError(DaeployException):
+    """Exception raised on authorization and authentication errors"""
+
+
 class S2iException(DaeployException):
-    pass
+    """Raised on errors with s2i"""
 
 
 class TraefikError(DaeployException):

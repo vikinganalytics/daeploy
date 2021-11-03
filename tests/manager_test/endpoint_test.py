@@ -11,7 +11,8 @@ import pytest
 from async_asgi_testclient import TestClient as AsyncTestClient
 from docker.errors import ImageNotFound
 from fastapi.testclient import TestClient
-from manager import logging_api, notification_api, service_api, proxy
+from manager import proxy
+from manager.routers import logging_api, notification_api, service_api
 from manager.app import app
 from manager.constants import DAEPLOY_DEFAULT_S2I_BUILD_IMAGE, get_manager_version
 from manager.data_models.request_models import BaseService
@@ -27,15 +28,6 @@ PYTHON_FILE_NAME = "main.py"
 PICKLE_FILE_NAME = "model.pkl"
 SERVICE_NAME = "myservice"
 SERVICE_VERSION = "0.0.1"
-
-
-@pytest.fixture
-def database():
-    try:
-        initialize_db()
-        yield
-    finally:
-        remove_db()
 
 
 @pytest.fixture

@@ -1,6 +1,6 @@
 import pytest
 
-from manager.service_api import run_s2i
+from manager.routers.service_api import run_s2i
 from manager.constants import DAEPLOY_DEFAULT_S2I_BUILD_IMAGE
 from manager.runtime_connectors import LocalDockerConnector
 from manager.exceptions import S2iException

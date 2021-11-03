@@ -1,9 +1,8 @@
-import string
-import random
 import logging
 import datetime
 from uuid import uuid4, UUID
-from typing import Optional, Union, List
+from typing import Optional, List
+from typing_extensions import TypedDict  # For compatability with python < 3.8
 
 import jwt
 import bcrypt
@@ -16,10 +15,9 @@ from manager.data_models.response_models import TokenResponse
 from manager.constants import (
     auth_enabled,
     get_external_proxy_url,
-    DAEPLOY_REQUIRED_PASSWORD_LENGTH,
 )
 from manager.database import auth_db, config_db
-from manager.exceptions import DatabaseNoMatchException
+from manager.exceptions import AuthError, DatabaseNoMatchException
 
 ROUTER = APIRouter()
 
@@ -28,22 +26,23 @@ LOGGER = logging.getLogger(__name__)
 TEMPLATES = Jinja2Templates(directory="manager/templates")
 
 
-def generate_random_password() -> str:
-    """Generate a random password consisting of alphanumerical characters
-
-    Returns:
-        str: Generated password
-    """
-    letters_and_digits = string.ascii_letters + string.digits
-    return "".join(random.sample(letters_and_digits, DAEPLOY_REQUIRED_PASSWORD_LENGTH))
+class TokenPayloadInput(TypedDict):
+    id: str  # User ID
 
 
-def create_token(dikt: dict, secret: str, expires_in: datetime.timedelta = None) -> str:
+class TokenPayload(TokenPayloadInput):
+    iat: int  # Token creating timestamp
+    exp: int  # Token expiration timestamp
+
+
+def create_token(
+    payload: TokenPayloadInput, secret: str, expires_in: datetime.timedelta = None
+) -> str:
     """Creates a JSON Web Token with content 'dikt' using 'secret'. The
     token can optionally be configured to expire in a certain time using 'expire_in'.
 
     Args:
-        dikt (dict): Additional payload to be added to token.
+        payload (TokenPayloadInput): Additional payload to be added to token.
         secret (str): Secret used for signing the token.
         expires_in (datetime.timedelta, optional): Time in which token expires.
             Defaults to None.
@@ -60,22 +59,25 @@ def create_token(dikt: dict, secret: str, expires_in: datetime.timedelta = None)
     if expires_in:
         mandatory_payload["exp"] = now + expires_in
 
-    payload = {**dikt, **mandatory_payload}
+    payload = {**payload, **mandatory_payload}
 
     LOGGER.info(f"Creating JWT with payload: {payload}")
 
     return jwt.encode(payload, secret, algorithm="HS256")
 
 
-def verify_token(auth_token: str, secret: str) -> Union[dict, bool]:
+def verify_token(auth_token: str, secret: str) -> TokenPayload:
     """Verify a token 'auth_token' using signing key 'secret'
 
     Args:
         auth_token (str): Token to be verified
         secret (str): Secret used for signing the token
 
+    Raises:
+        AuthError: If token cannot be verified
+
     Returns:
-        Union[dict, bool]: Payload of token (dict) if successful verification
+        TokenPayload: Payload of token (dict) if successful verification
             otherwise bool.
     """
     LOGGER.debug(f"Veryfing token: {auth_token}")
@@ -88,16 +90,24 @@ def verify_token(auth_token: str, secret: str) -> Union[dict, bool]:
     except jwt.ExpiredSignatureError:
         # Token has expired, ask user to log in again
         LOGGER.info(f"Token has expired: {auth_token}")
-        return False
+        raise AuthError("Expired token")
 
     except jwt.InvalidTokenError:
         # Invalid token! User must login!
         LOGGER.info(f"Token not valid: {auth_token}")
-        return False
+        raise AuthError("Invalid token")
+
+
+def select_cookie_or_header(cookie: str, header: str) -> str:
+    if cookie:
+        return cookie
+    if header:
+        return header.replace("Bearer ", "")
+    return ""
 
 
 # Login handling
-@ROUTER.get("/login", response_class=HTMLResponse, include_in_schema=False)
+@ROUTER.get("/login", response_class=HTMLResponse)
 def show_login_page(request: Request, destination: Optional[str] = "/"):
     """Show login page
 
@@ -111,7 +121,7 @@ def show_login_page(request: Request, destination: Optional[str] = "/"):
     )
 
 
-@ROUTER.post("/login", include_in_schema=False)
+@ROUTER.post("/login")
 def login_user(
     username: str = Form(...),
     password: SecretStr = Form(...),
@@ -153,7 +163,7 @@ def login_user(
     return response
 
 
-@ROUTER.get("/logout", include_in_schema=False)
+@ROUTER.get("/logout")
 def logout_user():
     """Log out the user (only works with cookies)
 
@@ -167,7 +177,7 @@ def logout_user():
 
 
 # Verification endpoint, to be exposed to Traefik
-@ROUTER.get("/verify", include_in_schema=False)
+@ROUTER.get("/verify")
 def verify_request(
     daeploy: Optional[str] = Cookie(None),
     authorization: Optional[str] = Header(None),
@@ -178,23 +188,21 @@ def verify_request(
     \f
     # noqa: DAR101,DAR201,DAR401
     """
+    # Allow all requests if auth is not enabled
     if not auth_enabled():
-        # Allow all requests if auth is not enabled
         return "OK"
 
-    # Check if we can find token in either cookie or header, prefer the cookie
-    is_cookie = True  # True if token is fetched from the cookie
-    token = daeploy
-
     # If token (from cookie) is empty and we have an Authorization token in the header
-    if not token and authorization and "Bearer" in authorization:
-        is_cookie = False  # Token no longer fetched from the cookie
-        token = authorization.replace("Bearer ", "")
+    is_cookie = True
+    if not daeploy and authorization and "Bearer" in authorization:
+        is_cookie = False
+
+    token = select_cookie_or_header(daeploy, authorization)
 
     # Try to verify the token
-    payload = verify_token(token, config_db.get_jwt_token_secret())
-
-    if not payload:
+    try:
+        payload = verify_token(token, config_db.get_jwt_token_secret())
+    except AuthError:
         # If we fetched token from a cookie, assuming the user is sitting at a
         # browser, lets redirect the user to the login page
         if is_cookie:
@@ -220,7 +228,7 @@ def verify_request(
 
 
 # API token handling #
-@ROUTER.get("/token", include_in_schema=False)
+@ROUTER.get("/token")
 def list_api_tokens() -> List[UUID]:
     """List existing token uuids (not the tokens itself)
 
@@ -230,7 +238,7 @@ def list_api_tokens() -> List[UUID]:
     return [record.uuid for record in auth_db.get_all_token_records()]
 
 
-@ROUTER.post("/token", include_in_schema=False, response_model=TokenResponse)
+@ROUTER.post("/token", response_model=TokenResponse)
 def new_api_token(expire_in_days: Optional[int] = None) -> dict:
     """ ""Generates new long-lived or semi-long-lived API token""
 
@@ -256,7 +264,7 @@ def new_api_token(expire_in_days: Optional[int] = None) -> dict:
     return {"Token": token, "Id": uuid}
 
 
-@ROUTER.delete("/token", include_in_schema=False)
+@ROUTER.delete("/token")
 def delete_token(uuid: UUID):
     """Deletes long-lived API token with id 'uuid'
 
