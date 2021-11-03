@@ -452,7 +452,7 @@ def build_service_image_s2i(
     except S2iException as exc:
         raise HTTPException(
             status_code=422,
-            detail=f"S2i failed with error:\n{exc}\nCheck manager logs for more details",
+            detail=f"S2i failed with error:\n{exc}\nCheck manager logs for details",
         )
 
     return image
