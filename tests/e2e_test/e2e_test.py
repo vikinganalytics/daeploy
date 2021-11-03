@@ -58,11 +58,11 @@ def dummy_manager():
 
 @pytest.fixture(scope="module")
 def cli_auth():
-    config.initialize_cli_configuration()
+    state = config.CliState()
     try:
         yield
     finally:
-        config.CONFIG_FILE.unlink()
+        state.config_file.unlink()
 
 
 @pytest.fixture(scope="module")
