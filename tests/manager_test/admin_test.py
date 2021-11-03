@@ -58,7 +58,13 @@ def test_add_user_conflict(test_client_logged_in: TestClient):
 
 
 def test_add_user_invalid_token(test_client: TestClient, auth_enabled, database):
-    res = add_user(test_client, USERNAME, PASSWORD)
+    res = add_user(test_client, USERNAME, PASSWORD)  # Not logged in
+    assert res.status_code == 401
+    assert res.json()["detail"] == "Invalid token"
+
+    res = add_user(  # Invalid token
+        test_client, USERNAME, PASSWORD, {"Authorization": "Bearer bogustoken"}
+    )
     assert res.status_code == 401
     assert res.json()["detail"] == "Invalid token"
 
@@ -85,7 +91,13 @@ def test_list_users(test_client_logged_in: TestClient):
 
 
 def test_list_users_invalid_token(test_client: TestClient, auth_enabled, database):
-    res = list_users(test_client)
+    res = list_users(test_client)  # Not loged in
+    assert res.status_code == status.HTTP_401_UNAUTHORIZED
+    assert res.json()["detail"] == "Invalid token"
+
+    res = list_users(  # Invalid token
+        test_client, {"Authorization": "Bearer bogustoken"}
+    )
     assert res.status_code == status.HTTP_401_UNAUTHORIZED
     assert res.json()["detail"] == "Invalid token"
 
@@ -118,7 +130,13 @@ def test_delete_admin(test_client_logged_in: TestClient):
 
 
 def test_delete_user_invalid_token(test_client, auth_enabled, database):
-    res = delete_user(test_client, USERNAME)
+    res = delete_user(test_client, USERNAME)  # Not logged in
+    assert res.status_code == status.HTTP_401_UNAUTHORIZED
+    assert res.json()["detail"] == "Invalid token"
+
+    res = delete_user(  # Invalid token
+        test_client, USERNAME, {"Authorization": "Bearer bogustoken"}
+    )
     assert res.status_code == status.HTTP_401_UNAUTHORIZED
     assert res.json()["detail"] == "Invalid token"
 
@@ -151,7 +169,13 @@ def test_update_password_admin(test_client_logged_in: TestClient):
 
 
 def test_update_password_invalid_token(test_client, auth_enabled, database):
-    res = update_password(test_client, USERNAME, PASSWORD)
+    res = update_password(test_client, USERNAME, PASSWORD)  # Not logged in
+    assert res.status_code == status.HTTP_401_UNAUTHORIZED
+    assert res.json()["detail"] == "Invalid token"
+
+    res = update_password(  # Invalid token
+        test_client, USERNAME, PASSWORD, {"Authorization": "Bearer bogustoken"}
+    )
     assert res.status_code == status.HTTP_401_UNAUTHORIZED
     assert res.json()["detail"] == "Invalid token"
 
