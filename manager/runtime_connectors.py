@@ -271,13 +271,13 @@ class LocalDockerConnector(ConnectorBase):
 
         # Labels
         run_kwargs["labels"] = {
-            **run_kwargs.get("labels", dict()),
+            **run_kwargs.get("labels", {}),
             **{DAEPLOY_CONTAINER_TYPE_KEY: DAEPLOY_CONTAINER_TYPE_SERVICE},
         }
 
         # Env variables
         run_kwargs["environment"] = {
-            **run_kwargs.get("environment", dict()),
+            **run_kwargs.get("environment", {}),
             **{
                 **environment_variables,
                 **standard_environment_variables,
@@ -285,7 +285,7 @@ class LocalDockerConnector(ConnectorBase):
         }
 
         # Ports
-        run_kwargs["ports"] = run_kwargs.get("ports", dict())
+        run_kwargs["ports"] = run_kwargs.get("ports", {})
 
         while True:
             try:

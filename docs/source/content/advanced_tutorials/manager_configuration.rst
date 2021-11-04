@@ -40,6 +40,16 @@ The Manager is highly configurable using environment variables.
 | DAEPLOY_ADMIN_PASSWORD                     | admin                 | Password for the admin user. Defualt to admin.              |
 +--------------------------------------------+-----------------------+-------------------------------------------------------------+
 
+User Management
+---------------
+
+The manager always has an admin user with a password that is set with the `DAEPLOY_ADMIN_PASSWORD` environment variable.
+To configure other users, it is easiest to use the CLI ``daeploy user`` commands. This way you can add, list, remove and
+change passwords for non-admin users.
+
+.. note:: The only difference between the admin and other users so far, is that the admin can create new users. A more
+    sophisticated privileges system is planned for a future release.
+
 Secure Manager Connection
 -------------------------
 
