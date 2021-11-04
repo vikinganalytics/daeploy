@@ -2,12 +2,13 @@
 
 All notable changes to this project will be documented in this file. This project adheres to [Semantic Versioning](https://semver.org/).
 
-## Dev
+## 1.2.0
 
 ### New Features
 
 - New admin only API functionality to manage users. Users no longer tied to the license
 - CLI commands for user management
+- Improved logging for s2i errors
 
 ## 1.1.1
 
