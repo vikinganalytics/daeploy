@@ -19,7 +19,7 @@ from daeploy.cli.cliutils import (
     make_tarball,
     save_image_tmp,
 )
-from daeploy.cli.cli import app, _get_services_for_autocompletion, parse_var, parse_vars
+from daeploy.cli.cli import app, _get_services, parse_var, parse_vars
 import daeploy.cli.cli as cli
 import daeploy.cli.config as config
 from manager.runtime_connectors import create_container_name
@@ -102,11 +102,11 @@ def clean_services():
 
 @pytest.fixture
 def cli_auth():
-    config.initialize_cli_configuration()
+    state = config.CliState()
     try:
         yield
     finally:
-        config.CONFIG_FILE.unlink()
+        state.config_file.unlink()
 
 
 @pytest.fixture()
@@ -606,7 +606,7 @@ def test_login_failure(dummy_manager, cli_auth):
     result = runner.invoke(
         app, ["login"], input="http://localhost:5080\nadmin\nwrongpassword\n"
     )
-
+    # TODO: test output
     assert result.exit_code == 1
 
 
@@ -655,9 +655,9 @@ def test_login_token(dummy_manager, cli_auth_login):
 
 def test_invalid_access_token(dummy_manager, cli_auth_login):
     # Change the access token
-    configuration = config.read_cli_configuration()
-    configuration["access_tokens"][configuration["active_host"]] = ""
-    config.save_cli_configuration(configuration)
+    state = config.CliState()
+    state._state["access_tokens"][state.active_host()] = ""
+    state.save_state()
 
     # Test that it is invalid
     result = runner.invoke(app, ["ls"])
@@ -685,12 +685,12 @@ def test_autocompletion_name():
         {"name": "myservice", "version": "3.1.0", "etc": "more_info", "main": False},
         {"name": "theirservice", "version": "2.1.0", "etc": "more_info", "main": True},
     ]
-    cli._get_services_for_autocompletion = MagicMock(return_value=services)
-    for name in cli._autocomplete_service_name("my"):
-        assert name == "myservice"
+    with patch("daeploy.cli.cli._get_services", return_value=services):
+        for name in cli._autocomplete_service_name("my"):
+            assert name == "myservice"
 
-    for name in cli._autocomplete_service_name("their"):
-        assert name == "theirservice"
+        for name in cli._autocomplete_service_name("their"):
+            assert name == "theirservice"
 
 
 def test_autocompletion_version():
@@ -699,25 +699,26 @@ def test_autocompletion_version():
         {"name": "myservice", "version": "3.1.0", "etc": "more_info", "main": False},
         {"name": "theirservice", "version": "2.1.0", "etc": "more_info", "main": True},
     ]
-    cli._get_services_for_autocompletion = MagicMock(return_value=services)
 
-    class Context:
-        def __init__(self, name):
-            self.params = {"name": name}
+    with patch("daeploy.cli.cli._get_services", return_value=services):
 
-    ctx = Context("myservice")
-    for name in cli._autocomplete_service_version(ctx, "1."):
-        assert name == "1.0.0"
+        class Context:
+            def __init__(self, name):
+                self.params = {"name": name}
 
-    for name in cli._autocomplete_service_version(ctx, "3."):
-        assert name == "3.1.0"
+        ctx = Context("myservice")
+        for name in cli._autocomplete_service_version(ctx, "1."):
+            assert name == "1.0.0"
 
-    ctx = Context("theirservice")
-    for name in cli._autocomplete_service_version(ctx, "2."):
-        assert name == "2.1.0"
+        for name in cli._autocomplete_service_version(ctx, "3."):
+            assert name == "3.1.0"
+
+        ctx = Context("theirservice")
+        for name in cli._autocomplete_service_version(ctx, "2."):
+            assert name == "2.1.0"
 
 
-def test_get_services_for_autocompletion(cli_auth_login, tar_file, clean_services):
+def test_get_services(cli_auth_login, tar_file, clean_services):
     result = runner.invoke(
         app,
         [
@@ -729,18 +730,18 @@ def test_get_services_for_autocompletion(cli_auth_login, tar_file, clean_service
     )
     assert result.exit_code == 0
 
-    services = _get_services_for_autocompletion()
+    services = _get_services()
     assert len(services) == 1
     assert services[0]["name"] == "test_service"
 
 
-def test_get_services_for_autocompletion_no_connection():
-    services = _get_services_for_autocompletion()
+def test_get_services_no_connection():
+    services = _get_services()
     assert services == []
 
 
 def test_logs_name_and_version_specified(cli_auth_login, clean_services):
-    runner.invoke(
+    deploy_result = runner.invoke(
         app,
         [
             "deploy",
@@ -750,6 +751,7 @@ def test_logs_name_and_version_specified(cli_auth_login, clean_services):
             "traefik/whoami:latest",
         ],
     )
+    assert deploy_result.exit_code == 0
     result_logs = runner.invoke(
         app,
         [
@@ -758,7 +760,6 @@ def test_logs_name_and_version_specified(cli_auth_login, clean_services):
             "1.0.0",
         ],
     )
-
     assert result_logs.exit_code == 0
     assert "Starting up on port 80" in result_logs.stdout
 
@@ -937,6 +938,70 @@ def test_dae_test_command(tmp_path):
 
     result = runner.invoke(app, ["test", str(tmp_path / "test_project")])
     print(result.stdout)  # Keep this here!
+    assert result.exit_code == 0
+
+
+def test_add_user(cli_auth_login):
+    result = runner.invoke(app, ["user", "add", "Rune", "-p", "Skejp"])
+    assert result.exit_code == 0
+    assert "Added user 'Rune'" in result.output
+
+
+def test_delete_user(cli_auth_login):
+    runner.invoke(app, ["user", "add", "Rune", "-p", "Skejp"])
+    # Not validated
+    result = runner.invoke(app, ["user", "rm", "Rune"], input="n")
+    assert result.exit_code == 0
+    assert "User 'Rune' not deleted" in result.output
+
+    # Validated
+    result = runner.invoke(app, ["user", "rm", "Rune"], input="y")
+    assert result.exit_code == 0
+    assert "User 'Rune' deleted" in result.output
+
+
+def test_list_users(cli_auth_login):
+    runner.invoke(app, ["user", "add", "Rune", "-p", "Skejp"])
+    result = runner.invoke(app, ["user", "ls"])
+    assert "admin" in result.output
+    assert "Rune" in result.output
+
+
+def test_change_password(cli_auth_login):
+    runner.invoke(app, ["user", "add", "Rune", "-p", "Skejp"])
+    result = runner.invoke(app, ["user", "update", "Rune", "-p", "Stone"])
+    assert result.exit_code == 0
+    assert "Changed password" in result.output
+
+
+def test_logout(cli_auth_login):
+    result = runner.invoke(app, ["logout"])
+    assert result.exit_code == 0
+    assert "Logged out" in result.output
+
+    result = runner.invoke(app, ["ls"])  # Check logged out
+    assert result.exit_code == 1
+
+
+def test_logout_other(cli_auth_login):
+    state = config.CliState()
+    state.add_host("test_host", "test_token")  # Login to host, not activated
+
+    result = runner.invoke(app, ["logout", "test_host"])
+    print(result.output)
+    assert result.exit_code == 0
+    assert "Logged out" in result.output
+
+    result = runner.invoke(app, ["ls"])  # Check still logged in
+    assert result.exit_code == 0
+
+
+def test_logout_not_found(cli_auth_login):
+    result = runner.invoke(app, ["logout", "nope"])
+    assert result.exit_code == 1
+    assert "Not logged in to" in result.output
+
+    result = runner.invoke(app, ["ls"])  # Check still logged in
     assert result.exit_code == 0
 
 

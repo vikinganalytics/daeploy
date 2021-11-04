@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file. This projec
 ### New Features
 
 - New admin only API functionality to manage users. Users no longer tied to the license
+- CLI commands for user management
 
 ## 1.1.1
 

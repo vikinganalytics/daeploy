@@ -1,9 +1,9 @@
 import datetime
-import json
 import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 import os
+import json
 
 import click
 import pkg_resources
@@ -14,36 +14,17 @@ from cookiecutter.exceptions import FailedHookException, OutputDirExistsExceptio
 from cookiecutter.main import cookiecutter
 from tabulate import tabulate
 
-import daeploy.cli.cliutils as cliutils
-import daeploy.cli.config as config
+from daeploy.cli import cliutils
+from daeploy.cli import config
+from daeploy.cli.user import app as user_app
 import daeploy.communication
 
 THIS_DIR = Path(__file__).parent
 
-# This wrapper prevent exceptions because the server is offline or the IP is wrong
-# And handles errors
-get = cliutils.request_error_handling(cliutils.request("GET"))
-post = cliutils.request_error_handling(cliutils.request("POST"))
-put = cliutils.request_error_handling(cliutils.request("PUT"))
-delete = cliutils.request_error_handling(cliutils.request("DELETE"))
-
 DEFAULT_NUMBER_OF_LOGS = "50"
 
 app = typer.Typer()
-state = dict()
-
-
-def _get_active_host():
-    return state["active_host"]
-
-
-def _get_token_for_host(host):
-    return state["access_tokens"].get(host, "bogustoken")
-
-
-def _get_token_for_active_host():
-    active_host = _get_active_host()
-    return _get_token_for_host(active_host)
+app.add_typer(user_app, name="user")
 
 
 def _check_token_validity(host, jwt_token):
@@ -59,31 +40,16 @@ def _check_token_validity(host, jwt_token):
         return False
 
 
-def _get_services(host=None, jwt_token=None):
-    host = host or _get_active_host()
-    jwt_token = jwt_token or _get_token_for_active_host()
-    response = get(
-        f"{host}/services/",
-        headers=cliutils.get_request_auth_header(jwt_token),
-    )
-    return response.json()
-
-
-def _get_services_for_autocompletion():
-    # Autocompletion runs before callback so state is empty
+def _get_services():
     try:
-        with config.CONFIG_FILE.open("r") as file_handle:
-            conf = json.load(file_handle)
-    except FileNotFoundError:
+        response = cliutils.get("/services/")
+        return response.json()
+    except requests.exceptions.MissingSchema:  # If we havent logged in
         return []
-
-    host = conf["active_host"]
-    jwt_token = conf["access_tokens"].get(host, "bogustoken")
-    return _get_services(host, jwt_token)
 
 
 def _autocomplete_service_name(incomplete: str):
-    services = _get_services_for_autocompletion()
+    services = _get_services()
     valid_completion_items = [service["name"] for service in services]
     for name in valid_completion_items:
         if name.startswith(incomplete):
@@ -91,7 +57,7 @@ def _autocomplete_service_name(incomplete: str):
 
 
 def _autocomplete_service_version(ctx: typer.Context, incomplete: str):
-    services = _get_services_for_autocompletion()
+    services = _get_services()
     # Take the service name into consideration to show relevant versions
     name = ctx.params.get("name", "")
     valid_completion_items = [
@@ -100,16 +66,6 @@ def _autocomplete_service_version(ctx: typer.Context, incomplete: str):
     for ver in valid_completion_items:
         if ver.startswith(incomplete):
             yield ver
-
-
-def _update_state_from_config_file():
-    # Create a configuration file if missing
-    if not config.CONFIG_FILE.exists():
-        config.initialize_cli_configuration()
-
-    # Update the state from the configuration file
-    with config.CONFIG_FILE.open("r") as file_handle:
-        state.update(json.load(file_handle))
 
 
 def version_callback(value: bool):
@@ -124,23 +80,22 @@ def version_callback(value: bool):
         pass
 
     # Get Manager Version
-    _update_state_from_config_file()
-    active_host = _get_active_host()
-    if active_host:
+    state = config.CliState()
+    if state.active_host():
         try:
             manager_version = requests.get(
-                f"{active_host}/~version",
-                headers=cliutils.get_request_auth_header(_get_token_for_active_host()),
+                f"{state.active_host()}/~version",
+                headers=cliutils.get_request_auth_header(state.active_host_token()),
             )
         except (requests.exceptions.ConnectionError, requests.models.HTTPError):
             typer.echo(
                 "Manager version not available."
                 " Either the version is < 1.0.0 or it is unreachable."
             )
-            raise typer.Exit(1)
+            raise typer.Exit(0)
         typer.echo(f"Manager version: {manager_version.json()}")
 
-    raise typer.Exit()
+    raise typer.Exit(0)
 
 
 # pylint: disable=unused-argument
@@ -166,7 +121,7 @@ def _callback(
     Returns:
         None
     """
-    _update_state_from_config_file()
+    state = config.CliState()
     # Skip host and token checks if --help flag is included.
     if "--help" in click.get_os_args():
         return
@@ -176,7 +131,7 @@ def _callback(
         return
 
     # Check if the user has an active host
-    if _get_active_host() is None:
+    if state.active_host() is None:
         typer.echo(
             "You must log in to a host with `daeploy login`"
             " before using this function."
@@ -184,20 +139,18 @@ def _callback(
         context.abort()
 
     # Check that the token for the active host is valid
-    valid_token = _check_token_validity(
-        _get_active_host(), _get_token_for_active_host()
-    )
+    valid_token = _check_token_validity(state.active_host(), state.active_host_token())
     if not valid_token:
         typer.echo(
-            f"You have been logged out from {_get_active_host()}."
+            f"You have been logged out from {state.active_host()}."
             " Please log in to the host again."
         )
         context.abort()
 
-    typer.echo(f"Active host: {_get_active_host()}")
+    typer.echo(f"Active host: {state.active_host()}")
 
 
-def deploy_image(host, name, version, port, source, envvars):
+def deploy_image(name, version, port, source, envvars):
     body = dict(
         name=name,
         version=version,
@@ -206,14 +159,13 @@ def deploy_image(host, name, version, port, source, envvars):
         run_args={"environment": envvars},
     )
     with cliutils.sigint_ignored():
-        post(
-            f"{host}/services/~image",
+        cliutils.post(
+            "/services/~image",
             json=body,
-            headers=cliutils.get_request_auth_header(_get_token_for_active_host()),
         )
 
 
-def deploy_git(host, name, version, port, source, envvars, build_image):
+def deploy_git(name, version, port, source, envvars, build_image):
     body = dict(
         name=name,
         version=version,
@@ -225,14 +177,13 @@ def deploy_git(host, name, version, port, source, envvars, build_image):
         body["s2i_build_image"] = build_image
 
     with cliutils.sigint_ignored():
-        post(
-            f"{host}/services/~git",
+        cliutils.post(
+            "/services/~git",
             json=body,
-            headers=cliutils.get_request_auth_header(_get_token_for_active_host()),
         )
 
 
-def deploy_tar(host, name, version, port, source, envvars, build_image):
+def deploy_tar(name, version, port, source, envvars, build_image):
     body = dict(
         name=name,
         version=version,
@@ -243,8 +194,8 @@ def deploy_tar(host, name, version, port, source, envvars, build_image):
         body["s2i_build_image"] = build_image
 
     with cliutils.sigint_ignored():
-        post(
-            f"{host}/services/~tar",
+        cliutils.post(
+            "/services/~tar",
             data=body,
             files={
                 "file": (
@@ -253,14 +204,13 @@ def deploy_tar(host, name, version, port, source, envvars, build_image):
                     "application/x-gzip",
                 )
             },
-            headers=cliutils.get_request_auth_header(_get_token_for_active_host()),
         )
 
 
-def deploy_local_image(host, name, version, port, source, envvars):
+def deploy_local_image(name, version, port, source, envvars):
     with cliutils.save_image_tmp(source) as image_path:
-        post(
-            f"{host}/services/~upload-image",
+        cliutils.post(
+            "/services/~upload-image",
             files={
                 "image": (
                     image_path.name,
@@ -268,10 +218,9 @@ def deploy_local_image(host, name, version, port, source, envvars):
                     "application/x-gzip",
                 )
             },
-            headers=cliutils.get_request_auth_header(_get_token_for_active_host()),
         )
 
-    deploy_image(host, name, version, port, source, envvars)
+    deploy_image(name, version, port, source, envvars)
 
 
 def parse_var(string: str) -> Tuple[str, str]:
@@ -391,7 +340,6 @@ def deploy(
             and the -g option.
     """
     cleanup = False
-    host = _get_active_host()
 
     if sum([image_flag, local_image_flag, git_flag]) > 1:
         typer.echo("Error: You can only select one source flag.")
@@ -402,11 +350,11 @@ def deploy(
 
     typer.echo("Deploying service...")
     if image_flag:
-        deploy_image(host, name, version, port, source, envvars_dict)
+        deploy_image(name, version, port, source, envvars_dict)
     elif local_image_flag:
-        deploy_local_image(host, name, version, port, source, envvars_dict)
+        deploy_local_image(name, version, port, source, envvars_dict)
     elif git_flag:
-        deploy_git(host, name, version, port, source, envvars_dict, build_image)
+        deploy_git(name, version, port, source, envvars_dict, build_image)
     # If neither image or git flag is active we default to a tar request.
     else:
         source_path = Path(source).resolve()
@@ -425,7 +373,7 @@ def deploy(
             )
             raise typer.Exit(1)
 
-        deploy_tar(host, name, version, port, source_path, envvars_dict, build_image)
+        deploy_tar(name, version, port, source_path, envvars_dict, build_image)
 
         if cleanup:
             source_path.unlink()
@@ -463,10 +411,9 @@ def ls(
     keys = ["MAIN", "NAME", "VERSION", "STATUS", "RUNNING"]
     output = []
     for service in services:
-        inspection = get(
-            f"{_get_active_host()}/services/~inspection",
+        inspection = cliutils.get(
+            "/services/~inspection",
             params={"name": service["name"], "version": service["version"]},
-            headers=cliutils.get_request_auth_header(_get_token_for_active_host()),
         ).json()
 
         values = cliutils.get_list_values_from_inspection(service, inspection)
@@ -548,8 +495,8 @@ def logs(
         version = service[0]["version"]
 
     # Get the logs
-    response = get(
-        f"{_get_active_host()}/services/~logs/",
+    response = cliutils.get(
+        "/services/~logs/",
         params={
             "name": name,
             "version": version,
@@ -557,7 +504,6 @@ def logs(
             "follow": follow,
             "since": date,
         },
-        headers=cliutils.get_request_auth_header(_get_token_for_active_host()),
         stream=True,
     )
     for log_line in response.iter_lines():
@@ -582,8 +528,7 @@ def kill(
     validation: Optional[bool] = typer.Option(
         False,
         "--yes",
-        help="Give confirmation to kill services."
-        " Skips prompt, so use with caution.",
+        help="Give confirmation to kill services." " Skips prompt, use with caution.",
     ),
     keep_image: Optional[bool] = typer.Option(
         False,
@@ -601,7 +546,7 @@ def kill(
         version (str, optional): Version of the service to kill. Defaults to None.
         all_ (bool, optional): Kill all services. Defaults to False.
         validation (bool, optional): Give confirmation to kill services at runtime.
-            Skips prompt, so use with caution. Defaults to False.
+            Skips prompt, use with caution. Defaults to False.
         keep_image (bool, optional): Keep the image(s) of the killed service(s).
 
     Raises:
@@ -628,14 +573,13 @@ def kill(
     )
     if not validation:
         typer.echo("Service(s) not killed")
-        raise typer.Exit()
+        raise typer.Exit(0)
 
     for service in cliutils.sort_main_service_last(services):
-        delete(
-            f"{_get_active_host()}/services/",
+        cliutils.delete(
+            "/services/",
             json={"name": service["name"], "version": service["version"]},
             params={"remove_image": not keep_image},
-            headers=cliutils.get_request_auth_header(_get_token_for_active_host()),
         )
         typer.echo(f"Service {service['name']} {service['version']} killed.")
 
@@ -655,8 +599,7 @@ def assign(
     validation: Optional[bool] = typer.Option(
         False,
         "--yes",
-        help="Give confirmation to assign service."
-        " Skips prompt, so use with caution.",
+        help="Give confirmation to assign service." " Skips prompt, use with caution.",
     ),
 ):
     """Change main version of a service.
@@ -666,7 +609,7 @@ def assign(
         name (str): Name of the service to change to primary.
         version (str): Version of the service to change to primary.
         validation (bool, optional): Give confirmation to assign service.
-            Skips prompt, so use with caution.
+            Skips prompt, use with caution.
 
     Raises:
         Exit: If the user does not validate the assign.
@@ -678,10 +621,9 @@ def assign(
         typer.echo("Assign cancelled.")
         raise typer.Exit()
 
-    put(
-        f"{_get_active_host()}/services/~assign",
+    cliutils.put(
+        "/services/~assign",
         json={"name": name, "version": version},
-        headers=cliutils.get_request_auth_header(_get_token_for_active_host()),
     )
     typer.echo(f"Changed main version to {name} {version}")
     ls(name=name, version=None)
@@ -760,9 +702,8 @@ def token(
         lifetime (Optional[int], optional): Number of days the token should be valid.
             Default to None which correpsonds to a long-lived token.
     """
-    response = post(
-        f"{_get_active_host()}/auth/token",
-        headers=cliutils.get_request_auth_header(_get_token_for_active_host()),
+    response = cliutils.post(
+        "/auth/token",
         json={"expire_in_days": lifetime},
     )
     token_value = response.json()["Token"]
@@ -810,8 +751,9 @@ def login(
     Raises:
         Exit: If given invalid login credentials or host
     """
+    state = config.CliState()
     # Print any existing hosts and let the user choose with a number
-    current_hosts = state["access_tokens"].keys()
+    current_hosts = state.list_hosts()
     if len(current_hosts) > 0 and not host:
         typer.echo("Current hosts:")
         for i, key in enumerate(current_hosts):
@@ -836,14 +778,13 @@ def login(
     # Ensure we dont have a trailing slash
     host = host.rstrip("/")
 
-    access_token = _token or _get_token_for_host(host)
+    access_token = _token or state.host_token(host)
 
     # If the user already has a valid token we just change the active host
     if _check_token_validity(host, access_token):
-        state["active_host"] = host
-        state["access_tokens"][host] = access_token
-        config.save_cli_configuration(state)
-        typer.echo(f"Changed host to {host}")
+        state.add_host(host, access_token)
+        state.activate_host(host)
+        typer.echo(f"Changed host to {state.active_host()}")
         raise typer.Exit(0)
 
     # If the token argument was given with an invalid token
@@ -874,10 +815,9 @@ def login(
             raise typer.Exit(1)
 
         # Save the retreived token for future usage
-        state["active_host"] = host
-        state["access_tokens"][host] = access_token
-        config.save_cli_configuration(state)
-        typer.echo(f"Changed host to {host}")
+        state.add_host(host, access_token)
+        state.activate_host(host)
+        typer.echo(f"Changed host to {state.active_host()}")
 
 
 @app.command()
@@ -899,6 +839,26 @@ def test(
     sys.path.append(str(service_path))
     exit_code = pytest.main([str(service_path)])
     raise typer.Exit(exit_code)
+
+
+@app.command(help="Log out from a host")
+def logout(
+    host: Optional[str] = typer.Argument(
+        None,
+        help="Host to log out from and remove token. "
+        "Logs out from the active host unless specified",
+    )
+):
+    state = config.CliState()
+
+    logout_host = host or state.active_host()
+    try:
+        state.logout(logout_host)
+    except KeyError:
+        typer.echo(f"Not logged in to {logout_host}")
+        raise typer.Exit(1)
+
+    typer.echo(f"Logged out from {logout_host}")
 
 
 # Expose click object for automated documentation with sphinx-click

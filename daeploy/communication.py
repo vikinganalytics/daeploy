@@ -38,7 +38,7 @@ class DaeploySession(requests.Session):
         # noqa: DAR101,DAR201,DAR401
         """
         super().__init__()
-        self._auth_domains = auth_domains or list()
+        self._auth_domains = auth_domains or []
         self._log_func = log_func or logging.getLogger(__name__).warning
 
     def should_strip_auth(self, old_url: str, new_url: str) -> bool:
