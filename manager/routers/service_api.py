@@ -389,20 +389,23 @@ def run_s2i(url: str, build_image: str, name: str, version: str) -> str:
     try:
         LOGGER.info(f"Running s2i for service {name} {version}")
         # $ s2i build <source> <image> [<tag>] -e ENV=VAR
-        output = subprocess.run(
+        s2i_process = subprocess.run(
             command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=True
         )
-        LOGGER.debug(output.stdout.decode())
+        s2i_logs = s2i_process.stdout.decode()
     except subprocess.CalledProcessError as exc:
-        LOGGER.exception("s2i failed!")
-        output = exc.stdout.decode().split("\n")  # List of lines
-        filtered_output = filter(lambda x: x.startswith("ERROR"), output)
+        s2i_logs = exc.stdout.decode()
+        LOGGER.exception(f"s2i failed! Log output:\n{s2i_logs}")
+        filtered_output = filter(  # Get lines starting with ERROR
+            lambda x: x.startswith("ERROR"), s2i_logs.split("\n")
+        )
         error_string = "\n".join(filtered_output)
         raise S2iException(error_string)
     except FileNotFoundError as exc:
         LOGGER.exception("s2i failed!")
         raise S2iException(str(exc))
 
+    LOGGER.debug(s2i_logs)
     return image_name
 
 
@@ -449,7 +452,7 @@ def build_service_image_s2i(
     except S2iException as exc:
         raise HTTPException(
             status_code=422,
-            detail=f"S2i failed with error:\n{exc}",
+            detail=f"S2i failed with error:\n{exc}\nCheck manager logs for details",
         )
 
     return image
