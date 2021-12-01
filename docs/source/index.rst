@@ -61,12 +61,8 @@ If you want to get in contact, you can reach us at info@vikinganalytics.se
    content/advanced_tutorials/manager_configuration
    content/advanced_tutorials/testing_services
    content/advanced_tutorials/proxy_dashboard
-   content/advanced_tutorials/upload_image
-   content/advanced_tutorials/status_codes
-   content/advanced_tutorials/integration_with_other_tools
    content/advanced_tutorials/going_beyond_sdk
    content/advanced_tutorials/daeploy_notebook_service
-   content/advanced_tutorials/changing_build_image
 
 .. toctree::
    :maxdepth: 1
