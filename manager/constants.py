@@ -115,9 +115,5 @@ def notification_email_config():
     return sender_email, sender_pass, smtp_server, smtp_port
 
 
-def get_activation_key():
-    return os.environ.get("DAEPLOY_ACTIVATION_KEY", "")
-
-
 def get_admin_password():
     return os.environ.get("DAEPLOY_ADMIN_PASSWORD", "admin")

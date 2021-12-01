@@ -14,7 +14,6 @@ from manager.routers import (
     logging_api,
 )
 from manager import proxy
-from manager.license import activation_key_reader_on_startup, validity_door_man
 from manager.database.database import initialize_db
 from manager.database import service_db
 from manager.constants import get_manager_version
@@ -75,11 +74,6 @@ def startup_event():
     atexit.register(killer)
     initialize_db()
     recreate_proxy_configurations()
-
-
-# License handling
-app.on_event("startup")(activation_key_reader_on_startup)
-app.middleware("http")(validity_door_man)
 
 
 def recreate_proxy_configurations():
