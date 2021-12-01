@@ -121,7 +121,7 @@ Container Run Arguments
 Extra ``key: value`` arguments (beyond port number and environment variables) needed for the docker image
 to run properly can be specified when deploying the image via the ``/~image`` POST HTTP endpoint. These extra
 ``key: value`` arguments should be specified under the ``run_args`` key in the request data field. The accepted
-parameters for ``docker run`` which can be found `here <https://docker-py.readthedocs.io/en/stable/containers.html>`_.
+parameters for ``docker run`` can be found `here <https://docker-py.readthedocs.io/en/stable/containers.html>`_.
 
 For instance, a docker image
 that requires ``privileged`` mode to run properly can be deployed like (using pythons request library)::
@@ -161,8 +161,9 @@ image, called a builder image, which it uses to produce a ready-to-run image.
 There exists a number of ready-made builder images for python and we have
 developed our own lightweight python builder images specifically for use with
 Daeploy (`github link
-<https://github.com/vikinganalytics/daeploy-s2i-python>`_). A full list of tags
-are available `here <https://hub.docker.com/r/daeploy/s2i-python/tags>`_
+<https://github.com/vikinganalytics/daeploy-s2i-python>`_). `Click here
+<https://hub.docker.com/r/daeploy/s2i-python/tags>`_ for a full list of
+available tags. 
 
 By default Daeploy uses a builder image based on ubuntu with python 3.8. There
 can be situations, however, where that image might not be suitable. For
