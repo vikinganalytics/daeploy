@@ -1,5 +1,4 @@
--e .
--r requirements_docs.txt
+packaging
 wheel
 pytest
 pytest-sphinx
@@ -13,3 +12,5 @@ streamlit
 async_asgi_testclient
 scikit-learn
 nbconvert
+-e .
+-r requirements_docs.txt
