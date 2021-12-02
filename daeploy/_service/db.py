@@ -230,6 +230,7 @@ def initialize_db():
 def remove_db():
     """Remove db"""
     global WRITER_THREAD
+    global QUEUE
 
     # Stop and join writer thread if alive
     if WRITER_THREAD.is_alive():
