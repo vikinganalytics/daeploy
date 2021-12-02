@@ -23,13 +23,12 @@ The Daeploy python library can be installed with `pip <https://pypi.org/project/
 
 Check your installation by running: ``daeploy --help`` in a terminal.
 
-You will also need a manager container. To start a free trial
+You will also need a manager container. To start a
 manager running on ``localhost`` for development, run the following command:
 
 >>> docker run -v /var/run/docker.sock:/var/run/docker.sock -p 80:80 -p 443:443 -d daeploy/manager:latest  # doctest: +SKIP
 
 You can check that it started correctly by opening http://localhost/ in your browser.
-The trial manager can be used without restrictions for 12 hours before it has to be restarted.
 
 .. warning:: This configuration should **never** be used in production. It is missing crucial
     features such as authentication and secured communication. Please refer to

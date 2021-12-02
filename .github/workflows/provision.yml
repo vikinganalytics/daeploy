@@ -11,10 +11,6 @@ on:
         description: 'Version to be provisioned'
         required: true
         default: 'latest'
-      activation_key:
-        description: 'License Activation Key'
-        required: false
-        default: ''
       secured:
         description: 'Use HTTPS (SSL), -H for yes, empty for no'
         required: false
@@ -53,7 +49,6 @@ jobs:
       uses: appleboy/ssh-action@master
       env:
         HOST: ${{ github.event.inputs.host_name }}
-        ACTIVATION_KEY: ${{ github.event.inputs.activation_key }}
         SECURED: ${{ github.event.inputs.secured }}
         VERSION: ${{ github.event.inputs.version }}
         ADMIN_PASSWORD: ${{ github.event.inputs.admin_password }}
@@ -63,5 +58,5 @@ jobs:
         username: manager
         key: ${{ secrets.MANAGER_SSH_KEY }}
         port: 22
-        envs: HOST,ACTIVATION_KEY,SECURED,VERSION,ADMIN_PASSWORD
-        script: bash start_manager -n $HOST -k $ACTIVATION_KEY $SECURED -v $VERSION -w $ADMIN_PASSWORD -A $EXTRA_OPTIONS
+        envs: HOST,SECURED,VERSION,ADMIN_PASSWORD
+        script: bash start_manager -n $HOST $SECURED -v $VERSION -w $ADMIN_PASSWORD -A $EXTRA_OPTIONS
