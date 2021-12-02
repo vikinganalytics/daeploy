@@ -16,10 +16,6 @@ jobs:
           with:
             username: ${{ secrets.TEST_DOCKER_USERNAME }}
             password: ${{ secrets.TEST_DOCKER_PASSWORD }}                
-        - name: Clean WORKSPACE
-          uses: AutoModality/action-clean@v1
-        - name: Clean docker
-          run: "docker system prune -a -f"
     black: 
         runs-on: ubuntu-latest
         name: "running black"
@@ -31,7 +27,10 @@ jobs:
             with: 
                 python-version: '3.x'
         -   name: "Install dependencies"
-            run: "pip install -r requirements_dev.txt"
+            run: |
+                "pip install --upgrade pip"
+                "pip install -r requirements_dev.txt"
+                
         -   name: "Run black!"
             run: "black --check ."
     pylint: 
