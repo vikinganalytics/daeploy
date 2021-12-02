@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. This project adheres to [Semantic Versioning](https://semver.org/).
 
+## Dev
+
+### New Features
+
+- It is no longer necessary to activate Daeploy with a license to get indefinite access
+
 ## 1.2.0
 
 ### New Features
