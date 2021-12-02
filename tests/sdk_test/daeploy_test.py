@@ -512,7 +512,7 @@ def test_store_calls_to_database(database):
     service = _Service()
     service.store(my_oh_my=10)
     # Needed grace period
-    time.sleep(0.1)
+    time.sleep(0.2)
     assert db.stored_variables() == ["my_oh_my"]
     assert len(db.read_from_ts(name="my_oh_my")) == 1
 
@@ -520,7 +520,7 @@ def test_store_calls_to_database(database):
 def test_invalid_dtype_to_database_to_str(database):
     service = _Service()
     service.store(my_oh_my=list())
-    time.sleep(0.1)
+    time.sleep(0.2)
     # Since list as dtype it should be converted to string
     records = db.read_from_ts(name="my_oh_my")
     assert records[0].value == str(list())
@@ -529,7 +529,7 @@ def test_invalid_dtype_to_database_to_str(database):
 def test_update_parameter_monitored(database):
     service = _Service()
     service.add_parameter("myparameter", 10, monitor=True)
-    time.sleep(0.1)
+    time.sleep(0.2)
     assert len(db.read_from_ts(name="myparameter")) == 1
     client = TestClient(service.app)
 
@@ -537,7 +537,7 @@ def test_update_parameter_monitored(database):
     response = client.post(
         "/~parameters/myparameter", json=req, headers={"accept": "application/json"}
     )
-    time.sleep(0.1)
+    time.sleep(0.2)
     assert len(db.read_from_ts(name="myparameter")) == 2
 
     assert response.status_code == 200
@@ -680,7 +680,7 @@ def test_database_table_creation(database):
     db.write_to_ts("dict", {"a": 4}, timestamp)
     db.write_to_ts("list", {"a": 4}, timestamp)
     # Make sure the writer thread has time to process everything
-    time.sleep(0.2)
+    time.sleep(0.5)
 
     assert db.stored_variables() == ["float", "text", "dict", "list"]
 
@@ -706,7 +706,7 @@ def test_continuous_storing_of_and_reading_of_variables(database):
         db.write_to_ts("text", str(i), timestamp)
         time.sleep(0.02)
 
-    time.sleep(1)
+    time.sleep(2)
 
     assert len(db.read_from_ts("float")) == 200
     assert len(db.read_from_ts("text")) == 200
@@ -744,7 +744,7 @@ def test_read_timerange(database):
         if i == 100:
             mid = datetime.datetime.utcnow()
 
-    time.sleep(1)
+    time.sleep(2)
 
     after = datetime.datetime.utcnow()
 
