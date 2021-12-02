@@ -766,6 +766,7 @@ def test_database_limit_rows(database, db_limit_rows):
         time.sleep(0.01)
         if i == 1:
             mid = datetime.datetime.utcnow()
+    time.sleep(0.5)
 
     db.clean_database()
 
