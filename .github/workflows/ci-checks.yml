@@ -28,9 +28,8 @@ jobs:
                 python-version: '3.x'
         -   name: "Install dependencies"
             run: |
-                "python3 -m pip install --upgrade pip"
-                "pip install -r requirements_dev.txt"
-                
+                "python -m pip install --upgrade pip"
+                "pip install setuptools -r requirements_dev.txt"
         -   name: "Run black!"
             run: "black --check ."
     pylint: 
