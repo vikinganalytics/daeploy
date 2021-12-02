@@ -23,7 +23,7 @@ ENGINE = create_engine(f"sqlite:///{str(SERVICE_DB_PATH)}")
 Base = automap_base()
 Session = sessionmaker(bind=ENGINE)
 
-QUEUE = queue.Queue()
+QUEUE: queue.Queue
 TABLES = {}
 LOCK = threading.Lock()
 
@@ -218,6 +218,8 @@ def clean_database():
 
 def initialize_db():
     """Initializes the database."""
+    global QUEUE
+    QUEUE = queue.Queue()
     global TABLES
     Base.prepare(ENGINE, reflect=True)  # Automap any existing tables
     TABLES = dict(Base.classes)  # Make sure we keep track of the auto-mapped tables
