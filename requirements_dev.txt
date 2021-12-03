@@ -5,7 +5,7 @@ pytest
 pytest-sphinx
 pytest-asyncio
 pytest-pinned
-pylint==2.8.3
+pylint==2.7.0
 black
 flake8
 darglint
