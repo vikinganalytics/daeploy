@@ -6,7 +6,7 @@
 Welcome to the Daeploy documentation!
 =====================================
 
-Daeploy is a software deployment tool that is perfect for
+Daeploy is an open source software deployment tool that is perfect for
 smaller applications where Time-to-Market and ease of use is more important than
 scalability to tens of thousands of users and requests.
 

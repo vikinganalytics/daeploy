@@ -8,6 +8,12 @@ software, primarily focused around Machine Learning algorithms, quick and easy f
 who can code a bit in python. Daeploy consists of three components. The Manager, the Software
 Development Kit (SDK) and the Command-Line Interface (CLI).
 
+Daeploy is free to use and open source. It is licensed under
+[The GNU General Public license v3.0](https://www.gnu.org/licenses/gpl-3.0.html) and the
+source code is available on [github](https://github.com/vikinganalytics/daeploy) for anyone
+to view and modify. Please contact [info@daeploy.com](mailto:info@daeploy.com) if you are
+interested in the enterprise edition.
+
 The Manager
 -----------
 
