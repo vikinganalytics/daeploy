@@ -1,7 +1,4 @@
 from datetime import datetime
-from unittest import mock
-from unittest.mock import patch
-from async_generator import async_generator
 import time
 import pytest
 import docker

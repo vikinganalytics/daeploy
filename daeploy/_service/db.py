@@ -218,6 +218,8 @@ def clean_database():
 
 def initialize_db():
     """Initializes the database."""
+    global QUEUE
+    QUEUE = queue.Queue()
     global TABLES
     Base.prepare(ENGINE, reflect=True)  # Automap any existing tables
     TABLES = dict(Base.classes)  # Make sure we keep track of the auto-mapped tables
@@ -228,6 +230,7 @@ def initialize_db():
 def remove_db():
     """Remove db"""
     global WRITER_THREAD
+    global QUEUE
 
     # Stop and join writer thread if alive
     if WRITER_THREAD.is_alive():

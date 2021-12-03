@@ -16,7 +16,6 @@ from manager.routers import logging_api, notification_api, service_api
 from manager.app import app
 from manager.constants import DAEPLOY_DEFAULT_S2I_BUILD_IMAGE, get_manager_version
 from manager.data_models.request_models import BaseService
-from manager.database.database import initialize_db, remove_db
 
 
 client = TestClient(app)

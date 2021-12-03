@@ -32,6 +32,12 @@ def database():
         db.remove_db()
 
 
+def await_database_queue():
+    # Only works once on the same queue object
+    # db.initialize_db must be run to reinitialize the queue
+    db.QUEUE.join()
+
+
 @pytest.fixture
 def db_limit_fixture():
     try:
@@ -511,8 +517,7 @@ def test_local_invocation_pydantic_validation():
 def test_store_calls_to_database(database):
     service = _Service()
     service.store(my_oh_my=10)
-    # Needed grace period
-    time.sleep(0.2)
+    await_database_queue()
     assert db.stored_variables() == ["my_oh_my"]
     assert len(db.read_from_ts(name="my_oh_my")) == 1
 
@@ -520,7 +525,7 @@ def test_store_calls_to_database(database):
 def test_invalid_dtype_to_database_to_str(database):
     service = _Service()
     service.store(my_oh_my=list())
-    time.sleep(0.2)
+    await_database_queue()
     # Since list as dtype it should be converted to string
     records = db.read_from_ts(name="my_oh_my")
     assert records[0].value == str(list())
@@ -529,7 +534,7 @@ def test_invalid_dtype_to_database_to_str(database):
 def test_update_parameter_monitored(database):
     service = _Service()
     service.add_parameter("myparameter", 10, monitor=True)
-    time.sleep(0.2)
+    await_database_queue()
     assert len(db.read_from_ts(name="myparameter")) == 1
     client = TestClient(service.app)
 
@@ -537,7 +542,7 @@ def test_update_parameter_monitored(database):
     response = client.post(
         "/~parameters/myparameter", json=req, headers={"accept": "application/json"}
     )
-    time.sleep(0.2)
+    await_database_queue()
     assert len(db.read_from_ts(name="myparameter")) == 2
 
     assert response.status_code == 200
@@ -555,8 +560,7 @@ def test_entrypoint_monitored(database):
         headers={"accept": "application/json"},
     )
     assert response.status_code == 200
-    time.sleep(0.5)
-    print(db.stored_variables())
+    await_database_queue()
     assert db.stored_variables() == [
         "valid_entrypoint_method_args_request",
         "valid_entrypoint_method_args_response",
@@ -679,13 +683,13 @@ def test_database_table_creation(database):
     db.write_to_ts("text", "1", timestamp)
     db.write_to_ts("dict", {"a": 4}, timestamp)
     db.write_to_ts("list", {"a": 4}, timestamp)
-    # Make sure the writer thread has time to process everything
-    time.sleep(0.5)
+    await_database_queue()
 
     assert db.stored_variables() == ["float", "text", "dict", "list"]
 
     db.write_to_ts("invalid", lambda x: x, datetime.datetime.utcnow())
     time.sleep(0.2)
+    print(db.QUEUE.queue)
     assert "invalid" not in db.stored_variables()
 
 
@@ -693,7 +697,7 @@ def test_jsonable_type_db(database):
 
     timestamp = datetime.datetime.utcnow()
     db.write_to_ts("dict", {"a": 4}, timestamp)
-    time.sleep(0.2)
+    await_database_queue()
 
     assert db.read_from_ts("dict")[-1].value == json.dumps({"a": 4})
 
@@ -704,9 +708,7 @@ def test_continuous_storing_of_and_reading_of_variables(database):
         timestamp = datetime.datetime.utcnow()
         db.write_to_ts("float", float(i), timestamp)
         db.write_to_ts("text", str(i), timestamp)
-        time.sleep(0.02)
-
-    time.sleep(2)
+    await_database_queue()
 
     assert len(db.read_from_ts("float")) == 200
     assert len(db.read_from_ts("text")) == 200
@@ -723,8 +725,7 @@ def test_edge_case_type_storing(database):
     db.write_to_ts("my_stringified_float", "12.0", timestamp)
     db.write_to_ts("my_normal_float", 10.10, timestamp)
     db.write_to_ts("my.normal.float", 10.10, timestamp)
-
-    time.sleep(1)
+    await_database_queue()
 
     assert db.read_from_ts("my_bool")[-1].value == 1.0
     assert db.read_from_ts("my_stringified_int")[-1].value == "10"
@@ -740,11 +741,9 @@ def test_read_timerange(database):
 
     for i in range(200):
         db.write_to_ts("float", float(i), datetime.datetime.utcnow())
-        time.sleep(0.01)
         if i == 100:
             mid = datetime.datetime.utcnow()
-
-    time.sleep(2)
+    await_database_queue()
 
     after = datetime.datetime.utcnow()
 
@@ -766,8 +765,7 @@ def test_database_limit_rows(database, db_limit_rows):
         time.sleep(0.01)
         if i == 1:
             mid = datetime.datetime.utcnow()
-    time.sleep(0.5)
-
+    await_database_queue()
     db.clean_database()
 
     assert len(db.read_from_ts("float")) == 10
@@ -779,7 +777,7 @@ def test_database_limit_time(database, db_limit_second):
     for i in range(2):
         db.write_to_ts("float", float(i), datetime.datetime.utcnow())
         time.sleep(0.6)
-
+    await_database_queue()
     db.clean_database()
 
     values = db.read_from_ts("float")
