@@ -9,7 +9,7 @@ on:
 jobs:
     docs: 
       name: Build and push docs to GH pages
-      runs-on: [self-hosted, ubuntu, ibm]
+      runs-on: ubuntu-latest
       steps: 
         -   uses: actions/checkout@v2
             with:

@@ -1,12 +1,10 @@
 import sys
 import asyncio
 from datetime import datetime, timedelta, timezone
-from unittest.mock import patch
 
 import pytest
 from fastapi import HTTPException
 
-from manager.constants import DAEPLOY_REQUIRED_PASSWORD_LENGTH
 import manager.license as lic
 
 
