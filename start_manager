@@ -5,7 +5,7 @@
 # Copyright 2020, info@vikinganalytics.se
 # All rights reserved.
 
-# Usage: start_manager [-h|--help] [-v|--version version] [-d|--docker-username docker_username] [-t|--docker-token docker_token] [-n|--host-name host_name] [-p|--http-port http_port] [-P|--https-port https_port] [-A|--auth-enabled] [-l|--log-level log_level] [-a|--disable-access-logs] [-H|--https-enabled] [-s|--https-staging-server] [-e|--config-email email] [-E|--config-password password] [-S|--smtp-server smtp_server] [-N|--smtp-port smtp_port] [-k|--activation-key activation_key]
+# Usage: start_manager [-h|--help] [-v|--version version] [-d|--docker-username docker_username] [-t|--docker-token docker_token] [-n|--host-name host_name] [-p|--http-port http_port] [-P|--https-port https_port] [-A|--auth-enabled] [-l|--log-level log_level] [-a|--disable-access-logs] [-H|--https-enabled] [-s|--https-staging-server] [-e|--config-email email] [-E|--config-password password] [-S|--smtp-server smtp_server] [-N|--smtp-port smtp_port]
 
 # Revision history:
 # 2020-12-21 Created by new_script ver. 3.3
@@ -42,7 +42,7 @@ signal_exit() { # Handle trapped signals
 }
 
 usage() {
-  echo -e "Usage: $PROGNAME -v version [-h|--help] [-d|--docker-username docker_username] [-t|--docker-token docker_token] [-n|--host-name host_name] [-p|--http-port http_port] [-P|--https-port https_port] [-A|--auth-enabled] [-l|--log-level log_level] [-a|--disable-access-logs] [-H|--https-enabled] [-s|--https-staging-server] [-e|--config-email email] [-E|--config-password password] [-S|--smtp-server smtp_server] [-N|--smtp-port smtp_port] [-k|--activation-key activation_key] [-w|--admin-password admin_password]"
+  echo -e "Usage: $PROGNAME -v version [-h|--help] [-d|--docker-username docker_username] [-t|--docker-token docker_token] [-n|--host-name host_name] [-p|--http-port http_port] [-P|--https-port https_port] [-A|--auth-enabled] [-l|--log-level log_level] [-a|--disable-access-logs] [-H|--https-enabled] [-s|--https-staging-server] [-e|--config-email email] [-E|--config-password password] [-S|--smtp-server smtp_server] [-N|--smtp-port smtp_port] [-w|--admin-password admin_password]"
 }
 
 help_message() {
@@ -80,8 +80,6 @@ help_message() {
     Where 'smtp_server' is the smtp server url.
   -N, --smtp-port smtp_port  SMTP server port, usually 465 or 587
     Where 'smtp_port' is the port.
-  -k, --activation-key  License activation key
-    Where 'activation_key' is the activation key.
   -w --admin-password Password for admin user
     Where admin_password is the password for the admin user.
 
@@ -132,8 +130,6 @@ while [[ -n $1 ]]; do
       echo "SMTP email server for sending email notifications"; shift; environ="$environ -e DAEPLOY_NOTIFICATION_SMTP_SERVER=$1" ;;
     -N | --smtp-port)
       echo "SMTP server port, usually 465 or 587"; shift; environ="$environ -e DAEPLOY_NOTIFICATION_SMTP_PORT=$1" ;;
-    -k | --activation-key)
-      echo "License activation key"; shift; environ="$environ -e DAEPLOY_ACTIVATION_KEY=$1" ;;
     -w | --admin-password)
       echo "Admin password"; shift; environ="$environ -e DAEPLOY_ADMIN_PASSWORD=$1" ;;
     -* | --*)
