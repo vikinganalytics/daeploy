@@ -23,7 +23,7 @@ ENGINE = create_engine(f"sqlite:///{str(SERVICE_DB_PATH)}")
 Base = automap_base()
 Session = sessionmaker(bind=ENGINE)
 
-QUEUE: queue.Queue
+QUEUE = queue.Queue()
 TABLES = {}
 LOCK = threading.Lock()
 
