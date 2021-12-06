@@ -1,6 +1,6 @@
 .. _beyond-sdk-reference:
 
-Going Beyond the SDK
+Daeploy with FastAPI
 ====================
 
 Increased API Design Freedom
@@ -13,7 +13,6 @@ other web framework, but with more effort.
 
 To use FastAPI with Daeploy you can use the :obj:`app` object in :py:mod:`daeploy.service`.
 Some very basic boilerplate to do this could be
-
 
 .. testcode::
 
