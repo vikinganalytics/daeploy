@@ -35,8 +35,6 @@ The Manager is highly configurable using environment variables.
 +--------------------------------------------+-----------------------+-------------------------------------------------------------+
 | DAEPLOY_NOTIFICATION_SMTP_PORT             | null                  | Port to SMTP server, usually 587 or 465.                    |
 +--------------------------------------------+-----------------------+-------------------------------------------------------------+
-| DAEPLOY_ACTIVATION_KEY                     | ""                    | License activation key. Without key Manager lives for 12h.  |
-+--------------------------------------------+-----------------------+-------------------------------------------------------------+
 | DAEPLOY_ADMIN_PASSWORD                     | admin                 | Password for the admin user. Defualt to admin.              |
 +--------------------------------------------+-----------------------+-------------------------------------------------------------+
 
@@ -141,7 +139,7 @@ Below we show an example of a typical production setup using the Docker CLI
 and the
 `start_manager script <https://github.com/vikinganalytics/daeploy-examples/blob/master/start_manager>`_.
 In the example we start a Manager instance listening on ``my.domain.com``, with HTTPS,
-authentication, an activated license and email notifications enabled.
+authentication and email notifications enabled.
 
 Docker CLI
 ^^^^^^^^^^
@@ -160,7 +158,6 @@ Docker CLI
         -e DAEPLOY_HOST_NAME=my.domain.com \
         -e DAEPLOY_PROXY_HTTPS=True \
         -e DAEPLOY_AUTH_ENABLED=True \
-        -e DAEPLOY_ACTIVATION_KEY=... \
         -e DAEPLOY_ADMIN_PASSWORD=... \
         -e DAEPLOY_CONFIG_EMAIL=<some@email.com> \
         -e DAEPLOY_CONFIG_EMAIL_PASSWORD=<password for some@email.com> \
@@ -189,7 +186,6 @@ manager settings available.
         --host-name my.domain.com \
         --auth-enabled \
         --https-enabled \
-        --activation-key ... \
         --admin-password ... \
         --config-email ... \
         --config-password ... \

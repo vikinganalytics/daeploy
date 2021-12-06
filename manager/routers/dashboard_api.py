@@ -6,7 +6,6 @@ import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output
 
-import manager.license
 from manager.routers.service_api import read_services, inspect_service
 from manager.routers.notification_api import get_notifications, delete_notifications
 from manager.constants import get_external_proxy_url, get_manager_version
@@ -29,11 +28,6 @@ def build_user_section():
         className="user-actions",
         children=[
             html.P(f"v:{get_manager_version()}", className="version-identifier"),
-            html.P(
-                f"Expiry date: {manager.license.EXPIRATION_TIME.date()}",
-                id="expiry-date",
-                className="version-identifier",
-            ),
             html.P(),
             html.A(
                 "LOGS",
@@ -113,15 +107,6 @@ def build_tabs():
             )
         ],
     )
-
-
-@app.callback(
-    Output("expiry-date", "children"),
-    Input("interval1", "n_intervals"),
-)
-# pylint: disable=unused-argument
-def update_expiry_date(interval):
-    return f"Expiry date: {manager.license.EXPIRATION_TIME.date()}"
 
 
 @app.callback(
