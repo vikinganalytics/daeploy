@@ -101,7 +101,7 @@ docker run -v /var/run/docker.sock:/var/run/docker.sock -p 80:80 -p 443:443 -e D
 
 The application will be available according to the following:
 
-- Docker container listens on ports 80 (http) and 433 (https)
+- Docker container listens on ports 80 (http) and 443 (https)
 - Proxy listens on ports 5080 (http) and 5443 (https)
 - Manager is available at ```/``` (or locally on port 8000)
 - Any started services are available at ```/services/{service_name}/``` (or locally on ports 8001 and upwards)
