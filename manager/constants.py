@@ -107,6 +107,26 @@ def configuration_email():
     return os.environ.get("DAEPLOY_CONFIG_EMAIL")
 
 
+def cors_enabled():
+    return os.environ.get("DAEPLOY_ENABLE_CORS")
+
+
+def cors_allowed_origins():
+    """assumes allowed origin are passed as a single string separated by ;
+    Example: 'https://origin1.com;https://orogin2.com'
+    returns ['https://origin1.com', 'https://orogin2.com']
+    """
+    return os.environ.get("DAEPLOY_ALLOW_ORIGIN", "").split(';')
+
+def cors_config():
+    cors_config = {}
+    cors_config["allow_credentials"] = False
+    cors_config["allow_origins"] = cors_allowed_origins()
+    cors_config["allow_methods"] = ['GET', 'POST', 'PUT', 'DELETE']
+    cors_config["allow_headers"] = ['Authorization']
+    return cors_config
+
+
 def notification_email_config():
     sender_email = configuration_email()
     sender_pass = os.environ.get("DAEPLOY_CONFIG_EMAIL_PASSWORD")
