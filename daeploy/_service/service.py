@@ -1,3 +1,4 @@
+import os
 import asyncio
 import datetime
 import functools
@@ -13,6 +14,7 @@ import uvicorn
 from fastapi import Body, Request, FastAPI
 from fastapi.encoders import jsonable_encoder
 from fastapi.concurrency import run_in_threadpool
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import create_model, validate_arguments
 
 from daeploy._service.logger import setup_logging
@@ -45,8 +47,27 @@ def _disable_http_logs(path: str):
     )
 
 
+def cors_allowed_origins():
+    """assumes allowed origin are passed as a single string separated by ;
+    Example: 'https://origin1.com;https://orogin2.com'
+    returns ['https://origin1.com', 'https://orogin2.com']
+    """
+    return os.environ.get("DAEPLOY_ALLOW_ORIGIN", "").split(";")
+
+
+def get_cors_config():
+    cors_config = {}
+    cors_config["allow_credentials"] = False
+    cors_config["allow_origins"] = cors_allowed_origins()
+    cors_config["allow_methods"] = ["GET", "POST", "PUT", "DELETE"]
+    cors_config["allow_headers"] = ["Authorization"]
+    return cors_config
+
+
 class _Service:
     def __init__(self):
+        cors_config = get_cors_config()
+
         self.app = FastAPI(
             root_path=get_service_root_path(),
             title=f"{get_service_name()} {get_service_version()}",
@@ -57,6 +78,10 @@ class _Service:
                 {"name": "Parameters"},
             ],
         )
+
+        # Custom Middleware
+        if bool(os.environ.get("DAEPLOY_ENABLE_CORS")):
+            self.app.add_middleware(CORSMiddleware, **cors_config)
 
         self.parameters = {}
 
