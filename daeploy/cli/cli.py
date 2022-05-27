@@ -123,7 +123,7 @@ def _callback(
     """
     state = config.CliState()
     # Skip host and token checks if --help flag is included.
-    if "--help" in click.get_os_args():
+    if "--help" in sys.argv[1:]:
         return
 
     # Skip host and token checks if running login, init or test function.
