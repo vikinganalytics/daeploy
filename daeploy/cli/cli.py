@@ -5,7 +5,6 @@ from typing import Dict, List, Optional, Tuple
 import os
 import json
 
-import click
 import pkg_resources
 import pytest
 import requests
