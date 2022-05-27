@@ -270,12 +270,12 @@ def deploy(
     name: str = typer.Argument(
         ...,
         help="Name of the new service.",
-        autocompletion=_autocomplete_service_name,
+        shell_complete=_autocomplete_service_name,
     ),
     version: str = typer.Argument(
         ...,
         help="Version of the new service.",
-        autocompletion=_autocomplete_service_version,
+        shell_complete=_autocomplete_service_version,
     ),
     source: str = typer.Argument(
         ...,
@@ -388,12 +388,12 @@ def ls(
     name: Optional[str] = typer.Argument(
         None,
         help="List services with this name.",
-        autocompletion=_autocomplete_service_name,
+        shell_complete=_autocomplete_service_name,
     ),
     version: Optional[str] = typer.Argument(
         None,
         help="List service with this version.",
-        autocompletion=_autocomplete_service_version,
+        shell_complete=_autocomplete_service_version,
     ),
 ):
     """List running services, filtered by name and version.
@@ -432,13 +432,13 @@ def logs(
     name: str = typer.Argument(
         ...,
         help="Name of the service to read logs from",
-        autocompletion=_autocomplete_service_name,
+        shell_complete=_autocomplete_service_name,
     ),
     version: Optional[str] = typer.Argument(
         None,
         help="Version of the service to read logs from."
         " Defaults to the main version of the service",
-        autocompletion=_autocomplete_service_version,
+        shell_complete=_autocomplete_service_version,
     ),
     tail: Optional[str] = typer.Option(
         DEFAULT_NUMBER_OF_LOGS,
@@ -517,12 +517,12 @@ def kill(
     name: Optional[str] = typer.Argument(
         None,
         help="Name of the service(s) to kill.",
-        autocompletion=_autocomplete_service_name,
+        shell_complete=_autocomplete_service_name,
     ),
     version: Optional[str] = typer.Argument(
         None,
         help="Version of the service to kill.",
-        autocompletion=_autocomplete_service_version,
+        shell_complete=_autocomplete_service_version,
     ),
     all_: Optional[bool] = typer.Option(False, "--all", "-a", help="Kill all services"),
     validation: Optional[bool] = typer.Option(
@@ -589,12 +589,12 @@ def assign(
     name: str = typer.Argument(
         ...,
         help="Name of version to change main",
-        autocompletion=_autocomplete_service_name,
+        shell_complete=_autocomplete_service_name,
     ),
     version: str = typer.Argument(
         ...,
         help="Version of service to set as main",
-        autocompletion=_autocomplete_service_version,
+        shell_complete=_autocomplete_service_version,
     ),
     validation: Optional[bool] = typer.Option(
         False,
