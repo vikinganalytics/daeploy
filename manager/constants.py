@@ -113,18 +113,21 @@ def cors_enabled():
 
 def cors_allowed_origins():
     """assumes allowed origin are passed as a single string separated by ;
-    Example: 'https://origin1.com;https://orogin2.com'
-    returns ['https://origin1.com', 'https://orogin2.com']
+    Example 'https://origin1.com;https://orogin2.com'
+
+    Returns:
+        list: url of allowed origins
     """
-    return os.environ.get("DAEPLOY_ALLOW_ORIGIN", "").split(';')
+    return os.environ.get("DAEPLOY_ALLOW_ORIGIN", "").split(";")
+
 
 def cors_config():
-    cors_config = {}
-    cors_config["allow_credentials"] = False
-    cors_config["allow_origins"] = cors_allowed_origins()
-    cors_config["allow_methods"] = ['GET', 'POST', 'PUT', 'DELETE']
-    cors_config["allow_headers"] = ['Authorization']
-    return cors_config
+    config = {}
+    config["allow_credentials"] = False
+    config["allow_origins"] = cors_allowed_origins()
+    config["allow_methods"] = ["GET", "POST", "PUT", "DELETE"]
+    config["allow_headers"] = ["Authorization"]
+    return config
 
 
 def notification_email_config():

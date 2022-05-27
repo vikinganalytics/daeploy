@@ -49,8 +49,10 @@ def _disable_http_logs(path: str):
 
 def cors_allowed_origins():
     """assumes allowed origin are passed as a single string separated by ;
-    Example: 'https://origin1.com;https://orogin2.com'
-    returns ['https://origin1.com', 'https://orogin2.com']
+    Example 'https://origin1.com;https://orogin2.com'
+
+    Returns:
+        list: url of allowed origins
     """
     return os.environ.get("DAEPLOY_ALLOW_ORIGIN", "").split(";")
 
