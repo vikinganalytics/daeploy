@@ -1,5 +1,5 @@
 fastapi==0.78.0
-uvicorn==0.17.6
+uvicorn==0.16.0
 docker==5.0.3
 aiodocker==0.21.0
 semver==2.13.0
