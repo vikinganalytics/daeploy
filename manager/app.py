@@ -2,6 +2,7 @@ import atexit
 import logging
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import RedirectResponse
 from starlette.middleware.wsgi import WSGIMiddleware
 
@@ -16,7 +17,7 @@ from manager.routers import (
 from manager import proxy
 from manager.database.database import initialize_db
 from manager.database import service_db
-from manager.constants import get_manager_version
+from manager.constants import get_manager_version, cors_enabled, cors_config
 
 
 # Setup logger
@@ -29,6 +30,10 @@ app = FastAPI(
     description="Daeploy Manager API by Viking Analytics",
     version=get_manager_version(),
 )
+
+# CORS middleware
+if cors_enabled():
+    app.add_middleware(CORSMiddleware, **cors_config())
 
 # Services subapi
 app.include_router(service_api.ROUTER, prefix="/services", tags=["Service"])

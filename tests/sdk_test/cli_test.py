@@ -814,7 +814,7 @@ def test_logs_date_format(cli_auth_login, clean_services):
         ["logs", "test_service", "1.0.0", "--date", "2020/01/24"],
     )
     assert logs.exit_code == 2
-    assert "invalid datetime format" in logs.stdout
+    assert "does not match the formats" in logs.stdout
     logs = runner.invoke(
         app,
         ["logs", "test_service", "1.0.0", "--date", "1970-01-24"],
