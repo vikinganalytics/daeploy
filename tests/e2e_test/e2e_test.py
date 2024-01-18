@@ -189,7 +189,6 @@ def test_version_command_cli(dummy_manager, cli_auth_login):
 
 
 def test_manager_restart_ok(dummy_manager, headers):
-
     assert requests.get("http://localhost", headers=headers).status_code == 200
 
     dummy_manager.restart()

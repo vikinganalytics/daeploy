@@ -10,7 +10,6 @@ STORAGE_DICTS = dict()
 
 @service.entrypoint(status_code=201)
 def create_new_dict(dict_name: str, content: dict):
-
     if STORAGE_DICTS.get(dict_name, False):
         raise HTTPException(status_code=409, detail=f"{dict_name} already exists")
 

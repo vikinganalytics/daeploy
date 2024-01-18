@@ -496,7 +496,6 @@ async def test_service_logs_no_streaming(
         f"/services/~logs?name={service_name}&version={service_version}&follow=False",
         stream=False,
     ) as response:
-
         assert response.status_code == 200
         assert response.text == "Log1 Log2 Log3 "
         mocked_docker_connection.service_logs.assert_called_with(
