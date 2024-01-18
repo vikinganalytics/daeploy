@@ -117,7 +117,6 @@ def build_tabs():
 )
 # pylint: disable=unused-argument
 def update_content(tab_switch, interval, n_clicks):
-
     # Clearing notifications
     changed_id = [p["prop_id"] for p in dash.callback_context.triggered][0]
     if "clear-notifications-button" in changed_id:

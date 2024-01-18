@@ -310,7 +310,6 @@ def kill_service(service: BaseService, remove_image: bool = True):
 @ROUTER.put("/~assign")
 @check_service_exists_json_body
 def assign_main_service(service: BaseService):
-
     try:
         service_db.assign_main_version(service.name, service.version)
     except DatabaseNoMatchException as exc:

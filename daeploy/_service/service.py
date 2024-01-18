@@ -276,7 +276,6 @@ class _Service:
             is_coroutine = asyncio.iscoroutinefunction(func)
 
             async def timer():
-
                 # Sleep before first call if required
                 if wait_first:
                     await asyncio.sleep(seconds)

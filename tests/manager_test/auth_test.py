@@ -32,13 +32,11 @@ def test_login_page(exclude_middleware):
 
 
 def test_verification_without_auth(database):
-
     response = client.get("/auth/verify", allow_redirects=False)
     assert response.status_code == 200
 
 
 def test_failed_login(database, auth_enabled):
-
     # Login
     response = client.post(
         "/auth/login",
@@ -53,7 +51,6 @@ def test_failed_login(database, auth_enabled):
 
 
 def test_cookie_token(database, auth_enabled):
-
     # No access from beginning
     response = client.get("/auth/verify", allow_redirects=False)
     assert response.status_code == 303
@@ -80,7 +77,6 @@ def test_cookie_token(database, auth_enabled):
 
 
 def test_API_token(clear_cookies, database, auth_enabled):
-
     # No access from beginning
     response = client.get(
         "/auth/verify",
