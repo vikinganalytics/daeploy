@@ -12,3 +12,4 @@ aiofiles
 pytest
 pandas
 docker
+ipython
