@@ -4,7 +4,7 @@ from typing import List, Dict, Union
 import semver
 from pydantic.types import SecretStr
 from pydantic import BaseModel, validator, HttpUrl
-from fastapi import Path, UploadFile
+from fastapi import UploadFile, Query
 
 from manager.constants import (
     DAEPLOY_DEFAULT_INTERNAL_PORT,
@@ -38,7 +38,7 @@ class BaseService(BaseModel):
 
 
 class BaseNewServiceRequest(BaseService):
-    port: int = Path(default=DAEPLOY_DEFAULT_INTERNAL_PORT, gt=0)
+    port: int = Query(default=DAEPLOY_DEFAULT_INTERNAL_PORT, gt=0)
     run_args: Dict = {}
 
 
