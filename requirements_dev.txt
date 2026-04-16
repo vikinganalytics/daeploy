@@ -10,6 +10,7 @@ black
 flake8
 darglint
 streamlit
+httpx
 async_asgi_testclient
 scikit-learn
 nbconvert
