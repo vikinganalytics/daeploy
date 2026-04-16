@@ -116,7 +116,10 @@ def show_login_page(request: Request, destination: Optional[str] = "/"):
     """
     return TEMPLATES.TemplateResponse(
         "login.html",
-        {"request": request, "ACTION": f"/auth/login?destination={destination}"},
+        context={
+            "request": request,
+            "ACTION": f"/auth/login?destination={destination}",
+        },
         status_code=401,
     )
 
