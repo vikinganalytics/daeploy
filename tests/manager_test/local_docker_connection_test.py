@@ -211,13 +211,13 @@ async def test_service_logs(local_docker_connection):
 
 
 def check_required_inspection_keys(container_info):
-    assert set(InspectResponse.schema()["required"]).issubset(
+    assert set(InspectResponse.model_json_schema()["required"]).issubset(
         set(container_info.keys())
     )
-    assert set(NetworkSettingsResponse.schema()["required"]).issubset(
+    assert set(NetworkSettingsResponse.model_json_schema()["required"]).issubset(
         set(container_info["NetworkSettings"].keys())
     )
-    assert set(StateResponse.schema()["required"]).issubset(
+    assert set(StateResponse.model_json_schema()["required"]).issubset(
         set(container_info["State"].keys())
     )
 

@@ -73,7 +73,13 @@ class ConnectorBase(ABC):
 
 class LocalDockerConnector(ConnectorBase):
     CLIENT = docker.from_env()
-    AIO_CLIENT = aiodocker.Docker()
+    _AIO_CLIENT = None
+
+    @classmethod
+    def _get_aio_client(cls):
+        if cls._AIO_CLIENT is None:
+            cls._AIO_CLIENT = aiodocker.Docker()
+        return cls._AIO_CLIENT
 
     def __init__(self):
         # Create our own docker network
@@ -395,7 +401,7 @@ class LocalDockerConnector(ConnectorBase):
             AsyncGenerator[str, None]: Async infinite generator if following,
             else async finite generator.
         """
-        container = await self.AIO_CLIENT.containers.get(
+        container = await self._get_aio_client().containers.get(
             create_container_name(service.name, service.version)
         )
 
