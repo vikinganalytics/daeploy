@@ -143,7 +143,8 @@ def test_version_flag_without_manager():
         ["--version"],
     )
     assert result.exit_code == 0
-    assert "Manager" not in result.stdout
+    assert "SDK version" in result.stdout
+    assert "Manager version:" not in result.stdout
 
 
 def test_deploy_from_git_source(dummy_manager, cli_auth_login, clean_services):

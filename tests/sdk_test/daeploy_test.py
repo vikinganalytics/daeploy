@@ -589,7 +589,8 @@ def test_entrypoint_get():
     client = TestClient(service.app)
 
     req = {"name": "Rune", "age": 100}
-    response = client.get(
+    response = client.request(
+        "GET",
         "/valid_entrypoint_method_args",
         json=req,
         headers={"accept": "application/json"},

@@ -8,9 +8,9 @@ from typing import Union, Type, List
 from contextlib import contextmanager
 import json
 
-from sqlalchemy import create_engine, and_
+from sqlalchemy import create_engine, and_, MetaData
 from sqlalchemy.ext.automap import automap_base
-from sqlalchemy.orm import sessionmaker, clear_mappers
+from sqlalchemy.orm import sessionmaker, declarative_base
 from sqlalchemy import Column, DateTime, Float, Text
 
 from daeploy.utilities import get_db_table_limit
@@ -20,7 +20,7 @@ LOGGER = logging.getLogger(__name__)
 SERVICE_DB_PATH = Path("service_db.db")
 
 ENGINE = create_engine(f"sqlite:///{str(SERVICE_DB_PATH)}")
-Base = automap_base()
+Base = declarative_base()
 Session = sessionmaker(bind=ENGINE)
 
 QUEUE = queue.Queue()
@@ -218,15 +218,17 @@ def initialize_db():
     global QUEUE
     QUEUE = queue.Queue()
     global TABLES
-    Base.prepare(ENGINE, reflect=True)  # Automap any existing tables
-    TABLES = dict(Base.classes)  # Make sure we keep track of the auto-mapped tables
+    # Reflect any existing tables using automap
+    AutoBase = automap_base(metadata=MetaData())
+    AutoBase.prepare(autoload_with=ENGINE)
+    TABLES = dict(AutoBase.classes)
     WRITER_THREAD.start()
     LOGGER.info("DB started!")
 
 
 def remove_db():
     """Remove db"""
-    global WRITER_THREAD
+    global WRITER_THREAD, Base
 
     # Stop and join writer thread if alive
     if WRITER_THREAD.is_alive():
@@ -236,10 +238,16 @@ def remove_db():
     # Reset it
     WRITER_THREAD = threading.Thread(target=_writer, daemon=True)
 
-    # Remove db
-    SERVICE_DB_PATH.unlink()
+    # Reset tables tracking
+    TABLES.clear()
 
-    # Reset mappers and metadata object
-    clear_mappers()
-    Base.metadata.clear()
+    # Remove db
+    ENGINE.dispose()
+    try:
+        SERVICE_DB_PATH.unlink()
+    except FileNotFoundError:
+        pass
+
+    # Reset base so new tables get fresh mappers
+    Base = declarative_base()
     LOGGER.info("DB has been shut down!")
