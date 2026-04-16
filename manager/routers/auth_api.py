@@ -115,11 +115,9 @@ def show_login_page(request: Request, destination: Optional[str] = "/"):
     # noqa: DAR101,DAR201,DAR401
     """
     return TEMPLATES.TemplateResponse(
-        "login.html",
-        context={
-            "request": request,
-            "ACTION": f"/auth/login?destination={destination}",
-        },
+        request=request,
+        name="login.html",
+        context={"ACTION": f"/auth/login?destination={destination}"},
         status_code=401,
     )
 
