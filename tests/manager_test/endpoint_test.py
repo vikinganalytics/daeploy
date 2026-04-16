@@ -17,7 +17,6 @@ from manager.app import app
 from manager.constants import DAEPLOY_DEFAULT_S2I_BUILD_IMAGE, get_manager_version
 from manager.data_models.request_models import BaseService
 
-
 client = TestClient(app)
 async_client = AsyncTestClient(app)
 

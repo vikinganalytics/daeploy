@@ -1,4 +1,4 @@
-# pylint: disable=too-many-ancestors
+# pylint: disable=too-many-ancestors, unused-argument
 from typing import Any, List, Dict
 
 import numpy as np
