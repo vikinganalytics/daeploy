@@ -2,9 +2,7 @@ import logging
 from datetime import datetime
 
 import dash
-from dash import dcc
-from dash import html
-from dash.dependencies import Input, Output
+from dash import dcc, html, Input, Output
 
 from manager.routers.service_api import read_services, inspect_service
 from manager.routers.notification_api import get_notifications, delete_notifications
@@ -67,12 +65,10 @@ def build_banner():
                 id="banner-text",
                 children=[
                     html.Img(src=app.get_asset_url("daeploy_white_icon.png")),
-                    dcc.Markdown(
-                        """
+                    dcc.Markdown("""
                     ### Daeploy Dashboard
                     by Viking Analytics AB
-                    """
-                    ),
+                    """),
                 ],
             ),
         ],
@@ -160,9 +156,11 @@ def generate_table_services():
             html.Tr(
                 # Main/Shadow
                 [
-                    html.Td("*", className="green-text")
-                    if service["main"]
-                    else html.Td("")
+                    (
+                        html.Td("*", className="green-text")
+                        if service["main"]
+                        else html.Td("")
+                    )
                 ]
                 +
                 # Name

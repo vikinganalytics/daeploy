@@ -143,7 +143,12 @@ def login_user(
         LOGGER.exception(f"User {username} failed to login!")
         return RedirectResponse(url=destination, status_code=303)
 
-    if not bcrypt.checkpw(password.get_secret_value().encode(), record.password):
+    stored_pw = (
+        record.password.encode()
+        if isinstance(record.password, str)
+        else record.password
+    )
+    if not bcrypt.checkpw(password.get_secret_value().encode(), stored_pw):
         return RedirectResponse(url=destination, status_code=303)
 
     # Construct token

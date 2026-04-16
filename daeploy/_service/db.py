@@ -10,7 +10,7 @@ import json
 
 from sqlalchemy import create_engine, and_
 from sqlalchemy.ext.automap import automap_base
-from sqlalchemy.orm import sessionmaker, mapper, clear_mappers
+from sqlalchemy.orm import sessionmaker, clear_mappers
 from sqlalchemy import Column, DateTime, Float, Text
 
 from daeploy.utilities import get_db_table_limit
@@ -68,9 +68,6 @@ def create_new_ts_table(name: str, dtype: Type) -> Type:
 
     # Create the actual table
     MapperClass.__table__.create(ENGINE, checkfirst=True)
-
-    # Map everything
-    mapper(MapperClass, MapperClass.__table__)
 
     LOGGER.info(f"Created new table for variable {name}")
 
@@ -230,7 +227,6 @@ def initialize_db():
 def remove_db():
     """Remove db"""
     global WRITER_THREAD
-    global QUEUE
 
     # Stop and join writer thread if alive
     if WRITER_THREAD.is_alive():

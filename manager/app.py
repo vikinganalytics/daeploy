@@ -19,7 +19,6 @@ from manager.database.database import initialize_db
 from manager.database import service_db
 from manager.constants import get_manager_version, cors_enabled, cors_config
 
-
 # Setup logger
 logging_api.setup_logging()
 LOGGER = logging.getLogger(__name__)
