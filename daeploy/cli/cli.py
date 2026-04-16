@@ -5,7 +5,7 @@ from typing import Dict, List, Optional, Tuple
 import os
 import json
 
-import pkg_resources
+from importlib.metadata import version as get_version, PackageNotFoundError
 import pytest
 import requests
 import typer
@@ -73,9 +73,9 @@ def version_callback(value: bool):
 
     # Get SDK Version
     try:
-        sdk_version = pkg_resources.get_distribution("daeploy").version
+        sdk_version = get_version("daeploy")
         typer.echo(f"SDK version: {sdk_version}")
-    except pkg_resources.DistributionNotFound:
+    except PackageNotFoundError:
         pass
 
     # Get Manager Version
@@ -654,13 +654,13 @@ def init(
         raise typer.Exit(1)
     # Find out which daeploy version that should be used by the service
     try:
-        dist = pkg_resources.get_distribution("daeploy")
+        daeploy_version = get_version("daeploy")
         daeploy_specifier = (
-            str(dist.as_requirement())
-            if dist.version != "0.0.0.dev0"
-            else dist.project_name
+            f"daeploy=={daeploy_version}"
+            if daeploy_version != "0.0.0.dev0"
+            else "daeploy"
         )  # Use full specificer unless in dev environment, then just go for the latest
-    except pkg_resources.DistributionNotFound:
+    except PackageNotFoundError:
         typer.echo(
             "`daeploy` package not found, assuming latest version "
             "should be used for the generated project."
