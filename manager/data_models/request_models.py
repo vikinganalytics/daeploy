@@ -116,7 +116,7 @@ class NotificationRequest(BaseModel):
     msg: str
     severity: int
     dashboard: bool
-    emails: Union[List[str], None]
+    emails: Union[List[str], None] = None
     timer: int
     timestamp: str
 

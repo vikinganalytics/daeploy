@@ -127,9 +127,8 @@ def initialize_db():
 
 def remove_db():
     """Removes db"""
+    engine.dispose()
     try:
         MANAGER_DB_PATH.unlink()
     except FileNotFoundError:
-        # Path.unlink(missing_ok=True) gives same behavior but was
-        # not introduced until python 3.8
         pass
