@@ -34,7 +34,7 @@ class StateResponse(BaseModel):
     Error: str
     StartedAt: str
     FinishedAt: str
-    Health: Optional[HealthResponse]
+    Health: Optional[HealthResponse] = None
 
 
 class NetworkSettingsResponse(BaseModel):
@@ -45,8 +45,8 @@ class NetworkSettingsResponse(BaseModel):
     LinkLocalIPv6PrefixLen: int
     Ports: dict
     SandboxKey: str
-    SecondaryIPAddresses: Optional[str]
-    SecondaryIPv6Addresses: Optional[str]
+    SecondaryIPAddresses: Optional[str] = None
+    SecondaryIPv6Addresses: Optional[str] = None
     EndpointID: str
     Gateway: str
     GlobalIPv6Address: str
@@ -76,7 +76,7 @@ class InspectResponse(BaseModel):
     MountLabel: str
     ProcessLabel: str
     AppArmorProfile: str
-    ExecIDs: Optional[List[str]]
+    ExecIDs: Optional[List[str]] = None
     HostConfig: dict
     GraphDriver: dict
     Mounts: list

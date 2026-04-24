@@ -87,7 +87,7 @@ def new_service_from_git_repo(service_request: ServiceGitRequest):
 
     """
     check_service_exists(service_request.name, service_request.version)
-    image = build_service_image_s2i(service_request.git_url, service_request)
+    image = build_service_image_s2i(str(service_request.git_url), service_request)
     start_service_from_image(image, service_request)
 
     return "Accepted"
