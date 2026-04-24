@@ -5,6 +5,7 @@ pytest
 pytest-sphinx
 pytest-asyncio
 pytest-pinned
+pytest-timeout
 pylint
 black
 flake8
