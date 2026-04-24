@@ -1,5 +1,7 @@
 import docker
 import pytest
+import sys
+import subprocess
 import time
 import requests
 import uuid
@@ -9,7 +11,6 @@ import io
 import re
 import shutil
 
-from setuptools import sandbox
 from pathlib import Path
 from typer.testing import CliRunner
 import nbformat
@@ -168,9 +169,16 @@ def generate_requirements_file_for_service(service_folder):
     the path to the wheel file which contains the daeploy package.
     """
     # TODO: No need to run the setup twice...
-    sandbox.run_setup(
-        str(THIS_DIR.parent.parent / "setup.py"),
-        ["bdist_wheel", "--dist-dir", str(service_folder)],
+    subprocess.run(
+        [
+            sys.executable,
+            "setup.py",
+            "bdist_wheel",
+            "--dist-dir",
+            str(service_folder),
+        ],
+        cwd=str(THIS_DIR.parent.parent),
+        check=True,
     )
     with (service_folder / "requirements.txt").open("w") as file_handle:
         file_handle.write(WHEEL_FILE_NAME)
