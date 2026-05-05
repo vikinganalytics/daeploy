@@ -93,7 +93,8 @@ def pickle_service(cli_auth_login, dummy_manager, headers):
     # Poll for the pickle service to be reachable; pandas + scikit-learn
     # make the s2i build several minutes long, and the service still needs
     # time to start up after the container appears.
-    deadline = time.time() + 600
+    deadline = time.time() + 800
+    reachable = False
     while time.time() < deadline:
         try:
             r = requests.get(
@@ -102,10 +103,18 @@ def pickle_service(cli_auth_login, dummy_manager, headers):
                 timeout=5,
             )
             if r.status_code == 200:
+                reachable = True
                 break
         except requests.RequestException:
             pass
         time.sleep(5)
+    if not reachable:
+        client = docker.from_env()
+        print("Containers:", [c.name for c in client.containers.list(all=True)])
+        print(
+            "dummy_manager logs:\n",
+            dummy_manager.logs(tail=200).decode(errors="replace"),
+        )
     try:
         yield
     finally:
