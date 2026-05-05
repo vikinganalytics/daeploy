@@ -88,9 +88,16 @@ def pickle_service(cli_auth_login, dummy_manager, headers):
         headers=headers,
         files={"file": ("filename", open(THIS_DIR / "pickle_e2e_testing.pkl", "rb"))},
     )
-    print(f"~pickle response: {response.status_code} {response.text}")
-    print(f"dummy_manager logs:\n{dummy_manager.logs().decode(errors='replace')}")
-    time.sleep(30)  # Grace period
+    assert response.status_code == 202, response.text
+
+    # Poll for the pickle container to appear; pandas + scikit-learn make
+    # the s2i build several minutes long.
+    client = docker.from_env()
+    deadline = time.time() + 600
+    while time.time() < deadline:
+        if "daeploy-pickle-0.1.0" in [c.name for c in client.containers.list()]:
+            break
+        time.sleep(5)
     try:
         yield
     finally:
