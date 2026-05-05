@@ -78,7 +78,7 @@ def pickle_service(cli_auth_login, headers):
         "name": "pickle",
         "version": "0.1.0",
         "port": 8000,
-        "requirements": ["pandas", "sklearn"],
+        "requirements": ["pandas", "scikit-learn"],
     }
 
     requests.request(
