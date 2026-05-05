@@ -73,7 +73,7 @@ def cli_auth_login(dummy_manager, cli_auth):
 
 
 @pytest.fixture(scope="module")
-def pickle_service(cli_auth_login, headers):
+def pickle_service(cli_auth_login, dummy_manager, headers):
     data = {
         "name": "pickle",
         "version": "0.1.0",
@@ -81,14 +81,16 @@ def pickle_service(cli_auth_login, headers):
         "requirements": ["pandas", "scikit-learn"],
     }
 
-    requests.request(
+    response = requests.request(
         "POST",
         url="http://localhost/services/~pickle",
         data=data,
         headers=headers,
         files={"file": ("filename", open(THIS_DIR / "pickle_e2e_testing.pkl", "rb"))},
     )
-    time.sleep(5)  # Grace period
+    print(f"~pickle response: {response.status_code} {response.text}")
+    print(f"dummy_manager logs:\n{dummy_manager.logs().decode(errors='replace')}")
+    time.sleep(30)  # Grace period
     try:
         yield
     finally:
