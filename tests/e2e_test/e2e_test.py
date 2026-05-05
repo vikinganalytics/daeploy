@@ -533,7 +533,14 @@ def test_service_from_pickle_endpoint(dummy_manager, pickle_service, headers):
         json=data,
         headers=headers,
     )
-    assert resp.status_code == 200
+    if resp.status_code != 200:
+        for c in client.containers.list(all=True):
+            if "pickle" in c.name:
+                print(
+                    f"{c.name} status={c.status} logs:\n",
+                    c.logs(tail=200).decode(errors="replace"),
+                )
+    assert resp.status_code == 200, resp.text
 
     # Test documentation started properly
     response = requests.get(
