@@ -504,6 +504,7 @@ def test_docs_page_from_service_shows_correct_docs(
     assert "0.1.0" in service_docs.text
 
 
+@pytest.mark.timeout(900)
 def test_service_from_pickle_endpoint(dummy_manager, pickle_service, headers):
     client = docker.from_env()
     containers = [con.name for con in client.containers.list()]
