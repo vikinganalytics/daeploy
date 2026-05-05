@@ -115,6 +115,12 @@ def pickle_service(cli_auth_login, dummy_manager, headers):
             "dummy_manager logs:\n",
             dummy_manager.logs(tail=200).decode(errors="replace"),
         )
+        for c in client.containers.list(all=True):
+            if "pickle" in c.name:
+                print(
+                    f"{c.name} status={c.status} logs:\n",
+                    c.logs(tail=200).decode(errors="replace"),
+                )
     try:
         yield
     finally:
