@@ -90,13 +90,21 @@ def pickle_service(cli_auth_login, dummy_manager, headers):
     )
     assert response.status_code == 202, response.text
 
-    # Poll for the pickle container to appear; pandas + scikit-learn make
-    # the s2i build several minutes long.
-    client = docker.from_env()
+    # Poll for the pickle service to be reachable; pandas + scikit-learn
+    # make the s2i build several minutes long, and the service still needs
+    # time to start up after the container appears.
     deadline = time.time() + 600
     while time.time() < deadline:
-        if "daeploy-pickle-0.1.0" in [c.name for c in client.containers.list()]:
-            break
+        try:
+            r = requests.get(
+                "http://localhost/services/pickle/openapi.json",
+                headers=headers,
+                timeout=5,
+            )
+            if r.status_code == 200:
+                break
+        except requests.RequestException:
+            pass
         time.sleep(5)
     try:
         yield
