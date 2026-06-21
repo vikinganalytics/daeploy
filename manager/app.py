@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import RedirectResponse
 from starlette.middleware.wsgi import WSGIMiddleware
+from starlette.staticfiles import StaticFiles
 
 from manager.routers import (
     admin_api,
@@ -41,6 +42,9 @@ app.include_router(service_api.ROUTER, prefix="/services", tags=["Service"])
 app.include_router(
     notification_api.ROUTER, prefix="/notifications", tags=["Notification"]
 )
+
+# Static assets
+app.mount("/assets", StaticFiles(directory="manager/assets"), name="assets")
 
 # Dashboard subapi
 app.mount("/dashboard", WSGIMiddleware(dashboard_api.app.server))

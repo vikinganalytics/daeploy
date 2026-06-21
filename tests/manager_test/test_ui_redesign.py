@@ -20,3 +20,25 @@ def test_fonts_bundled():
 def test_logo_is_local_svg():
     svg = (ASSETS / "daeploy_mark.svg").read_text()
     assert "<svg" in svg and "5EE6D0" in svg
+
+
+from manager.templates import __file__ as _t  # noqa
+TPL = Path("manager/templates")
+
+FORBIDDEN = ["maxcdn", "bootstrapcdn", "googleapis", "cloudflare",
+             "jquery", "daeploy.com/wp-content"]
+
+def test_login_html_is_self_contained():
+    html = TPL.joinpath("login.html").read_text()
+    low = html.lower()
+    for bad in FORBIDDEN:
+        assert bad not in low, f"login.html still references {bad}"
+    # keep the working form contract
+    assert 'action="{{ ACTION }}"' in html
+    assert 'name="username"' in html and 'name="password"' in html
+    assert '/assets/tokens.css' in html
+
+def test_assets_mounted(test_client):
+    r = test_client.get("/assets/tokens.css")
+    assert r.status_code == 200
+    assert "--accent" in r.text
