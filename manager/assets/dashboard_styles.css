@@ -74,6 +74,7 @@ a{color:inherit;text-decoration:none;}
 .sdot.shadow{background:var(--accent);box-shadow:0 0 0 3px rgba(94,230,208,.15)}
 .sdot.stop{background:var(--faint)}
 .state .lbl{font-size:.82rem}
+.lbl.stopped{color:var(--muted)}
 .state .since{font-family:var(--mono);font-size:10.5px;color:var(--faint);margin-top:.1rem}
 
 /* ---------- badges ---------- */

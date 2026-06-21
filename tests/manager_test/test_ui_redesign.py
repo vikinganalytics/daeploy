@@ -80,3 +80,9 @@ def test_dashboard_layout_builds():
         "update_content",
     ]:
         assert hasattr(dashboard_api, fn)
+
+
+def test_notifications_panel_is_live():
+    from manager.routers import dashboard_api
+
+    assert "notifications-content.children" in dashboard_api.app.callback_map

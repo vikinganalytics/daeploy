@@ -87,36 +87,6 @@ def build_banner():
     )
 
 
-def build_tabs():
-    return html.Div(
-        id="daeploy_tabs",
-        children=[
-            dcc.Tabs(
-                id="app-tabs",
-                className="daeploy_custom-tabs",
-                # Set tab-1 to active from start.
-                value="tab1",
-                children=[
-                    dcc.Tab(
-                        id="services",
-                        label="Services",
-                        value="tab1",
-                        className="daeploy_custom-tabs",
-                        selected_className="daeploy_custom-tab--selected",
-                    ),
-                    dcc.Tab(
-                        id="notification",
-                        label="Notifications",
-                        value="tab2",
-                        className="daeploy_custom-tabs",
-                        selected_className="daeploy_custom-tab--selected",
-                    ),
-                ],
-            )
-        ],
-    )
-
-
 @app.callback(
     Output("app-content", "children"),
     Input("app-tabs", "value"),
@@ -148,6 +118,16 @@ def update_content(tab_switch, interval, n_clicks):
             ],
         ),
     )
+
+
+@app.callback(
+    Output("notifications-content", "children"),
+    Input("interval1", "n_intervals"),
+    Input("clear-notifications-button", "n_clicks"),
+)
+# pylint: disable=unused-argument
+def update_notifications(interval, n_clicks):
+    return generate_table_notifications()
 
 
 def generate_table_services():
@@ -207,13 +187,13 @@ def generate_table_services():
             className="id",
         )
 
-        state_lbl_style = {"color": "var(--muted)"} if not running else {}
+        state_lbl_class = "lbl stopped" if not running else "lbl"
         state_div = html.Div(
             [
                 html.Span(className=dot_class),
                 html.Div(
                     [
-                        html.Div(state_label, className="lbl", style=state_lbl_style),
+                        html.Div(state_label, className=state_lbl_class),
                         html.Div(f"since {since_str}", className="since"),
                     ]
                 ),
@@ -402,7 +382,10 @@ app.layout = html.Div(
                                     className="panel-head",
                                     children=[html.H2("Notifications")],
                                 ),
-                                generate_table_notifications(),
+                                html.Div(
+                                    id="notifications-content",
+                                    children=[generate_table_notifications()],
+                                ),
                             ],
                         ),
                     ],
