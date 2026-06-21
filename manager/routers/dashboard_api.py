@@ -130,6 +130,70 @@ def update_notifications(interval, n_clicks):
     return generate_table_notifications()
 
 
+def _service_since(inspection, running):
+    """Format the running/stopped 'since' timestamp from a service inspection."""
+    key = "StartedAt" if running else "FinishedAt"
+    raw = inspection["State"][key].split(".")[0]
+    parsed = datetime.strptime(raw, "%Y-%m-%dT%H:%M:%S")
+    return parsed.strftime("%Y-%m-%d %H:%M:%S")
+
+
+def build_service_row(service):
+    """Build a single styled service row Div for the dashboard."""
+    is_main = service["main"]
+    inspection = inspect_service(service["name"], service["version"])
+    running = inspection["State"]["Running"]
+
+    if running and is_main:
+        dot_class, state_label = "sdot run live", "Running"
+    elif running:
+        dot_class, state_label = "sdot shadow", "Mirroring traffic"
+    else:
+        dot_class, state_label = "sdot stop", "Stopped"
+
+    if is_main:
+        pin = html.Span("★", className="pin main", title="Main version")
+    elif not running:
+        pin = html.Span("○", className="pin", title="Stopped")
+    else:
+        pin = html.Span("↗", className="pin", title="Shadow version")
+
+    if not is_main and running:
+        name = html.Div(
+            [service["name"], html.Span("shadow", className="badge shadow")],
+            className="name",
+        )
+    else:
+        name = html.Div(service["name"], className="name")
+
+    id_div = html.Div(
+        [pin, html.Div([name, html.Div(service["version"], className="ver")])],
+        className="id",
+    )
+    state_div = html.Div(
+        [
+            html.Span(className=dot_class),
+            html.Div(
+                [
+                    html.Div(
+                        state_label, className="lbl" if running else "lbl stopped"
+                    ),
+                    html.Div(
+                        f"since {_service_since(inspection, running)}",
+                        className="since",
+                    ),
+                ]
+            ),
+        ],
+        className="state",
+    )
+    actions_div = html.Div(
+        [get_service_log_link(service), get_service_docs_link(service)],
+        className="svc-actions",
+    )
+    return html.Div([id_div, state_div, actions_div], className="svc")
+
+
 def generate_table_services():
     """Generates service rows with the service information.
 
@@ -139,79 +203,7 @@ def generate_table_services():
     services = read_services()
     if not services:
         return html.Div("No services deployed.", className="empty")
-
-    rows = []
-    for service in services:
-        is_main = service["main"]
-        inspection = inspect_service(service["name"], service["version"])
-        running = inspection["State"]["Running"]
-
-        # Determine dot class and state label
-        if running and is_main:
-            dot_class = "sdot run live"
-            state_label = "Running"
-        elif running:
-            dot_class = "sdot shadow"
-            state_label = "Mirroring traffic"
-        else:
-            dot_class = "sdot stop"
-            state_label = "Stopped"
-
-        # Timestamp
-        if running:
-            timestamp_raw = inspection["State"]["StartedAt"]
-        else:
-            timestamp_raw = inspection["State"]["FinishedAt"]
-        timestamp = datetime.strptime(timestamp_raw.split(".")[0], "%Y-%m-%dT%H:%M:%S")
-        since_str = timestamp.strftime("%Y-%m-%d %H:%M:%S")
-
-        # Pin icon
-        if is_main:
-            pin = html.Span("★", className="pin main", title="Main version")
-        elif not running:
-            pin = html.Span("○", className="pin", title="Stopped")
-        else:
-            pin = html.Span("↗", className="pin", title="Shadow version")
-
-        # Name with optional shadow badge
-        name_children = [html.Div(service["name"], className="name")]
-        if not is_main and running:
-            name_children[0] = html.Div(
-                [service["name"], html.Span("shadow", className="badge shadow")],
-                className="name",
-            )
-        name_children.append(html.Div(service["version"], className="ver"))
-
-        id_div = html.Div(
-            [pin, html.Div(name_children)],
-            className="id",
-        )
-
-        state_lbl_class = "lbl stopped" if not running else "lbl"
-        state_div = html.Div(
-            [
-                html.Span(className=dot_class),
-                html.Div(
-                    [
-                        html.Div(state_label, className=state_lbl_class),
-                        html.Div(f"since {since_str}", className="since"),
-                    ]
-                ),
-            ],
-            className="state",
-        )
-
-        actions_div = html.Div(
-            [
-                get_service_log_link(service),
-                get_service_docs_link(service),
-            ],
-            className="svc-actions",
-        )
-
-        rows.append(html.Div([id_div, state_div, actions_div], className="svc"))
-
-    return html.Div(rows)
+    return html.Div([build_service_row(service) for service in services])
 
 
 def get_service_docs_link(service):
