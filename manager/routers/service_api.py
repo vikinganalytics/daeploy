@@ -38,6 +38,7 @@ from manager.constants import (
     DAEPLOY_PREFIX,
     DAEPLOY_TAR_FILE_NAME,
     DAEPLOY_DEFAULT_INTERNAL_PORT,
+    get_manager_version,
 )
 from manager.checks import (
     check_service_exists_json_body,
@@ -333,7 +334,11 @@ def service_logs_view(request: Request, name: str, version: str):
     return TEMPLATES.TemplateResponse(
         request=request,
         name="logs.html",
-        context={"name": name, "version": version},
+        context={
+            "name": name,
+            "version": version,
+            "manager_version": get_manager_version(),
+        },
     )
 
 

@@ -130,7 +130,7 @@
         <img src="/assets/daeploy_mark.svg" width="26" height="26" alt="">
         <span class="wordmark">dae<b>ploy</b></span>
       </div>
-      <span class="vchip">manager <b>v: latest</b></span>
+      <span class="vchip">manager <b>v: {{ manager_version }}</b></span>
     </div>
     <nav class="actions">
       <a class="act" href="/dashboard/">&larr; Services</a>
@@ -144,7 +144,7 @@
         <div class="ctx"><span class="sdot run live"></span>
           <span class="name">{{ name }}</span><span class="ver">v{{ version }}</span></div>
         <div class="logs-tools">
-          <span class="live-tag" id="liveTag"><span class="d"></span>Live</span>
+          <span class="live-tag" id="liveTag"><span class="d"></span><span id="liveLabel">Live</span></span>
           <label class="follow" title="Auto-scroll to newest logs">
             <input type="checkbox" id="followBox" checked>
             <span class="track" aria-hidden="true"></span><span class="flabel">Follow</span>
@@ -164,7 +164,7 @@
         jumpBtn=document.getElementById('jumpBtn'),
         liveTag=document.getElementById('liveTag');
     function nearBottom(){return consoleEl.scrollHeight-consoleEl.scrollTop-consoleEl.clientHeight<24;}
-    function setLive(on){liveTag.classList.toggle('paused',!on);liveTag.childNodes[1].textContent=on?'Live':'Paused';}
+    function setLive(on){liveTag.classList.toggle('paused',!on);document.getElementById('liveLabel').textContent=on?'Live':'Paused';}
     function classify(line){var u=line.toUpperCase();
       if(u.indexOf('ERROR')>-1||u.indexOf('CRITICAL')>-1)return'err';
       if(u.indexOf('WARN')>-1)return'warn';return'info';}

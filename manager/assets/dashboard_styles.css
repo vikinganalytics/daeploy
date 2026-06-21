@@ -25,6 +25,7 @@ a{color:inherit;text-decoration:none;}
   transition:color .15s,border-color .15s,background .15s;display:inline-block;
 }
 .act:hover{color:var(--text);border-color:var(--accent-dim)}
+.act:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
 .act.danger:hover{color:var(--crit);border-color:var(--crit)}
 
 /* ---------- page / grid ---------- */

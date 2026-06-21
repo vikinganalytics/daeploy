@@ -214,35 +214,6 @@ def generate_table_services():
     return html.Div(rows)
 
 
-def get_service_state(service):
-    """Getter for the state of the service.
-       The statue of the service is collected from the inspect information.
-
-    Args:
-        service (dict): The service to get the state from.
-
-    Returns:
-        str: The state of the 'service'
-    """
-    inspection = inspect_service(service["name"], service["version"])
-
-    running = inspection["State"]["Running"]
-    if running:
-        timestamp = inspection["State"]["StartedAt"]
-        running_msg = "Running"
-    else:
-        timestamp = inspection["State"]["FinishedAt"]
-        running_msg = "Stopped"
-
-    timestamp = datetime.strptime(timestamp.split(".")[0], "%Y-%m-%dT%H:%M:%S")
-    timestamp = timestamp.strftime("%Y-%m-%d %H:%M:%S")
-    return f" {running_msg} (since {timestamp})"
-
-
-def get_link_style():
-    return {"color": "white"}
-
-
 def get_service_docs_link(service):
     """Create the link to the docs from a service
 
@@ -276,13 +247,6 @@ def get_service_log_link(service):
         f"?name={service['name']}&version={service['version']}",
         className="lnk",
     )
-
-
-def get_service_link(service):
-    service_endpoint = (
-        f"{get_external_proxy_url()}/services/{service['name']}_{service['version']}/"
-    )
-    return html.A(service["name"], href=service_endpoint, style=get_link_style())
 
 
 def generate_table_notifications():
