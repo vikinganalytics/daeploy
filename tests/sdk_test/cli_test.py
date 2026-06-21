@@ -848,11 +848,18 @@ def test_logs_stream(cli_auth_login):
         ],
     )
 
-    threading.Thread(target=kill_service).start()
+    killer = threading.Thread(target=kill_service)
+    killer.start()
     streamed_logs = runner.invoke(
         app,
         ["logs", "test_service", "1.0.0", "--follow"],
     )
+    # Wait for the background "kill" invoke to finish before returning. It uses
+    # the same module-level CliRunner, and CliRunner.isolation() swaps the
+    # process-global sys.stdout/sys.stderr. If the thread is left unjoined, its
+    # isolation teardown races with the next test's invoke and closes that
+    # invoke's stream -> "ValueError: I/O operation on closed file".
+    killer.join()
     assert len(streamed_logs.stdout) > len(first_logs.stdout)
 
 
