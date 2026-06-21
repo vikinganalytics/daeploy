@@ -1,0 +1,17 @@
+/* Daeploy design tokens — single source of truth for color + type. */
+@font-face{font-family:"Inter";font-weight:400;font-display:swap;src:url(fonts/inter-400.woff2) format("woff2");}
+@font-face{font-family:"Inter";font-weight:500;font-display:swap;src:url(fonts/inter-500.woff2) format("woff2");}
+@font-face{font-family:"Inter";font-weight:600;font-display:swap;src:url(fonts/inter-600.woff2) format("woff2");}
+@font-face{font-family:"JetBrains Mono";font-weight:400;font-display:swap;src:url(fonts/jbmono-400.woff2) format("woff2");}
+@font-face{font-family:"JetBrains Mono";font-weight:500;font-display:swap;src:url(fonts/jbmono-500.woff2) format("woff2");}
+
+:root{
+  --ground:#0E1320; --surface:#161C2C; --surface-2:#1C2438;
+  --line:#28324A; --line-soft:#1E2638;
+  --text:#E7ECF5; --muted:#8B95AC; --faint:#5C6680;
+  --accent:#5EE6D0; --accent-dim:#2E5A56; --accent-ink:#072019;
+  --ok:#3DDC97; --warn:#F4B740; --crit:#F2585B;
+  --shadow:0 24px 60px -24px rgba(0,0,0,.7);
+  --sans:"Inter","Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
