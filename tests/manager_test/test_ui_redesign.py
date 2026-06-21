@@ -86,3 +86,21 @@ def test_notifications_panel_is_live():
     from manager.routers import dashboard_api
 
     assert "notifications-content.children" in dashboard_api.app.callback_map
+
+
+def test_logs_view_route_returns_page(test_client_logged_in):
+    r = test_client_logged_in.get("/services/~logs/view?name=demo&version=0.1.0")
+    assert r.status_code == 200
+    body = r.text
+    assert 'id="console"' in body
+    assert 'id="followBox"' in body  # the Follow checkbox
+    assert "/services/~logs?" in body  # streams the real endpoint
+    assert "name=demo" in body and "version=0.1.0" in body
+
+
+def test_logs_view_template_self_contained():
+    html = TPL.joinpath("logs.html").read_text()
+    low = html.lower()
+    for bad in FORBIDDEN:
+        assert bad not in low
+    assert "/assets/tokens.css" in html

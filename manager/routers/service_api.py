@@ -8,8 +8,9 @@ from pathlib import Path
 from pydantic import ValidationError, Json
 
 from cookiecutter.main import cookiecutter
-from fastapi import APIRouter, HTTPException, File, UploadFile, Form
-from fastapi.responses import StreamingResponse
+from fastapi import APIRouter, HTTPException, File, Request, UploadFile, Form
+from fastapi.responses import HTMLResponse, StreamingResponse
+from fastapi.templating import Jinja2Templates
 from docker.errors import ImageNotFound, ImageLoadError
 
 from manager.exceptions import (
@@ -54,6 +55,7 @@ PICKLE_TEMPLATE_DIR = THIS_DIR.parent / "templates" / "daeploy_pickle_template/"
 LOGGER = logging.getLogger(__name__)
 
 ROUTER = APIRouter()
+TEMPLATES = Jinja2Templates(directory="manager/templates")
 
 
 @ROUTER.get("/", response_model=List[ServiceResponse])
@@ -323,6 +325,16 @@ def assign_main_service(service: BaseService):
     if main_version:
         proxy.create_mirror_configuration(service.name, main_version, shadow_versions)
     return "OK"
+
+
+@ROUTER.get("/~logs/view", response_class=HTMLResponse)
+def service_logs_view(request: Request, name: str, version: str):
+    """HTML view that streams a service's logs with a follow/auto-scroll toggle."""
+    return TEMPLATES.TemplateResponse(
+        request=request,
+        name="logs.html",
+        context={"name": name, "version": version},
+    )
 
 
 @ROUTER.get("/~logs", response_class=StreamingResponse)

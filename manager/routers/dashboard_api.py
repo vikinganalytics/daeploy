@@ -269,11 +269,11 @@ def get_service_log_link(service):
     Returns:
         html.A: Html.A object with a href to the logs for 'service'
     """
-    logs_end_point = f"{get_external_proxy_url()}/services/~logs"
+    proxy_url = get_external_proxy_url()
     return html.A(
         "Logs",
-        href=f"{logs_end_point}?name={service['name']}&version={service['version']}"
-        f"&follow=true&tail={DEFAULT_NUMBER_OF_LOGS}",
+        href=f"{proxy_url}/services/~logs/view"
+        f"?name={service['name']}&version={service['version']}",
         className="lnk",
     )
 
