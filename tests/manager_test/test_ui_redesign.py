@@ -104,3 +104,14 @@ def test_logs_view_template_self_contained():
     for bad in FORBIDDEN:
         assert bad not in low
     assert "/assets/tokens.css" in html
+
+
+def test_assets_router_is_public():
+    # /assets must be served without the auth middleware so the login page
+    # can load its CSS/fonts/logo before the user authenticates.
+    from manager import proxy
+
+    routers = proxy.get_manager_configuration()["http"]["routers"]
+    assert "static_assets" in routers, "missing public /assets router"
+    assert "/assets" in routers["static_assets"]["rule"]
+    assert not routers["static_assets"].get("middlewares"), "/assets must be public"
