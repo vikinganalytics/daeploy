@@ -21,56 +21,68 @@ app.title = "Daeploy"
 
 
 def build_user_section():
-    return html.Div(
-        id="user-actions",
-        className="user-actions",
+    return html.Nav(
+        className="actions",
         children=[
-            html.P(f"v:{get_manager_version()}", className="version-identifier"),
-            html.P(),
             html.A(
-                "LOGS",
-                id="manager-logs-buttom",
+                "Logs",
                 href=f"{get_external_proxy_url()}/logs",
-                className="logout",
+                className="act",
             ),
             html.A(
-                "API DOCS",
-                id="documenation-button",
+                "API Docs",
                 href=f"{get_external_proxy_url()}/docs",
-                className="logout",
+                className="act",
             ),
-            html.P(),
             html.Button(
-                "CLEAR NOTIFICATIONS",
+                "Clear notifications",
                 id="clear-notifications-button",
                 n_clicks=0,
-                className="logout",
+                className="act",
             ),
             html.A(
-                "LOGOUT",
-                id="logout-button",
+                "Log out",
                 href=f"{get_external_proxy_url()}/auth/logout",
-                className="logout",
+                className="act danger",
             ),
         ],
     )
 
 
 def build_banner():
-    return html.Div(
-        id="banner",
-        className="banner",
+    return html.Header(
+        className="top",
         children=[
             html.Div(
-                id="banner-text",
+                className="left",
                 children=[
-                    html.Img(src=app.get_asset_url("daeploy_white_icon.png")),
-                    dcc.Markdown("""
-                    ### Daeploy Dashboard
-                    by Viking Analytics AB
-                    """),
+                    html.Div(
+                        className="mark",
+                        children=[
+                            html.Img(
+                                src=app.get_asset_url("daeploy_mark.svg"),
+                                width=26,
+                                height=26,
+                            ),
+                            html.Span(
+                                children=[
+                                    "dae",
+                                    html.B("ploy"),
+                                ],
+                                className="wordmark",
+                            ),
+                        ],
+                    ),
+                    html.Span(
+                        children=[
+                            "manager ",
+                            html.B(f"v: {get_manager_version()}"),
+                        ],
+                        className="vchip",
+                    ),
                 ],
             ),
+            build_user_section(),
         ],
     )
 
@@ -139,44 +151,87 @@ def update_content(tab_switch, interval, n_clicks):
 
 
 def generate_table_services():
-    """Generates a HTML table with the service information
+    """Generates service rows with the service information.
 
     Returns:
-        html.Table: The html table with service information
+        html.Div: A Div containing styled service rows.
     """
     services = read_services()
-    headers = ["Main", "Service name", "Version", "State", "Logs", "Documentation"]
+    if not services:
+        return html.Div("No services deployed.", className="empty")
 
-    return html.Table(
-        # Header
-        [html.Tr([html.Th(col) for col in headers])]
-        +
-        # Body
-        [
-            html.Tr(
-                # Main/Shadow
-                [
-                    (
-                        html.Td("*", className="green-text")
-                        if service["main"]
-                        else html.Td("")
-                    )
-                ]
-                +
-                # Name
-                [html.Td(get_service_link(service))]
-                # Version
-                + [html.Td(service["version"])]
-                # Service state
-                + [html.Td(get_service_state(service))]
-                # Log link
-                + [html.Td(get_service_log_link(service))]
-                # Docs link
-                + [html.Td(get_service_docs_link(service))]
+    rows = []
+    for service in services:
+        is_main = service["main"]
+        inspection = inspect_service(service["name"], service["version"])
+        running = inspection["State"]["Running"]
+
+        # Determine dot class and state label
+        if running and is_main:
+            dot_class = "sdot run live"
+            state_label = "Running"
+        elif running:
+            dot_class = "sdot shadow"
+            state_label = "Mirroring traffic"
+        else:
+            dot_class = "sdot stop"
+            state_label = "Stopped"
+
+        # Timestamp
+        if running:
+            timestamp_raw = inspection["State"]["StartedAt"]
+        else:
+            timestamp_raw = inspection["State"]["FinishedAt"]
+        timestamp = datetime.strptime(timestamp_raw.split(".")[0], "%Y-%m-%dT%H:%M:%S")
+        since_str = timestamp.strftime("%Y-%m-%d %H:%M:%S")
+
+        # Pin icon
+        if is_main:
+            pin = html.Span("★", className="pin main", title="Main version")
+        elif not running:
+            pin = html.Span("○", className="pin", title="Stopped")
+        else:
+            pin = html.Span("↗", className="pin", title="Shadow version")
+
+        # Name with optional shadow badge
+        name_children = [html.Div(service["name"], className="name")]
+        if not is_main and running:
+            name_children[0] = html.Div(
+                [service["name"], html.Span("shadow", className="badge shadow")],
+                className="name",
             )
-            for service in services
-        ]
-    )
+        name_children.append(html.Div(service["version"], className="ver"))
+
+        id_div = html.Div(
+            [pin, html.Div(name_children)],
+            className="id",
+        )
+
+        state_lbl_style = {"color": "var(--muted)"} if not running else {}
+        state_div = html.Div(
+            [
+                html.Span(className=dot_class),
+                html.Div(
+                    [
+                        html.Div(state_label, className="lbl", style=state_lbl_style),
+                        html.Div(f"since {since_str}", className="since"),
+                    ]
+                ),
+            ],
+            className="state",
+        )
+
+        actions_div = html.Div(
+            [
+                get_service_log_link(service),
+                get_service_docs_link(service),
+            ],
+            className="svc-actions",
+        )
+
+        rows.append(html.Div([id_div, state_div, actions_div], className="svc"))
+
+    return html.Div(rows)
 
 
 def get_service_state(service):
@@ -221,7 +276,7 @@ def get_service_docs_link(service):
     return html.A(
         "Docs",
         href=(f"{proxy_url}/services/{service['name']}_{service['version']}/docs"),
-        style=get_link_style(),
+        className="lnk",
     )
 
 
@@ -239,7 +294,7 @@ def get_service_log_link(service):
         "Logs",
         href=f"{logs_end_point}?name={service['name']}&version={service['version']}"
         f"&follow=true&tail={DEFAULT_NUMBER_OF_LOGS}",
-        style=get_link_style(),
+        className="lnk",
     )
 
 
@@ -251,77 +306,107 @@ def get_service_link(service):
 
 
 def generate_table_notifications():
-    """Generates a HTML table with the notifications
+    """Generates notification rows.
 
     Returns:
-        html.Table: The html table with notification information
+        html.Div: A Div containing styled notification rows.
     """
     notifications = get_notifications()
-    headers = [
-        "Latest Timestamp",
-        "Service name",
-        "Version",
-        "Message",
-        "Count",
-        "Severity",
-    ]
-    dict_keys = ["timestamp", "service_name", "service_version", "msg", "counter"]
-    severity_colors = get_severity_colors(notifications)
-    return html.Table(
-        # Header
-        [html.Tr([html.Th(col) for col in headers])]
-        +
-        # Body
-        [
-            html.Tr(
-                [html.Td(notifications[index[0]][key]) for key in dict_keys]
-                + [severity_colors[index[0]]]
-            )
-            for index in reversed(
-                sorted(notifications.items(), key=lambda item: item[1]["timestamp"])
-            )
-        ]
-    )
+    if not notifications:
+        return html.Div("No notifications.", className="empty")
+
+    severity_map = get_severity_colors(notifications)
+    rows = []
+    for index, _ in reversed(
+        sorted(notifications.items(), key=lambda item: item[1]["timestamp"])
+    ):
+        notification = notifications[index]
+        sev_class, sev_label = severity_map[index]
+        timestamp = notification["timestamp"]
+        msg = notification["msg"]
+
+        row = html.Div(
+            [
+                html.Span(className=f"sev {sev_class}"),
+                html.Div(
+                    [
+                        html.Div(msg, className="msg"),
+                        html.Div(
+                            [
+                                html.Span(sev_label, className=f"sev-tag {sev_class}"),
+                                html.Span(timestamp),
+                            ],
+                            className="meta",
+                        ),
+                    ]
+                ),
+            ],
+            className="note",
+        )
+        rows.append(row)
+
+    return html.Div(rows)
 
 
 def get_severity_colors(notifications):
-    """Get the correct color for a severity.
+    """Get the CSS class and label for each notification's severity.
 
     Args:
         notifications (dict): The notifications.
 
     Returns:
         dict: Dict with the notification hash as the key and
-        a html.Td object with correct color class for the severity
-        as value.
+        a (css_class, label) tuple as the value.
+        Severity mapping: 0=Info, 1=Warning, 2=Critical.
     """
-    tds = {}
+    result = {}
     for index, notification in notifications.items():
-        color_class = "severity-info"
-        text = "Info"
-        if notification["severity"] == 1:
-            color_class = "severity-warning"
-            text = "Warning"
-        elif notification["severity"] == 2:
-            color_class = "severity-critical"
-            text = "Critical"
-        tds[index] = html.Td(text, className=color_class)
-    return tds
+        sev = notification["severity"]
+        if sev == 1:
+            result[index] = ("warn", "Warning")
+        elif sev == 2:
+            result[index] = ("crit", "Critical")
+        else:
+            result[index] = ("info", "Info")
+    return result
 
 
 app.layout = html.Div(
-    id="big-app-container",
     children=[
-        # reload intevarl
         dcc.Interval(id="interval1", interval=5 * 1000, n_intervals=0),
-        build_user_section(),
+        # Hidden tabs component kept so update_content callback still resolves
+        dcc.Tabs(id="app-tabs", value="tab1", style={"display": "none"}),
         build_banner(),
         html.Div(
-            id="app-container",
+            className="page",
             children=[
-                build_tabs(),
-                # Main app
-                html.Div(id="app-content"),
+                html.Div(
+                    className="grid",
+                    children=[
+                        # Services panel (hero)
+                        html.Section(
+                            className="panel",
+                            children=[
+                                html.Div(
+                                    className="panel-head",
+                                    children=[html.H2("Services")],
+                                ),
+                                html.Div(id="app-content"),
+                            ],
+                        ),
+                        # Notifications panel
+                        html.Section(
+                            className="panel",
+                            children=[
+                                html.Div(
+                                    className="panel-head",
+                                    children=[html.H2("Notifications")],
+                                ),
+                                generate_table_notifications(),
+                            ],
+                        ),
+                    ],
+                ),
             ],
         ),
     ],
