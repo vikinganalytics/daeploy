@@ -82,7 +82,12 @@ class InspectResponse(BaseModel):
     AppArmorProfile: str
     ExecIDs: Optional[List[str]] = None
     HostConfig: dict
-    GraphDriver: dict
+    # Docker 29+ with the containerd/overlayfs image store returns `Storage`
+    # (and `ImageManifestDescriptor`) instead of the legacy `GraphDriver`, so
+    # none of these can be required for inspection to work across drivers.
+    GraphDriver: Optional[dict] = None
+    Storage: Optional[dict] = None
+    ImageManifestDescriptor: Optional[dict] = None
     Mounts: list
     Configuration: dict = Field(..., alias="Config")
     NetworkSettings: NetworkSettingsResponse
