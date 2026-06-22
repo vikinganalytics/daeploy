@@ -435,5 +435,42 @@ class LocalDockerConnector(ConnectorBase):
         manager_container = self._get_manager_container()
         return manager_container.logs(since=since)
 
+    async def manager_logs_stream(
+        self,
+        tail: Optional[int] = None,
+        follow: Optional[bool] = False,
+        since: Optional[datetime] = None,
+    ) -> AsyncGenerator[str, None]:
+        """Stream the manager's own logs, optionally following new output.
+
+        Args:
+            tail (Optional[int]): Number of lines from the end. Default all.
+            follow (Optional[bool]): If the logs should be followed.
+            since (Optional[datetime]): Get logs since given datetime.
+
+        Yields:
+            AsyncGenerator[str, None]: Async infinite generator if following,
+            else async finite generator.
+        """
+        manager = self._get_manager_container()
+        container = await self._get_aio_client().containers.get(manager.id)
+
+        kwargs = {
+            "tail": tail if tail else "all",
+            "stdout": True,
+            "stderr": True,
+            "follow": follow,
+        }
+        if since:
+            kwargs["since"] = datetime_to_timestamp(since)
+        logs = container.log(**kwargs)
+
+        if follow:
+            async for log in logs:
+                yield log
+        else:
+            for log in await logs:
+                yield log
+
 
 RTE_CONN = LocalDockerConnector()

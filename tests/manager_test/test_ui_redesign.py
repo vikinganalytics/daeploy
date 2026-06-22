@@ -115,3 +115,13 @@ def test_assets_router_is_public():
     assert "static_assets" in routers, "missing public /assets router"
     assert "/assets" in routers["static_assets"]["rule"]
     assert not routers["static_assets"].get("middlewares"), "/assets must be public"
+
+
+def test_manager_logs_view_route(test_client):
+    # The manager logs view reuses logs.html, streaming /logs/stream.
+    r = test_client.get("/logs/view")
+    assert r.status_code == 200
+    body = r.text
+    assert 'id="console"' in body and 'id="followBox"' in body
+    assert "/logs/stream?follow=true" in body
+    assert "/assets/tokens.css" in body

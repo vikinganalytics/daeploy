@@ -1,13 +1,16 @@
 from datetime import datetime, timedelta
 import logging
 import sys
-from typing import Union
-from fastapi import APIRouter, HTTPException
-from fastapi.responses import PlainTextResponse
-from manager.constants import log_level, access_logs_enabled
+from typing import Optional, Union
+from fastapi import APIRouter, HTTPException, Request
+from fastapi.responses import PlainTextResponse, StreamingResponse, HTMLResponse
+from fastapi.templating import Jinja2Templates
+from manager.constants import log_level, access_logs_enabled, get_manager_version
 from manager.runtime_connectors import RTE_CONN
 
 ROUTER = APIRouter()
+
+TEMPLATES = Jinja2Templates(directory="manager/templates")
 
 
 @ROUTER.get("/", response_class=PlainTextResponse)
@@ -32,6 +35,43 @@ async def manager_logs(since: Union[datetime, None] = None) -> str:
     except RuntimeError as exc:
         raise HTTPException(status_code=404, detail=str(exc))
     return logs
+
+
+@ROUTER.get("/stream", response_class=StreamingResponse)
+async def manager_logs_stream(
+    tail: Optional[int] = None,
+    follow: Optional[bool] = False,
+    since: Union[datetime, None] = None,
+) -> str:
+    """Stream the manager logs (optionally following new output).
+
+    \f
+    # noqa: DAR101,DAR201
+    """
+    return StreamingResponse(
+        RTE_CONN.manager_logs_stream(tail, follow, since),
+        media_type="text/plain",
+        headers={"X-Content-Type-Options": "nosniff"},
+    )
+
+
+@ROUTER.get("/view", response_class=HTMLResponse)
+def manager_logs_view(request: Request):
+    """HTML view that streams the manager logs with a follow/auto-scroll toggle.
+
+    \f
+    # noqa: DAR101,DAR201
+    """
+    return TEMPLATES.TemplateResponse(
+        request=request,
+        name="logs.html",
+        context={
+            "title": "manager",
+            "subtitle": f"v: {get_manager_version()}",
+            "stream_url": "/logs/stream?follow=true&tail=400",
+            "manager_version": get_manager_version(),
+        },
+    )
 
 
 def setup_logging():

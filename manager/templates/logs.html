@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Daeploy — {{ name }} logs</title>
+  <title>Daeploy — {{ title }} logs</title>
   <link rel="icon" href="/assets/favicon.ico">
   <link rel="stylesheet" href="/assets/tokens.css">
   <style>
@@ -142,7 +142,7 @@
     <section class="panel">
       <div class="logs-head">
         <div class="ctx"><span class="sdot run live"></span>
-          <span class="name">{{ name }}</span><span class="ver">v{{ version }}</span></div>
+          <span class="name">{{ title }}</span><span class="ver">{{ subtitle }}</span></div>
         <div class="logs-tools">
           <span class="live-tag" id="liveTag"><span class="d"></span><span id="liveLabel">Live</span></span>
           <label class="follow" title="Auto-scroll to newest logs">
@@ -158,7 +158,7 @@
     </section>
   </div>
   <script>
-    var STREAM_URL = "/services/~logs?name={{ name|urlencode }}&version={{ version|urlencode }}&follow=true&tail=200";
+    var STREAM_URL = "{{ stream_url|safe }}";
     var consoleEl=document.getElementById('console'),
         followBox=document.getElementById('followBox'),
         jumpBtn=document.getElementById('jumpBtn'),

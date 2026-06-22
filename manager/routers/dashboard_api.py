@@ -26,7 +26,7 @@ def build_user_section():
         children=[
             html.A(
                 "Logs",
-                href=f"{get_external_proxy_url()}/logs",
+                href=f"{get_external_proxy_url()}/logs/view",
                 className="act",
             ),
             html.A(
