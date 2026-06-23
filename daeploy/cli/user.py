@@ -5,7 +5,6 @@ from tabulate import tabulate
 
 from daeploy.cli import cliutils
 
-
 app = typer.Typer(help="Collection of user management commands")
 typer.Option(None, "-p", "--password", expose_value=False)
 

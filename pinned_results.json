@@ -60,6 +60,21 @@
                 "web",
                 "websecure"
             ],
+            "name": "static_assets@file",
+            "provider": "file",
+            "rule": "Host(`localhost`) && PathPrefix(`/assets`)",
+            "service": "manager_service",
+            "status": "enabled",
+            "using": [
+                "web",
+                "websecure"
+            ]
+        },
+        {
+            "entryPoints": [
+                "web",
+                "websecure"
+            ],
             "middlewares": [
                 "traefik-dashboard-prefix-stripper@file"
             ],
@@ -106,7 +121,8 @@
             "type": "loadbalancer",
             "usedBy": [
                 "login_page@file",
-                "manager@file"
+                "manager@file",
+                "static_assets@file"
             ]
         },
         {
@@ -219,6 +235,21 @@
             "name": "manager@file",
             "provider": "file",
             "rule": "Host(`localhost`)",
+            "service": "manager_service",
+            "status": "enabled",
+            "using": [
+                "web",
+                "websecure"
+            ]
+        },
+        {
+            "entryPoints": [
+                "web",
+                "websecure"
+            ],
+            "name": "static_assets@file",
+            "provider": "file",
+            "rule": "Host(`localhost`) && PathPrefix(`/assets`)",
             "service": "manager_service",
             "status": "enabled",
             "using": [

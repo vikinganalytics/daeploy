@@ -3,8 +3,8 @@ from typing import List, Dict, Union
 
 import semver
 from pydantic.types import SecretStr
-from pydantic import BaseModel, validator, HttpUrl
-from fastapi import Path, UploadFile
+from pydantic import BaseModel, field_validator, HttpUrl, ConfigDict
+from fastapi import UploadFile, Query
 
 from manager.constants import (
     DAEPLOY_DEFAULT_INTERNAL_PORT,
@@ -16,8 +16,8 @@ class BaseService(BaseModel):
     name: str
     version: str
 
-    # pylint: disable=no-self-use
-    @validator("name")
+    @field_validator("name")
+    @classmethod
     def must_adhere_to_docker_requirements(cls, name):
         # Only allow a name to contain lower case letters, numbers and underscore
         # anywhere but in the beginning and end
@@ -29,16 +29,16 @@ class BaseService(BaseModel):
             )
         return name
 
-    # pylint: disable=no-self-use
-    @validator("version")
+    @field_validator("version")
+    @classmethod
     def must_be_semver_string(cls, version):
-        if not semver.VersionInfo.isvalid(version):
+        if not semver.Version.is_valid(version):
             raise ValueError("Version must be a semantic version string.")
         return version
 
 
 class BaseNewServiceRequest(BaseService):
-    port: int = Path(default=DAEPLOY_DEFAULT_INTERNAL_PORT, gt=0)
+    port: int = Query(default=DAEPLOY_DEFAULT_INTERNAL_PORT, gt=0)
     run_args: Dict = {}
 
 
@@ -49,8 +49,8 @@ class BaseNewS2IServiceRequest(BaseNewServiceRequest):
 class ServiceImageRequest(BaseNewServiceRequest):
     image: str
 
-    class Config:
-        schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "name": "myservice",
                 "version": "0.0.1",
@@ -59,13 +59,14 @@ class ServiceImageRequest(BaseNewServiceRequest):
                 "run_args": {},
             }
         }
+    )
 
 
 class ServiceGitRequest(BaseNewS2IServiceRequest):
     git_url: HttpUrl
 
-    class Config:
-        schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "name": "myservice",
                 "version": "0.0.1",
@@ -74,13 +75,14 @@ class ServiceGitRequest(BaseNewS2IServiceRequest):
                 "run_args": {},
             }
         }
+    )
 
 
 class ServiceTarRequest(BaseNewS2IServiceRequest):
     file: UploadFile
 
-    class Config:
-        schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "name": "myservice",
                 "version": "0.0.1",
@@ -89,13 +91,14 @@ class ServiceTarRequest(BaseNewS2IServiceRequest):
                 "run_args": {},
             }
         }
+    )
 
 
 class ServicePickleRequest(ServiceTarRequest):
     requirements: List[str]
 
-    class Config:
-        schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "name": "myservice",
                 "version": "0.0.1",
@@ -104,6 +107,7 @@ class ServicePickleRequest(ServiceTarRequest):
                 "requirements": [],
             }
         }
+    )
 
 
 class NotificationRequest(BaseModel):
@@ -112,7 +116,7 @@ class NotificationRequest(BaseModel):
     msg: str
     severity: int
     dashboard: bool
-    emails: Union[List[str], None]
+    emails: Union[List[str], None] = None
     timer: int
     timestamp: str
 

@@ -1,6 +1,7 @@
 """
 Constants and config
 """
+
 import os
 from pathlib import Path
 

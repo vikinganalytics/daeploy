@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file. This project adheres to [Semantic Versioning](https://semver.org/).
 
+## 1.4.0
+
+### New Features
+
+- Redesigned web UI: a modern dark login, dashboard, and a streaming logs view with a Follow / auto-scroll toggle (for both service and manager logs). Fully self-contained — no external CDNs or hot-linked assets.
+
+### Changed
+
+- Modernized the manager and SDK dependency stack and moved to Python 3.12.
+
+### Bugfixes
+
+- Docker Engine 29 compatibility: `daeploy ls`, the dashboard, and service inspection no longer return HTTP 500 on hosts using the newer Docker storage drivers.
+
+### Breaking
+
+- Dropped Python 3.9. Building services requires the Python 3.12 `daeploy/s2i-python` builder image (release 0.1.3).
+
 ## 1.3.0
 
 Daeploy goes Open Source and free to use for any purpose! 

@@ -5,11 +5,14 @@ pytest
 pytest-sphinx
 pytest-asyncio
 pytest-pinned
-pylint==2.7.4
+pytest-timeout
+pylint
 black
 flake8
 darglint
 streamlit
+httpx
 async_asgi_testclient
 scikit-learn
 nbconvert
+ipykernel

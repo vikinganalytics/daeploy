@@ -44,10 +44,10 @@ def test_client_logged_in(test_client: TestClient, auth_enabled, database):
     response = test_client.post(
         "/auth/login",
         data={"username": "admin", "password": "admin"},
-        allow_redirects=False,
+        follow_redirects=False,
     )
     # Check that we have access!
-    response = test_client.get("/auth/verify", allow_redirects=False)
+    response = test_client.get("/auth/verify", follow_redirects=False)
     assert response.status_code == 200
     yield test_client
     # Logs out when removing cookies in parent fixture

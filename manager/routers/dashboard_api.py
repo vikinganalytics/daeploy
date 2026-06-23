@@ -2,9 +2,7 @@ import logging
 from datetime import datetime
 
 import dash
-from dash import dcc
-from dash import html
-from dash.dependencies import Input, Output
+from dash import dcc, html, Input, Output
 
 from manager.routers.service_api import read_services, inspect_service
 from manager.routers.notification_api import get_notifications, delete_notifications
@@ -23,88 +21,68 @@ app.title = "Daeploy"
 
 
 def build_user_section():
-    return html.Div(
-        id="user-actions",
-        className="user-actions",
+    return html.Nav(
+        className="actions",
         children=[
-            html.P(f"v:{get_manager_version()}", className="version-identifier"),
-            html.P(),
             html.A(
-                "LOGS",
-                id="manager-logs-buttom",
-                href=f"{get_external_proxy_url()}/logs",
-                className="logout",
+                "Logs",
+                href=f"{get_external_proxy_url()}/logs/view",
+                className="act",
             ),
             html.A(
-                "API DOCS",
-                id="documenation-button",
+                "API Docs",
                 href=f"{get_external_proxy_url()}/docs",
-                className="logout",
+                className="act",
             ),
-            html.P(),
             html.Button(
-                "CLEAR NOTIFICATIONS",
+                "Clear notifications",
                 id="clear-notifications-button",
                 n_clicks=0,
-                className="logout",
+                className="act",
             ),
             html.A(
-                "LOGOUT",
-                id="logout-button",
+                "Log out",
                 href=f"{get_external_proxy_url()}/auth/logout",
-                className="logout",
+                className="act danger",
             ),
         ],
     )
 
 
 def build_banner():
-    return html.Div(
-        id="banner",
-        className="banner",
+    return html.Header(
+        className="top",
         children=[
             html.Div(
-                id="banner-text",
+                className="left",
                 children=[
-                    html.Img(src=app.get_asset_url("daeploy_white_icon.png")),
-                    dcc.Markdown(
-                        """
-                    ### Daeploy Dashboard
-                    by Viking Analytics AB
-                    """
+                    html.Div(
+                        className="mark",
+                        children=[
+                            html.Img(
+                                src=app.get_asset_url("daeploy_mark.svg"),
+                                width=26,
+                                height=26,
+                            ),
+                            html.Span(
+                                children=[
+                                    "dae",
+                                    html.B("ploy"),
+                                ],
+                                className="wordmark",
+                            ),
+                        ],
+                    ),
+                    html.Span(
+                        children=[
+                            "manager ",
+                            html.B(f"v: {get_manager_version()}"),
+                        ],
+                        className="vchip",
                     ),
                 ],
             ),
-        ],
-    )
-
-
-def build_tabs():
-    return html.Div(
-        id="daeploy_tabs",
-        children=[
-            dcc.Tabs(
-                id="app-tabs",
-                className="daeploy_custom-tabs",
-                # Set tab-1 to active from start.
-                value="tab1",
-                children=[
-                    dcc.Tab(
-                        id="services",
-                        label="Services",
-                        value="tab1",
-                        className="daeploy_custom-tabs",
-                        selected_className="daeploy_custom-tab--selected",
-                    ),
-                    dcc.Tab(
-                        id="notification",
-                        label="Notifications",
-                        value="tab2",
-                        className="daeploy_custom-tabs",
-                        selected_className="daeploy_custom-tab--selected",
-                    ),
-                ],
-            )
+            build_user_section(),
         ],
     )
 
@@ -142,72 +120,90 @@ def update_content(tab_switch, interval, n_clicks):
     )
 
 
+@app.callback(
+    Output("notifications-content", "children"),
+    Input("interval1", "n_intervals"),
+    Input("clear-notifications-button", "n_clicks"),
+)
+# pylint: disable=unused-argument
+def update_notifications(interval, n_clicks):
+    return generate_table_notifications()
+
+
+def _service_since(inspection, running):
+    """Format the running/stopped 'since' timestamp from a service inspection."""
+    key = "StartedAt" if running else "FinishedAt"
+    raw = inspection["State"][key].split(".")[0]
+    parsed = datetime.strptime(raw, "%Y-%m-%dT%H:%M:%S")
+    return parsed.strftime("%Y-%m-%d %H:%M:%S")
+
+
+def build_service_row(service):
+    """Build a single styled service row Div for the dashboard."""
+    is_main = service["main"]
+    inspection = inspect_service(service["name"], service["version"])
+    running = inspection["State"]["Running"]
+
+    if running and is_main:
+        dot_class, state_label = "sdot run live", "Running"
+    elif running:
+        dot_class, state_label = "sdot shadow", "Mirroring traffic"
+    else:
+        dot_class, state_label = "sdot stop", "Stopped"
+
+    if is_main:
+        pin = html.Span("★", className="pin main", title="Main version")
+    elif not running:
+        pin = html.Span("○", className="pin", title="Stopped")
+    else:
+        pin = html.Span("↗", className="pin", title="Shadow version")
+
+    if not is_main and running:
+        name = html.Div(
+            [service["name"], html.Span("shadow", className="badge shadow")],
+            className="name",
+        )
+    else:
+        name = html.Div(service["name"], className="name")
+
+    id_div = html.Div(
+        [pin, html.Div([name, html.Div(service["version"], className="ver")])],
+        className="id",
+    )
+    state_div = html.Div(
+        [
+            html.Span(className=dot_class),
+            html.Div(
+                [
+                    html.Div(
+                        state_label, className="lbl" if running else "lbl stopped"
+                    ),
+                    html.Div(
+                        f"since {_service_since(inspection, running)}",
+                        className="since",
+                    ),
+                ]
+            ),
+        ],
+        className="state",
+    )
+    actions_div = html.Div(
+        [get_service_log_link(service), get_service_docs_link(service)],
+        className="svc-actions",
+    )
+    return html.Div([id_div, state_div, actions_div], className="svc")
+
+
 def generate_table_services():
-    """Generates a HTML table with the service information
+    """Generates service rows with the service information.
 
     Returns:
-        html.Table: The html table with service information
+        html.Div: A Div containing styled service rows.
     """
     services = read_services()
-    headers = ["Main", "Service name", "Version", "State", "Logs", "Documentation"]
-
-    return html.Table(
-        # Header
-        [html.Tr([html.Th(col) for col in headers])]
-        +
-        # Body
-        [
-            html.Tr(
-                # Main/Shadow
-                [
-                    html.Td("*", className="green-text")
-                    if service["main"]
-                    else html.Td("")
-                ]
-                +
-                # Name
-                [html.Td(get_service_link(service))]
-                # Version
-                + [html.Td(service["version"])]
-                # Service state
-                + [html.Td(get_service_state(service))]
-                # Log link
-                + [html.Td(get_service_log_link(service))]
-                # Docs link
-                + [html.Td(get_service_docs_link(service))]
-            )
-            for service in services
-        ]
-    )
-
-
-def get_service_state(service):
-    """Getter for the state of the service.
-       The statue of the service is collected from the inspect information.
-
-    Args:
-        service (dict): The service to get the state from.
-
-    Returns:
-        str: The state of the 'service'
-    """
-    inspection = inspect_service(service["name"], service["version"])
-
-    running = inspection["State"]["Running"]
-    if running:
-        timestamp = inspection["State"]["StartedAt"]
-        running_msg = "Running"
-    else:
-        timestamp = inspection["State"]["FinishedAt"]
-        running_msg = "Stopped"
-
-    timestamp = datetime.strptime(timestamp.split(".")[0], "%Y-%m-%dT%H:%M:%S")
-    timestamp = timestamp.strftime("%Y-%m-%d %H:%M:%S")
-    return f" {running_msg} (since {timestamp})"
-
-
-def get_link_style():
-    return {"color": "white"}
+    if not services:
+        return html.Div("No services deployed.", className="empty")
+    return html.Div([build_service_row(service) for service in services])
 
 
 def get_service_docs_link(service):
@@ -223,7 +219,7 @@ def get_service_docs_link(service):
     return html.A(
         "Docs",
         href=(f"{proxy_url}/services/{service['name']}_{service['version']}/docs"),
-        style=get_link_style(),
+        className="lnk",
     )
 
 
@@ -236,94 +232,120 @@ def get_service_log_link(service):
     Returns:
         html.A: Html.A object with a href to the logs for 'service'
     """
-    logs_end_point = f"{get_external_proxy_url()}/services/~logs"
+    proxy_url = get_external_proxy_url()
     return html.A(
         "Logs",
-        href=f"{logs_end_point}?name={service['name']}&version={service['version']}"
-        f"&follow=true&tail={DEFAULT_NUMBER_OF_LOGS}",
-        style=get_link_style(),
+        href=f"{proxy_url}/services/~logs/view"
+        f"?name={service['name']}&version={service['version']}",
+        className="lnk",
     )
-
-
-def get_service_link(service):
-    service_endpoint = (
-        f"{get_external_proxy_url()}/services/{service['name']}_{service['version']}/"
-    )
-    return html.A(service["name"], href=service_endpoint, style=get_link_style())
 
 
 def generate_table_notifications():
-    """Generates a HTML table with the notifications
+    """Generates notification rows.
 
     Returns:
-        html.Table: The html table with notification information
+        html.Div: A Div containing styled notification rows.
     """
     notifications = get_notifications()
-    headers = [
-        "Latest Timestamp",
-        "Service name",
-        "Version",
-        "Message",
-        "Count",
-        "Severity",
-    ]
-    dict_keys = ["timestamp", "service_name", "service_version", "msg", "counter"]
-    severity_colors = get_severity_colors(notifications)
-    return html.Table(
-        # Header
-        [html.Tr([html.Th(col) for col in headers])]
-        +
-        # Body
-        [
-            html.Tr(
-                [html.Td(notifications[index[0]][key]) for key in dict_keys]
-                + [severity_colors[index[0]]]
-            )
-            for index in reversed(
-                sorted(notifications.items(), key=lambda item: item[1]["timestamp"])
-            )
-        ]
-    )
+    if not notifications:
+        return html.Div("No notifications.", className="empty")
+
+    severity_map = get_severity_colors(notifications)
+    rows = []
+    for index, _ in reversed(
+        sorted(notifications.items(), key=lambda item: item[1]["timestamp"])
+    ):
+        notification = notifications[index]
+        sev_class, sev_label = severity_map[index]
+        timestamp = notification["timestamp"]
+        msg = notification["msg"]
+
+        row = html.Div(
+            [
+                html.Span(className=f"sev {sev_class}"),
+                html.Div(
+                    [
+                        html.Div(msg, className="msg"),
+                        html.Div(
+                            [
+                                html.Span(sev_label, className=f"sev-tag {sev_class}"),
+                                html.Span(timestamp),
+                            ],
+                            className="meta",
+                        ),
+                    ]
+                ),
+            ],
+            className="note",
+        )
+        rows.append(row)
+
+    return html.Div(rows)
 
 
 def get_severity_colors(notifications):
-    """Get the correct color for a severity.
+    """Get the CSS class and label for each notification's severity.
 
     Args:
         notifications (dict): The notifications.
 
     Returns:
         dict: Dict with the notification hash as the key and
-        a html.Td object with correct color class for the severity
-        as value.
+        a (css_class, label) tuple as the value.
+        Severity mapping: 0=Info, 1=Warning, 2=Critical.
     """
-    tds = {}
+    result = {}
     for index, notification in notifications.items():
-        color_class = "severity-info"
-        text = "Info"
-        if notification["severity"] == 1:
-            color_class = "severity-warning"
-            text = "Warning"
-        elif notification["severity"] == 2:
-            color_class = "severity-critical"
-            text = "Critical"
-        tds[index] = html.Td(text, className=color_class)
-    return tds
+        sev = notification["severity"]
+        if sev == 1:
+            result[index] = ("warn", "Warning")
+        elif sev == 2:
+            result[index] = ("crit", "Critical")
+        else:
+            result[index] = ("info", "Info")
+    return result
 
 
 app.layout = html.Div(
-    id="big-app-container",
     children=[
-        # reload intevarl
         dcc.Interval(id="interval1", interval=5 * 1000, n_intervals=0),
-        build_user_section(),
+        # Hidden tabs component kept so update_content callback still resolves
+        dcc.Tabs(id="app-tabs", value="tab1", style={"display": "none"}),
         build_banner(),
         html.Div(
-            id="app-container",
+            className="page",
             children=[
-                build_tabs(),
-                # Main app
-                html.Div(id="app-content"),
+                html.Div(
+                    className="grid",
+                    children=[
+                        # Services panel (hero)
+                        html.Section(
+                            className="panel",
+                            children=[
+                                html.Div(
+                                    className="panel-head",
+                                    children=[html.H2("Services")],
+                                ),
+                                html.Div(id="app-content"),
+                            ],
+                        ),
+                        # Notifications panel
+                        html.Section(
+                            className="panel",
+                            children=[
+                                html.Div(
+                                    className="panel-head",
+                                    children=[html.H2("Notifications")],
+                                ),
+                                html.Div(
+                                    id="notifications-content",
+                                    children=[generate_table_notifications()],
+                                ),
+                            ],
+                        ),
+                    ],
+                ),
             ],
         ),
     ],

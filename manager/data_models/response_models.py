@@ -34,28 +34,32 @@ class StateResponse(BaseModel):
     Error: str
     StartedAt: str
     FinishedAt: str
-    Health: Optional[HealthResponse]
+    Health: Optional[HealthResponse] = None
 
 
 class NetworkSettingsResponse(BaseModel):
-    Bridge: str
+    # Docker Engine 29+ no longer populates the legacy top-level network
+    # fields (Bridge, IPAddress, MacAddress, etc.) for containers attached
+    # only to a custom network; that data now lives under `Networks`. Keep
+    # them optional so inspection doesn't fail response validation.
     SandboxID: str
-    HairpinMode: bool
-    LinkLocalIPv6Address: str
-    LinkLocalIPv6PrefixLen: int
     Ports: dict
     SandboxKey: str
-    SecondaryIPAddresses: Optional[str]
-    SecondaryIPv6Addresses: Optional[str]
-    EndpointID: str
-    Gateway: str
-    GlobalIPv6Address: str
-    GlobalIPv6PrefixLen: int
-    IPAddress: str
-    IPPrefixLen: int
-    IPv6Gateway: str
-    MacAddress: str
     Networks: Dict[str, Dict]
+    Bridge: Optional[str] = None
+    HairpinMode: Optional[bool] = None
+    LinkLocalIPv6Address: Optional[str] = None
+    LinkLocalIPv6PrefixLen: Optional[int] = None
+    SecondaryIPAddresses: Optional[str] = None
+    SecondaryIPv6Addresses: Optional[str] = None
+    EndpointID: Optional[str] = None
+    Gateway: Optional[str] = None
+    GlobalIPv6Address: Optional[str] = None
+    GlobalIPv6PrefixLen: Optional[int] = None
+    IPAddress: Optional[str] = None
+    IPPrefixLen: Optional[int] = None
+    IPv6Gateway: Optional[str] = None
+    MacAddress: Optional[str] = None
 
 
 class InspectResponse(BaseModel):
@@ -76,9 +80,14 @@ class InspectResponse(BaseModel):
     MountLabel: str
     ProcessLabel: str
     AppArmorProfile: str
-    ExecIDs: Optional[List[str]]
+    ExecIDs: Optional[List[str]] = None
     HostConfig: dict
-    GraphDriver: dict
+    # Docker 29+ with the containerd/overlayfs image store returns `Storage`
+    # (and `ImageManifestDescriptor`) instead of the legacy `GraphDriver`, so
+    # none of these can be required for inspection to work across drivers.
+    GraphDriver: Optional[dict] = None
+    Storage: Optional[dict] = None
+    ImageManifestDescriptor: Optional[dict] = None
     Mounts: list
     Configuration: dict = Field(..., alias="Config")
     NetworkSettings: NetworkSettingsResponse

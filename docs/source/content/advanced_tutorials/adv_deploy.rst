@@ -165,7 +165,7 @@ Daeploy (`github link
 <https://hub.docker.com/r/daeploy/s2i-python/tags>`_ for a full list of
 available tags. 
 
-By default Daeploy uses a builder image based on ubuntu with python 3.8. There
+By default Daeploy uses a builder image based on python 3.12. There
 can be situations, however, where that image might not be suitable. For
 example if you want to use some library that is not supported for that version
 of python, or if you need a certain OS.
