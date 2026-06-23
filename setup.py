@@ -35,7 +35,7 @@ setuptools.setup(
         "Programming Language :: Python :: 3",
         "Operating System :: OS Independent",
     ],
-    python_requires=">=3.6",
+    python_requires=">=3.9",
     install_requires=required,
     entry_points={
         "console_scripts": ["daeploy=daeploy.cli.cli:app"],

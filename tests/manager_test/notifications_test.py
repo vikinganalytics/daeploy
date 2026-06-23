@@ -97,7 +97,7 @@ def test_email_notification_not_send_when_frozen(email_func, notifications_dict)
     notification_api.new_notification(notification_3)
     notification_api.new_notification(notification_3)
     # The email func is only called once!
-    email_func.called_once()
+    email_func.assert_called_once()
 
 
 @patch("manager.routers.notification_api._send_notification_as_email")

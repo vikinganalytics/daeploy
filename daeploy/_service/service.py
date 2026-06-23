@@ -15,7 +15,7 @@ from fastapi import Body, Request, FastAPI
 from fastapi.encoders import jsonable_encoder
 from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import create_model, validate_arguments
+from pydantic import create_model, validate_call
 
 from daeploy._service.logger import setup_logging
 from daeploy._service.db import clean_database, initialize_db, remove_db, write_to_ts
@@ -32,7 +32,6 @@ from daeploy.utilities import (
     get_db_clean_interval_seconds,
 )
 from daeploy.communication import notify, Severity
-
 
 setup_logging()
 logger = logging.getLogger(__name__)
@@ -219,7 +218,7 @@ class _Service:
                 _disable_http_logs(path)
 
             # Wrap the original func in a pydantic validation wrapper and return that
-            return validate_arguments(deco_func)
+            return validate_call(deco_func)
 
         # This ensures that we can use the decorator with or without arguments
         if not (callable(func) or func is None):
@@ -369,7 +368,7 @@ class _Service:
         if isinstance(value, Number):
             value = float(value)
 
-        @validate_arguments()
+        @validate_call()
         def update_parameter(value: value.__class__) -> Any:
             logger.info(f"Parameter {parameter} changed to {value}")
             self.parameters[parameter]["value"] = value

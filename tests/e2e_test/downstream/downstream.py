@@ -1,6 +1,7 @@
 """
 File used as a service in e2e tests.
 """
+
 import logging
 import time
 from pydantic import BaseModel

@@ -46,7 +46,7 @@ def predict(data: dict) -> List[Any]:
     logger.info(f"Recieved data: \n{data_df}")
     y_pred = model.predict(data_df)
     logger.info(f"Predicted: {y_pred}")
-    return list(y_pred)
+    return y_pred.tolist()
 
 
 if __name__ == "__main__":

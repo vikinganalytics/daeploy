@@ -274,6 +274,10 @@ def get_manager_configuration() -> dict:
     """
     rule = f"""Host(`{get_proxy_domain_name()}`)"""
     rule_login = f"""Host(`{get_proxy_domain_name()}`) && PathPrefix(`/auth/login`)"""
+    # Static UI assets (CSS, fonts, logo) must load on the login page *before*
+    # the user authenticates, so they are served by a router without the auth
+    # middleware. These are non-sensitive presentation files only.
+    rule_assets = f"""Host(`{get_proxy_domain_name()}`) && PathPrefix(`/assets`)"""
 
     config = {
         "http": {
@@ -286,6 +290,12 @@ def get_manager_configuration() -> dict:
                 ),
                 "login_page": get_router_configuration(
                     rule=rule_login,
+                    service="manager_service",
+                    middlewares=None,
+                    tls=https_proxy(),
+                ),
+                "static_assets": get_router_configuration(
+                    rule=rule_assets,
                     service="manager_service",
                     middlewares=None,
                     tls=https_proxy(),

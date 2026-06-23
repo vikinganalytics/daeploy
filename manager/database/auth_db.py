@@ -19,7 +19,8 @@ def add_user_record(username: str, password: str):
     """
     with session_scope() as session:
         new_user = User(
-            name=username, password=bcrypt.hashpw(password.encode(), bcrypt.gensalt())
+            name=username,
+            password=bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode(),
         )
         session.add(new_user)
 
