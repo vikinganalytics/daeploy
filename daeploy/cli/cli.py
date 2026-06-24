@@ -5,8 +5,7 @@ from typing import Dict, List, Optional, Tuple
 import os
 import json
 
-import click
-import pkg_resources
+from importlib.metadata import version as get_version, PackageNotFoundError
 import pytest
 import requests
 import typer
@@ -74,9 +73,9 @@ def version_callback(value: bool):
 
     # Get SDK Version
     try:
-        sdk_version = pkg_resources.get_distribution("daeploy").version
+        sdk_version = get_version("daeploy")
         typer.echo(f"SDK version: {sdk_version}")
-    except pkg_resources.DistributionNotFound:
+    except PackageNotFoundError:
         pass
 
     # Get Manager Version
@@ -123,7 +122,7 @@ def _callback(
     """
     state = config.CliState()
     # Skip host and token checks if --help flag is included.
-    if "--help" in click.get_os_args():
+    if "--help" in sys.argv[1:]:
         return
 
     # Skip host and token checks if running login, init or test function.
@@ -270,12 +269,12 @@ def deploy(
     name: str = typer.Argument(
         ...,
         help="Name of the new service.",
-        autocompletion=_autocomplete_service_name,
+        shell_complete=_autocomplete_service_name,
     ),
     version: str = typer.Argument(
         ...,
         help="Version of the new service.",
-        autocompletion=_autocomplete_service_version,
+        shell_complete=_autocomplete_service_version,
     ),
     source: str = typer.Argument(
         ...,
@@ -388,12 +387,12 @@ def ls(
     name: Optional[str] = typer.Argument(
         None,
         help="List services with this name.",
-        autocompletion=_autocomplete_service_name,
+        shell_complete=_autocomplete_service_name,
     ),
     version: Optional[str] = typer.Argument(
         None,
         help="List service with this version.",
-        autocompletion=_autocomplete_service_version,
+        shell_complete=_autocomplete_service_version,
     ),
 ):
     """List running services, filtered by name and version.
@@ -432,13 +431,13 @@ def logs(
     name: str = typer.Argument(
         ...,
         help="Name of the service to read logs from",
-        autocompletion=_autocomplete_service_name,
+        shell_complete=_autocomplete_service_name,
     ),
     version: Optional[str] = typer.Argument(
         None,
         help="Version of the service to read logs from."
         " Defaults to the main version of the service",
-        autocompletion=_autocomplete_service_version,
+        shell_complete=_autocomplete_service_version,
     ),
     tail: Optional[str] = typer.Option(
         DEFAULT_NUMBER_OF_LOGS,
@@ -517,12 +516,12 @@ def kill(
     name: Optional[str] = typer.Argument(
         None,
         help="Name of the service(s) to kill.",
-        autocompletion=_autocomplete_service_name,
+        shell_complete=_autocomplete_service_name,
     ),
     version: Optional[str] = typer.Argument(
         None,
         help="Version of the service to kill.",
-        autocompletion=_autocomplete_service_version,
+        shell_complete=_autocomplete_service_version,
     ),
     all_: Optional[bool] = typer.Option(False, "--all", "-a", help="Kill all services"),
     validation: Optional[bool] = typer.Option(
@@ -589,12 +588,12 @@ def assign(
     name: str = typer.Argument(
         ...,
         help="Name of version to change main",
-        autocompletion=_autocomplete_service_name,
+        shell_complete=_autocomplete_service_name,
     ),
     version: str = typer.Argument(
         ...,
         help="Version of service to set as main",
-        autocompletion=_autocomplete_service_version,
+        shell_complete=_autocomplete_service_version,
     ),
     validation: Optional[bool] = typer.Option(
         False,
@@ -655,13 +654,13 @@ def init(
         raise typer.Exit(1)
     # Find out which daeploy version that should be used by the service
     try:
-        dist = pkg_resources.get_distribution("daeploy")
+        daeploy_version = get_version("daeploy")
         daeploy_specifier = (
-            str(dist.as_requirement())
-            if dist.version != "0.0.0.dev0"
-            else dist.project_name
+            f"daeploy=={daeploy_version}"
+            if daeploy_version != "0.0.0.dev0"
+            else "daeploy"
         )  # Use full specificer unless in dev environment, then just go for the latest
-    except pkg_resources.DistributionNotFound:
+    except PackageNotFoundError:
         typer.echo(
             "`daeploy` package not found, assuming latest version "
             "should be used for the generated project."

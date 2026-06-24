@@ -1,5 +1,7 @@
 import docker
 import pytest
+import sys
+import subprocess
 import time
 import requests
 import uuid
@@ -9,7 +11,6 @@ import io
 import re
 import shutil
 
-from setuptools import sandbox
 from pathlib import Path
 from typer.testing import CliRunner
 import nbformat
@@ -72,22 +73,54 @@ def cli_auth_login(dummy_manager, cli_auth):
 
 
 @pytest.fixture(scope="module")
-def pickle_service(cli_auth_login, headers):
+def pickle_service(cli_auth_login, dummy_manager, headers):
     data = {
         "name": "pickle",
         "version": "0.1.0",
         "port": 8000,
-        "requirements": ["pandas", "sklearn"],
+        "requirements": ["pandas", "scikit-learn"],
     }
 
-    requests.request(
+    response = requests.request(
         "POST",
         url="http://localhost/services/~pickle",
         data=data,
         headers=headers,
         files={"file": ("filename", open(THIS_DIR / "pickle_e2e_testing.pkl", "rb"))},
     )
-    time.sleep(5)  # Grace period
+    assert response.status_code == 202, response.text
+
+    # Poll for the pickle service to be reachable; pandas + scikit-learn
+    # make the s2i build several minutes long, and the service still needs
+    # time to start up after the container appears.
+    deadline = time.time() + 800
+    reachable = False
+    while time.time() < deadline:
+        try:
+            r = requests.get(
+                "http://localhost/services/pickle/openapi.json",
+                headers=headers,
+                timeout=5,
+            )
+            if r.status_code == 200:
+                reachable = True
+                break
+        except requests.RequestException:
+            pass
+        time.sleep(5)
+    if not reachable:
+        client = docker.from_env()
+        print("Containers:", [c.name for c in client.containers.list(all=True)])
+        print(
+            "dummy_manager logs:\n",
+            dummy_manager.logs(tail=200).decode(errors="replace"),
+        )
+        for c in client.containers.list(all=True):
+            if "pickle" in c.name:
+                print(
+                    f"{c.name} status={c.status} logs:\n",
+                    c.logs(tail=200).decode(errors="replace"),
+                )
     try:
         yield
     finally:
@@ -168,9 +201,16 @@ def generate_requirements_file_for_service(service_folder):
     the path to the wheel file which contains the daeploy package.
     """
     # TODO: No need to run the setup twice...
-    sandbox.run_setup(
-        str(THIS_DIR.parent.parent / "setup.py"),
-        ["bdist_wheel", "--dist-dir", str(service_folder)],
+    subprocess.run(
+        [
+            sys.executable,
+            "setup.py",
+            "bdist_wheel",
+            "--dist-dir",
+            str(service_folder),
+        ],
+        cwd=str(THIS_DIR.parent.parent),
+        check=True,
     )
     with (service_folder / "requirements.txt").open("w") as file_handle:
         file_handle.write(WHEEL_FILE_NAME)
@@ -263,8 +303,8 @@ def test_disable_http_logs_in_entrypoint(
     logs = logs("downstream")
     # Check that the logs from inside the entrypoint are logged.
     assert "This is a correct log!" in logs
-    assert '"POST /services/downstream_0.1.0/http_logs_2 HTTP/1.1" 200 OK' in logs
-    assert '"POST /services/downstream_0.1.0/http_logs HTTP/1.1" 200 OK' not in logs
+    assert '"POST /http_logs_2 HTTP/1.1" 200 OK' in logs
+    assert '"POST /http_logs HTTP/1.1" 200 OK' not in logs
 
 
 def test_call_service_multiple_cases(
@@ -479,6 +519,7 @@ def test_docs_page_from_service_shows_correct_docs(
     assert "0.1.0" in service_docs.text
 
 
+@pytest.mark.timeout(900)
 def test_service_from_pickle_endpoint(dummy_manager, pickle_service, headers):
     client = docker.from_env()
     containers = [con.name for con in client.containers.list()]
@@ -492,7 +533,14 @@ def test_service_from_pickle_endpoint(dummy_manager, pickle_service, headers):
         json=data,
         headers=headers,
     )
-    assert resp.status_code == 200
+    if resp.status_code != 200:
+        for c in client.containers.list(all=True):
+            if "pickle" in c.name:
+                print(
+                    f"{c.name} status={c.status} logs:\n",
+                    c.logs(tail=200).decode(errors="replace"),
+                )
+    assert resp.status_code == 200, resp.text
 
     # Test documentation started properly
     response = requests.get(

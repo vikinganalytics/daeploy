@@ -11,7 +11,7 @@ applications.
 Prerequisites
 -------------
 
-To use Daeploy, you need to have **python >= 3.6** installed in your development environment
+To use Daeploy, you need to have **python >= 3.10** installed in your development environment
 and **docker** in your deployment environment.
 
 Installation

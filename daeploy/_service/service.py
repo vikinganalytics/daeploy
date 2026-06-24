@@ -1,3 +1,4 @@
+import os
 import asyncio
 import datetime
 import functools
@@ -13,7 +14,8 @@ import uvicorn
 from fastapi import Body, Request, FastAPI
 from fastapi.encoders import jsonable_encoder
 from fastapi.concurrency import run_in_threadpool
-from pydantic import create_model, validate_arguments
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import create_model, validate_call
 
 from daeploy._service.logger import setup_logging
 from daeploy._service.db import clean_database, initialize_db, remove_db, write_to_ts
@@ -31,7 +33,6 @@ from daeploy.utilities import (
 )
 from daeploy.communication import notify, Severity
 
-
 setup_logging()
 logger = logging.getLogger(__name__)
 
@@ -45,8 +46,29 @@ def _disable_http_logs(path: str):
     )
 
 
+def cors_allowed_origins():
+    """assumes allowed origin are passed as a single string separated by ;
+    Example 'https://origin1.com;https://orogin2.com'
+
+    Returns:
+        list: url of allowed origins
+    """
+    return os.environ.get("DAEPLOY_ALLOW_ORIGIN", "").split(";")
+
+
+def get_cors_config():
+    cors_config = {}
+    cors_config["allow_credentials"] = False
+    cors_config["allow_origins"] = cors_allowed_origins()
+    cors_config["allow_methods"] = ["GET", "POST", "PUT", "DELETE"]
+    cors_config["allow_headers"] = ["Authorization"]
+    return cors_config
+
+
 class _Service:
     def __init__(self):
+        cors_config = get_cors_config()
+
         self.app = FastAPI(
             root_path=get_service_root_path(),
             title=f"{get_service_name()} {get_service_version()}",
@@ -57,6 +79,10 @@ class _Service:
                 {"name": "Parameters"},
             ],
         )
+
+        # Custom Middleware
+        if bool(os.environ.get("DAEPLOY_ENABLE_CORS")):
+            self.app.add_middleware(CORSMiddleware, **cors_config)
 
         self.parameters = {}
 
@@ -192,7 +218,7 @@ class _Service:
                 _disable_http_logs(path)
 
             # Wrap the original func in a pydantic validation wrapper and return that
-            return validate_arguments(deco_func)
+            return validate_call(deco_func)
 
         # This ensures that we can use the decorator with or without arguments
         if not (callable(func) or func is None):
@@ -343,7 +369,7 @@ class _Service:
         if isinstance(value, Number):
             value = float(value)
 
-        @validate_arguments()
+        @validate_call()
         def update_parameter(value: value.__class__) -> Any:
             logger.info(f"Parameter {parameter} changed to {value}")
             self.parameters[parameter]["value"] = value

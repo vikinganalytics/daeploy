@@ -1,5 +1,5 @@
 ## Stage 1: Build image
-FROM python:3.8 AS build-image
+FROM python:3.12 AS build-image
 
 # Install S2i
 RUN wget -c https://github.com/openshift/source-to-image/releases/download/v1.3.0/source-to-image-v1.3.0-eed2850f-linux-amd64.tar.gz \
@@ -20,7 +20,7 @@ COPY ./requirements_manager.txt .
 RUN pip install -r requirements_manager.txt
 
 ## Stage 2: Production image
-FROM python:3.8-slim AS production-image
+FROM python:3.12-slim AS production-image
 
 # Install Git
 RUN apt-get update && apt-get install -y git

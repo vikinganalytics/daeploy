@@ -508,7 +508,7 @@ def test_local_invocation_pydantic_validation():
 
     assert valid_entrypoint_method_args(32, "Urban") == "hello"  # Args of wrong type!
 
-    with pytest.raises(pydantic.error_wrappers.ValidationError):
+    with pytest.raises(pydantic.ValidationError):
         wrapped(32, "Urban")
 
     assert wrapped("Urban", 32) == "hello"
@@ -589,7 +589,8 @@ def test_entrypoint_get():
     client = TestClient(service.app)
 
     req = {"name": "Rune", "age": 100}
-    response = client.get(
+    response = client.request(
+        "GET",
         "/valid_entrypoint_method_args",
         json=req,
         headers={"accept": "application/json"},

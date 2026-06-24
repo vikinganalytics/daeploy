@@ -10,13 +10,13 @@ import pydantic
 import pytest
 from async_asgi_testclient import TestClient as AsyncTestClient
 from docker.errors import ImageNotFound
+from fastapi.exceptions import ResponseValidationError
 from fastapi.testclient import TestClient
 from manager import proxy
 from manager.routers import logging_api, notification_api, service_api
 from manager.app import app
 from manager.constants import DAEPLOY_DEFAULT_S2I_BUILD_IMAGE, get_manager_version
 from manager.data_models.request_models import BaseService
-
 
 client = TestClient(app)
 async_client = AsyncTestClient(app)
@@ -195,12 +195,12 @@ def test_post_services_git_request(
     response = client.post("/services/~git", json=req)
 
     assert response.status_code == 202
-    service_api.run_s2i.assert_called_with(
-        url="https://github.com/sclorg/django-ex",
-        build_image=DAEPLOY_DEFAULT_S2I_BUILD_IMAGE,
-        name=SERVICE_NAME,
-        version=SERVICE_VERSION,
-    )
+    service_api.run_s2i.assert_called_once()
+    call_kwargs = service_api.run_s2i.call_args[1]
+    assert str(call_kwargs["url"]) == "https://github.com/sclorg/django-ex"
+    assert call_kwargs["build_image"] == DAEPLOY_DEFAULT_S2I_BUILD_IMAGE
+    assert call_kwargs["name"] == SERVICE_NAME
+    assert call_kwargs["version"] == SERVICE_VERSION
     assert response.json() == "Accepted"
 
 
@@ -228,12 +228,12 @@ def test_post_services_git_request_changed_builder_image(
     response = client.post("/services/~git", json=req)
 
     assert response.status_code == 202
-    service_api.run_s2i.assert_called_with(
-        url="https://github.com/sclorg/django-ex",
-        build_image="centos/python-38-centos7",
-        name=SERVICE_NAME,
-        version=SERVICE_VERSION,
-    )
+    service_api.run_s2i.assert_called_once()
+    call_kwargs = service_api.run_s2i.call_args[1]
+    assert str(call_kwargs["url"]) == "https://github.com/sclorg/django-ex"
+    assert call_kwargs["build_image"] == "centos/python-38-centos7"
+    assert call_kwargs["name"] == SERVICE_NAME
+    assert call_kwargs["version"] == SERVICE_VERSION
     assert response.json() == "Accepted"
 
 
@@ -438,8 +438,10 @@ def test_service_delete(mocked_docker_connection, database):
     )
     service_name = SERVICE_NAME
     service_version = SERVICE_VERSION
-    response = client.delete(
-        "/services/", json={"name": service_name, "version": service_version}
+    response = client.request(
+        "DELETE",
+        "/services/",
+        json={"name": service_name, "version": service_version},
     )
 
     assert response.status_code == 200
@@ -462,7 +464,8 @@ def test_service_delete_keep_image(mocked_docker_connection, database):
     )
     service_name = SERVICE_NAME
     service_version = SERVICE_VERSION
-    response = client.delete(
+    response = client.request(
+        "DELETE",
         "/services/",
         json={"name": service_name, "version": service_version},
         params={"remove_image": False},
@@ -576,7 +579,7 @@ def test_service_inspection(mocked_docker_connection):
     service_name = SERVICE_NAME
     service_version = SERVICE_VERSION
 
-    with pytest.raises(pydantic.ValidationError):
+    with pytest.raises((pydantic.ValidationError, ResponseValidationError)):
         client.get(
             f"/services/~inspection?name={service_name}&version={service_version}"
         )

@@ -1,6 +1,7 @@
 """
 Constants and config
 """
+
 import os
 from pathlib import Path
 
@@ -105,6 +106,29 @@ def access_logs_enabled():
 
 def configuration_email():
     return os.environ.get("DAEPLOY_CONFIG_EMAIL")
+
+
+def cors_enabled():
+    return os.environ.get("DAEPLOY_ENABLE_CORS")
+
+
+def cors_allowed_origins():
+    """assumes allowed origin are passed as a single string separated by ;
+    Example 'https://origin1.com;https://orogin2.com'
+
+    Returns:
+        list: url of allowed origins
+    """
+    return os.environ.get("DAEPLOY_ALLOW_ORIGIN", "").split(";")
+
+
+def cors_config():
+    config = {}
+    config["allow_credentials"] = False
+    config["allow_origins"] = cors_allowed_origins()
+    config["allow_methods"] = ["GET", "POST", "PUT", "DELETE"]
+    config["allow_headers"] = ["Authorization"]
+    return config
 
 
 def notification_email_config():

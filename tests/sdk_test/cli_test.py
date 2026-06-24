@@ -143,7 +143,8 @@ def test_version_flag_without_manager():
         ["--version"],
     )
     assert result.exit_code == 0
-    assert "Manager" not in result.stdout
+    assert "SDK version" in result.stdout
+    assert "Manager version:" not in result.stdout
 
 
 def test_deploy_from_git_source(dummy_manager, cli_auth_login, clean_services):
@@ -814,7 +815,7 @@ def test_logs_date_format(cli_auth_login, clean_services):
         ["logs", "test_service", "1.0.0", "--date", "2020/01/24"],
     )
     assert logs.exit_code == 2
-    assert "invalid datetime format" in logs.stdout
+    assert "does not match the formats" in logs.output
     logs = runner.invoke(
         app,
         ["logs", "test_service", "1.0.0", "--date", "1970-01-24"],
@@ -847,11 +848,18 @@ def test_logs_stream(cli_auth_login):
         ],
     )
 
-    threading.Thread(target=kill_service).start()
+    killer = threading.Thread(target=kill_service)
+    killer.start()
     streamed_logs = runner.invoke(
         app,
         ["logs", "test_service", "1.0.0", "--follow"],
     )
+    # Wait for the background "kill" invoke to finish before returning. It uses
+    # the same module-level CliRunner, and CliRunner.isolation() swaps the
+    # process-global sys.stdout/sys.stderr. If the thread is left unjoined, its
+    # isolation teardown races with the next test's invoke and closes that
+    # invoke's stream -> "ValueError: I/O operation on closed file".
+    killer.join()
     assert len(streamed_logs.stdout) > len(first_logs.stdout)
 
 

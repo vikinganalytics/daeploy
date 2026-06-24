@@ -4,8 +4,7 @@ from contextlib import contextmanager
 import logging
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker, declarative_base
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey
 
 from manager.constants import DAEPLOY_DATA_DIR, get_admin_password
@@ -128,9 +127,8 @@ def initialize_db():
 
 def remove_db():
     """Removes db"""
+    engine.dispose()
     try:
         MANAGER_DB_PATH.unlink()
     except FileNotFoundError:
-        # Path.unlink(missing_ok=True) gives same behavior but was
-        # not introduced until python 3.8
         pass

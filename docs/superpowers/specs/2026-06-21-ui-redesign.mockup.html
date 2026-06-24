@@ -1,0 +1,687 @@
+<title>Daeploy — UI redesign mockup</title>
+<style>
+  :root{
+    --ground:#0E1320;
+    --surface:#161C2C;
+    --surface-2:#1C2438;
+    --line:#28324A;
+    --line-soft:#1E2638;
+    --text:#E7ECF5;
+    --muted:#8B95AC;
+    --faint:#5C6680;
+    --accent:#5EE6D0;
+    --accent-dim:#2E5A56;
+    --accent-ink:#072019;
+    --ok:#3DDC97;
+    --warn:#F4B740;
+    --crit:#F2585B;
+    --shadow:0 24px 60px -24px rgba(0,0,0,.7);
+    --mono:ui-monospace,"SF Mono","JetBrains Mono","Cascadia Code",Menlo,Consolas,monospace;
+    --sans:"Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:var(--ground);
+    color:var(--text);
+    font-family:var(--sans);
+    -webkit-font-smoothing:antialiased;
+    line-height:1.5;
+    overflow-x:hidden;
+  }
+  .screen{display:none}
+  .screen.active{display:block}
+
+  /* ---------- shared bits ---------- */
+  .eyebrow{
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:.22em;
+    text-transform:uppercase;
+    color:var(--faint);
+  }
+  .mark{display:inline-flex;align-items:center;gap:.6rem}
+  .mark svg{display:block}
+  .wordmark{
+    font-weight:600;
+    font-size:1.4rem;
+    letter-spacing:-.02em;
+  }
+  .wordmark b{color:var(--accent);font-weight:600}
+  button{font-family:inherit}
+  a{color:inherit}
+
+  /* =====================================================
+     LOGIN
+  ===================================================== */
+  .login-wrap{
+    min-height:100vh;
+    display:grid;
+    place-items:center;
+    padding:2rem;
+    position:relative;
+    overflow:hidden;
+  }
+  #sonar{position:absolute;inset:0;width:100%;height:100%;z-index:0;opacity:.55}
+  .login-wrap::after{ /* vignette to settle the wave */
+    content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
+    background:radial-gradient(120% 90% at 50% 30%,transparent 40%,var(--ground) 100%);
+  }
+  .card{
+    position:relative;z-index:2;
+    width:100%;max-width:392px;
+    background:linear-gradient(180deg,rgba(28,36,56,.92),rgba(22,28,44,.92));
+    border:1px solid var(--line);
+    border-radius:18px;
+    padding:2.4rem 2.1rem 2rem;
+    box-shadow:var(--shadow);
+    backdrop-filter:blur(8px);
+  }
+  .card .mark{margin-bottom:1.5rem}
+  .card h1{
+    font-size:1.18rem;font-weight:560;margin:.1rem 0 .15rem;letter-spacing:-.01em;
+  }
+  .card .sub{color:var(--muted);font-size:.86rem;margin:0 0 1.6rem}
+  .field{margin-bottom:.85rem}
+  .field label{
+    display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--faint);margin:0 0 .4rem .15rem;
+  }
+  .field input{
+    width:100%;background:var(--ground);color:var(--text);
+    border:1px solid var(--line);border-radius:10px;
+    padding:.72rem .85rem;font-size:.92rem;font-family:var(--sans);
+    transition:border-color .15s,box-shadow .15s;
+  }
+  .field input::placeholder{color:var(--faint)}
+  .field input:focus{
+    outline:none;border-color:var(--accent);
+    box-shadow:0 0 0 3px rgba(94,230,208,.14);
+  }
+  .btn-primary{
+    width:100%;margin-top:.7rem;
+    background:var(--accent);color:var(--accent-ink);
+    border:none;border-radius:10px;
+    padding:.78rem 1rem;font-size:.92rem;font-weight:650;letter-spacing:.01em;
+    cursor:pointer;transition:transform .08s,filter .15s;
+  }
+  .btn-primary:hover{filter:brightness(1.07)}
+  .btn-primary:active{transform:translateY(1px)}
+  .card .foot{
+    margin-top:1.5rem;padding-top:1.15rem;border-top:1px solid var(--line-soft);
+    display:flex;align-items:center;justify-content:space-between;
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;color:var(--faint);
+    text-transform:uppercase;
+  }
+  .dot-ok{width:7px;height:7px;border-radius:50%;background:var(--ok);display:inline-block;
+    box-shadow:0 0 0 3px rgba(61,220,151,.16)}
+
+  /* =====================================================
+     DASHBOARD
+  ===================================================== */
+  .top{
+    display:flex;align-items:center;justify-content:space-between;gap:1rem;
+    padding:1.05rem 1.6rem;border-bottom:1px solid var(--line-soft);
+    background:linear-gradient(180deg,rgba(22,28,44,.6),transparent);
+  }
+  .top .left{display:flex;align-items:center;gap:1.1rem}
+  .vchip{
+    font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:var(--muted);
+    border:1px solid var(--line);border-radius:999px;padding:.2rem .6rem;
+  }
+  .vchip b{color:var(--accent);font-weight:600}
+  .actions{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}
+  .act{
+    font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--muted);background:transparent;border:1px solid var(--line);
+    border-radius:8px;padding:.42rem .7rem;cursor:pointer;text-decoration:none;
+    transition:color .15s,border-color .15s,background .15s;display:inline-block;
+  }
+  .act:hover{color:var(--text);border-color:var(--accent-dim)}
+  .act.danger:hover{color:var(--crit);border-color:var(--crit)}
+
+  .page{max-width:1180px;margin:0 auto;padding:1.8rem 1.6rem 4rem}
+  .grid{display:grid;grid-template-columns:1.85fr 1fr;gap:1.4rem;align-items:start}
+
+  .panel{
+    background:var(--surface);border:1px solid var(--line-soft);border-radius:16px;
+    overflow:hidden;
+  }
+  .panel-head{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:1rem 1.2rem .85rem;border-bottom:1px solid var(--line-soft);
+  }
+  .panel-head h2{font-size:.82rem;letter-spacing:.04em;font-weight:600;margin:0}
+  .count{font-family:var(--mono);font-size:11px;color:var(--faint)}
+
+  /* service rows */
+  .svc{
+    display:grid;
+    grid-template-columns:1.3fr .7fr auto;
+    grid-template-areas:"id state actions";
+    align-items:center;gap:.8rem;
+    padding:.95rem 1.2rem;border-bottom:1px solid var(--line-soft);
+    transition:background .15s;
+  }
+  .svc:last-child{border-bottom:none}
+  .svc:hover{background:var(--surface-2)}
+  .svc .id{grid-area:id;display:flex;align-items:center;gap:.7rem;min-width:0}
+  .svc .name{font-weight:560;font-size:.96rem;letter-spacing:-.01em}
+  .svc .ver{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:.12rem}
+  .pin{
+    flex:none;width:26px;height:26px;border-radius:8px;display:grid;place-items:center;
+    font-size:11px;font-family:var(--mono);
+    border:1px solid var(--line);color:var(--faint);
+  }
+  .pin.main{color:var(--accent);border-color:var(--accent-dim);background:rgba(94,230,208,.06)}
+
+  .state{grid-area:state;display:flex;align-items:center;gap:.55rem;min-width:0}
+  .sdot{width:8px;height:8px;border-radius:50%;flex:none}
+  .sdot.run{background:var(--ok);box-shadow:0 0 0 3px rgba(61,220,151,.15)}
+  .sdot.run.live{animation:pulse 2.4s ease-in-out infinite}
+  .sdot.shadow{background:var(--accent);box-shadow:0 0 0 3px rgba(94,230,208,.15)}
+  .sdot.stop{background:var(--faint)}
+  .state .lbl{font-size:.82rem}
+  .state .since{font-family:var(--mono);font-size:10.5px;color:var(--faint);margin-top:.1rem}
+  .badge{
+    font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;
+    padding:.16rem .42rem;border-radius:5px;
+  }
+  .badge.shadow{color:var(--accent);background:rgba(94,230,208,.1)}
+  .svc-actions{grid-area:actions;display:flex;gap:.4rem}
+  .lnk{
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--muted);text-decoration:none;border-bottom:1px solid transparent;padding:.1rem 0;
+    transition:color .15s,border-color .15s;
+  }
+  .lnk:hover{color:var(--accent);border-color:var(--accent)}
+
+  /* notifications */
+  .note{
+    display:grid;grid-template-columns:auto 1fr;gap:.75rem;
+    padding:.85rem 1.2rem;border-bottom:1px solid var(--line-soft);
+  }
+  .note:last-child{border-bottom:none}
+  .sev{width:3px;border-radius:3px;align-self:stretch}
+  .sev.info{background:var(--accent)}
+  .sev.warn{background:var(--warn)}
+  .sev.crit{background:var(--crit)}
+  .note .msg{font-size:.86rem;line-height:1.45}
+  .note .meta{
+    font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--faint);margin-top:.3rem;display:flex;gap:.6rem;
+  }
+  .sev-tag{font-weight:600}
+  .sev-tag.info{color:var(--accent)}
+  .sev-tag.warn{color:var(--warn)}
+  .sev-tag.crit{color:var(--crit)}
+
+  .empty{padding:2.2rem 1.2rem;text-align:center;color:var(--faint);font-size:.85rem}
+
+  /* ---------- logs view ---------- */
+  .logs-head{
+    display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;
+    padding:1rem 1.2rem .9rem;border-bottom:1px solid var(--line-soft);
+  }
+  .logs-head .ctx{display:flex;align-items:center;gap:.6rem;min-width:0}
+  .logs-head .ctx .name{font-weight:560;font-size:.96rem}
+  .logs-head .ctx .ver{font-family:var(--mono);font-size:11px;color:var(--muted)}
+  .live-tag{
+    display:inline-flex;align-items:center;gap:.45rem;
+    font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--ok);
+  }
+  .live-tag .d{width:7px;height:7px;border-radius:50%;background:var(--ok);
+    box-shadow:0 0 0 3px rgba(61,220,151,.15);animation:pulse 2.4s ease-in-out infinite}
+  .live-tag.paused{color:var(--faint)}
+  .live-tag.paused .d{background:var(--faint);box-shadow:none;animation:none}
+  .logs-tools{display:flex;align-items:center;gap:.9rem}
+
+  /* follow switch */
+  .follow{display:inline-flex;align-items:center;gap:.55rem;cursor:pointer;user-select:none}
+  .follow input{position:absolute;opacity:0;width:0;height:0}
+  .track{
+    width:38px;height:21px;border-radius:999px;background:var(--surface-2);
+    border:1px solid var(--line);position:relative;transition:background .15s,border-color .15s;
+  }
+  .track::after{
+    content:"";position:absolute;top:2px;left:2px;width:15px;height:15px;border-radius:50%;
+    background:var(--faint);transition:transform .16s,background .16s;
+  }
+  .follow input:checked + .track{background:rgba(94,230,208,.18);border-color:var(--accent-dim)}
+  .follow input:checked + .track::after{transform:translateX(17px);background:var(--accent)}
+  .follow input:focus-visible + .track{box-shadow:0 0 0 3px rgba(94,230,208,.22)}
+  .follow .flabel{
+    font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);
+  }
+  .follow input:checked ~ .flabel{color:var(--text)}
+
+  .console-wrap{position:relative}
+  .console{
+    height:60vh;min-height:320px;overflow-y:auto;overflow-x:hidden;
+    font-family:var(--mono);font-size:12.5px;line-height:1.7;
+    padding:.6rem 0;background:
+      linear-gradient(180deg,rgba(94,230,208,.025),transparent 120px);
+    scrollbar-width:thin;scrollbar-color:var(--line) transparent;
+  }
+  .console::-webkit-scrollbar{width:10px}
+  .console::-webkit-scrollbar-thumb{background:var(--line);border-radius:6px;border:3px solid var(--surface)}
+  .logline{
+    display:grid;grid-template-columns:auto auto 1fr;gap:.85rem;align-items:baseline;
+    padding:.06rem 1.2rem;white-space:pre-wrap;word-break:break-word;
+  }
+  .logline:hover{background:var(--surface-2)}
+  .logline .ts{color:var(--faint)}
+  .logline .lvl{font-weight:600;letter-spacing:.04em}
+  .logline .lvl.info{color:var(--muted)}
+  .logline .lvl.warn{color:var(--warn)}
+  .logline .lvl.err{color:var(--crit)}
+  .logline.err{background:rgba(242,88,91,.06);box-shadow:inset 3px 0 0 var(--crit)}
+  .logline.warn{box-shadow:inset 3px 0 0 var(--warn)}
+  .logline .txt{color:var(--text)}
+  .logline .txt .dim{color:var(--muted)}
+
+  .jump{
+    position:absolute;left:50%;bottom:.9rem;transform:translateX(-50%) translateY(8px);
+    display:inline-flex;align-items:center;gap:.4rem;
+    background:var(--accent);color:var(--accent-ink);border:none;border-radius:999px;
+    padding:.42rem .95rem;font-family:var(--mono);font-size:11px;letter-spacing:.08em;
+    text-transform:uppercase;font-weight:650;cursor:pointer;box-shadow:var(--shadow);
+    opacity:0;pointer-events:none;transition:opacity .18s,transform .18s;
+  }
+  .jump.show{opacity:1;pointer-events:auto;transform:translateX(-50%) translateY(0)}
+
+  /* ---------- mockup view switcher (not part of product) ---------- */
+  .switch{
+    position:fixed;z-index:50;left:50%;bottom:1.1rem;transform:translateX(-50%);
+    display:flex;gap:.25rem;background:rgba(14,19,32,.85);border:1px solid var(--line);
+    border-radius:999px;padding:.28rem;backdrop-filter:blur(10px);box-shadow:var(--shadow);
+  }
+  .switch button{
+    font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--muted);background:transparent;border:none;border-radius:999px;
+    padding:.4rem .9rem;cursor:pointer;transition:color .15s,background .15s;
+  }
+  .switch button.on{color:var(--accent-ink);background:var(--accent)}
+
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(61,220,151,.45)}50%{box-shadow:0 0 0 6px rgba(61,220,151,0)}}
+
+  @media (max-width:760px){
+    .grid{grid-template-columns:1fr}
+    .svc{grid-template-columns:1fr;grid-template-areas:"id" "state" "actions";gap:.55rem}
+    .svc-actions{justify-content:flex-start}
+    .top{flex-direction:column;align-items:flex-start;gap:.9rem}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .sdot.run.live{animation:none}
+    #sonar{opacity:.32}
+  }
+</style>
+
+<!-- ============================ LOGIN ============================ -->
+<section class="screen active" id="screen-login">
+  <div class="login-wrap">
+    <canvas id="sonar"></canvas>
+    <div class="card">
+      <div class="mark">
+        <svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true">
+          <circle cx="16" cy="16" r="15" fill="none" stroke="#28324A" stroke-width="1"/>
+          <path d="M5 19 C10 19 11 12 16 12 C21 12 22 19 27 19" fill="none" stroke="#5EE6D0" stroke-width="2.1" stroke-linecap="round"/>
+          <circle cx="16" cy="12" r="1.7" fill="#5EE6D0"/>
+        </svg>
+        <span class="wordmark">dae<b>ploy</b></span>
+      </div>
+      <h1>Sign in to your control plane</h1>
+      <p class="sub">Deploy and manage your services from one place.</p>
+
+      <form onsubmit="return false">
+        <div class="field">
+          <label for="u">Username</label>
+          <input id="u" type="text" placeholder="admin" autocomplete="username">
+        </div>
+        <div class="field">
+          <label for="p">Password</label>
+          <input id="p" type="password" placeholder="••••••••" autocomplete="current-password">
+        </div>
+        <button class="btn-primary" type="submit">Log in</button>
+      </form>
+
+      <div class="foot">
+        <span><span class="dot-ok"></span>&nbsp;&nbsp;manager online</span>
+        <span>by Viking Analytics</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ DASHBOARD ============================ -->
+<section class="screen" id="screen-dash">
+  <header class="top">
+    <div class="left">
+      <div class="mark">
+        <svg width="26" height="26" viewBox="0 0 32 32" aria-hidden="true">
+          <circle cx="16" cy="16" r="15" fill="none" stroke="#28324A" stroke-width="1"/>
+          <path d="M5 19 C10 19 11 12 16 12 C21 12 22 19 27 19" fill="none" stroke="#5EE6D0" stroke-width="2.1" stroke-linecap="round"/>
+          <circle cx="16" cy="12" r="1.7" fill="#5EE6D0"/>
+        </svg>
+        <span class="wordmark">dae<b>ploy</b></span>
+      </div>
+      <span class="vchip">manager <b>v: latest</b></span>
+    </div>
+    <nav class="actions">
+      <a class="act" href="#">Logs</a>
+      <a class="act" href="#">API Docs</a>
+      <button class="act">Clear notifications</button>
+      <a class="act danger" href="#">Log out</a>
+    </nav>
+  </header>
+
+  <div class="page">
+    <div class="grid">
+
+      <!-- SERVICES (hero) -->
+      <section class="panel" aria-label="Services">
+        <div class="panel-head">
+          <h2>Services</h2>
+          <span class="count">4 deployed · 3 running</span>
+        </div>
+
+        <div class="svc">
+          <div class="id">
+            <span class="pin main" title="Main version">★</span>
+            <div>
+              <div class="name">status_code</div>
+              <div class="ver">v0.1.0</div>
+            </div>
+          </div>
+          <div class="state">
+            <span class="sdot run live"></span>
+            <div>
+              <div class="lbl">Running</div>
+              <div class="since">since 2026-06-21 17:24:13</div>
+            </div>
+          </div>
+          <div class="svc-actions">
+            <a class="lnk" href="#">Logs</a>
+            <a class="lnk" href="#">Docs</a>
+          </div>
+        </div>
+
+        <div class="svc">
+          <div class="id">
+            <span class="pin main" title="Main version">★</span>
+            <div>
+              <div class="name">forecast-api</div>
+              <div class="ver">v1.2.0</div>
+            </div>
+          </div>
+          <div class="state">
+            <span class="sdot run"></span>
+            <div>
+              <div class="lbl">Running</div>
+              <div class="since">since 2026-06-20 09:11:02</div>
+            </div>
+          </div>
+          <div class="svc-actions">
+            <a class="lnk" href="#">Logs</a>
+            <a class="lnk" href="#">Docs</a>
+          </div>
+        </div>
+
+        <div class="svc">
+          <div class="id">
+            <span class="pin" title="Shadow version">↗</span>
+            <div>
+              <div class="name">forecast-api <span class="badge shadow">shadow</span></div>
+              <div class="ver">v1.3.0</div>
+            </div>
+          </div>
+          <div class="state">
+            <span class="sdot shadow"></span>
+            <div>
+              <div class="lbl">Mirroring traffic</div>
+              <div class="since">since 2026-06-21 14:02:55</div>
+            </div>
+          </div>
+          <div class="svc-actions">
+            <a class="lnk" href="#">Logs</a>
+            <a class="lnk" href="#">Docs</a>
+          </div>
+        </div>
+
+        <div class="svc">
+          <div class="id">
+            <span class="pin" title="Stopped">○</span>
+            <div>
+              <div class="name">anomaly-detector</div>
+              <div class="ver">v0.4.1</div>
+            </div>
+          </div>
+          <div class="state">
+            <span class="sdot stop"></span>
+            <div>
+              <div class="lbl" style="color:var(--muted)">Stopped</div>
+              <div class="since">since 2026-06-19 22:48:10</div>
+            </div>
+          </div>
+          <div class="svc-actions">
+            <a class="lnk" href="#">Logs</a>
+            <a class="lnk" href="#">Docs</a>
+          </div>
+        </div>
+      </section>
+
+      <!-- NOTIFICATIONS -->
+      <section class="panel" aria-label="Notifications">
+        <div class="panel-head">
+          <h2>Notifications</h2>
+          <span class="count">3</span>
+        </div>
+
+        <div class="note">
+          <span class="sev crit"></span>
+          <div>
+            <div class="msg">anomaly-detector stopped after 3 failed restarts.</div>
+            <div class="meta"><span class="sev-tag crit">Critical</span><span>Yesterday · 22:49</span></div>
+          </div>
+        </div>
+        <div class="note">
+          <span class="sev warn"></span>
+          <div>
+            <div class="msg">anomaly-detector exited with code 1 and was restarted.</div>
+            <div class="meta"><span class="sev-tag warn">Warning</span><span>Yesterday · 22:48</span></div>
+          </div>
+        </div>
+        <div class="note">
+          <span class="sev info"></span>
+          <div>
+            <div class="msg">forecast-api v1.3.0 deployed as a shadow of v1.2.0.</div>
+            <div class="meta"><span class="sev-tag info">Info</span><span>Today · 14:02</span></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</section>
+
+<!-- ============================ LOGS ============================ -->
+<section class="screen" id="screen-logs">
+  <header class="top">
+    <div class="left">
+      <div class="mark">
+        <svg width="26" height="26" viewBox="0 0 32 32" aria-hidden="true">
+          <circle cx="16" cy="16" r="15" fill="none" stroke="#28324A" stroke-width="1"/>
+          <path d="M5 19 C10 19 11 12 16 12 C21 12 22 19 27 19" fill="none" stroke="#5EE6D0" stroke-width="2.1" stroke-linecap="round"/>
+          <circle cx="16" cy="12" r="1.7" fill="#5EE6D0"/>
+        </svg>
+        <span class="wordmark">dae<b>ploy</b></span>
+      </div>
+      <span class="vchip">manager <b>v: latest</b></span>
+    </div>
+    <nav class="actions">
+      <a class="act" href="#">&larr; Services</a>
+      <a class="act" href="#">API Docs</a>
+      <a class="act danger" href="#">Log out</a>
+    </nav>
+  </header>
+
+  <div class="page">
+    <section class="panel" aria-label="Service logs">
+      <div class="logs-head">
+        <div class="ctx">
+          <span class="sdot run live"></span>
+          <span class="name">status_code</span>
+          <span class="ver">v0.1.0</span>
+        </div>
+        <div class="logs-tools">
+          <span class="live-tag" id="liveTag"><span class="d"></span>Live</span>
+          <label class="follow" title="Auto-scroll to newest logs as they stream in">
+            <input type="checkbox" id="followBox" checked>
+            <span class="track" aria-hidden="true"></span>
+            <span class="flabel">Follow</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="console-wrap">
+        <div class="console" id="console" tabindex="0" aria-label="Log output" role="log" aria-live="off"></div>
+        <button class="jump" id="jumpBtn" onclick="jumpToLatest()">Jump to latest &darr;</button>
+      </div>
+    </section>
+  </div>
+</section>
+
+<!-- mockup-only screen switcher -->
+<div class="switch" role="tablist" aria-label="Mockup screens">
+  <button id="b-login" class="on" onclick="show('login')">Login</button>
+  <button id="b-dash" onclick="show('dash')">Dashboard</button>
+  <button id="b-logs" onclick="show('logs')">Logs</button>
+</div>
+
+<script>
+  var SCREENS=['login','dash','logs'];
+  function show(which){
+    SCREENS.forEach(function(s){
+      document.getElementById('screen-'+s).classList.toggle('active', s===which);
+      document.getElementById('b-'+s).classList.toggle('on', s===which);
+    });
+    if(which==='login') startSonar(); else stopSonar();
+    if(which==='logs') startLogs(); else stopLogs();
+  }
+
+  /* Sonar/waveform backdrop — the whale-mark motif, tied to Viking Analytics'
+     signal-analytics roots. One restrained, looping sweep. */
+  var cv=document.getElementById('sonar'), ctx=cv.getContext('2d'), raf=null, t=0;
+  var reduce = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+  function size(){
+    var d=window.devicePixelRatio||1;
+    cv.width=cv.clientWidth*d; cv.height=cv.clientHeight*d;
+    ctx.setTransform(d,0,0,d,0,0);
+  }
+  function draw(){
+    var w=cv.clientWidth, h=cv.clientHeight, cx=w/2, cy=h*0.42;
+    ctx.clearRect(0,0,w,h);
+    // concentric sonar rings
+    for(var i=0;i<5;i++){
+      var r=((t*0.6+i*70)%360);
+      ctx.beginPath();
+      ctx.arc(cx,cy,r,0,Math.PI*2);
+      ctx.strokeStyle='rgba(94,230,208,'+(0.10*(1-r/360))+')';
+      ctx.lineWidth=1;
+      ctx.stroke();
+    }
+    // waveform line
+    ctx.beginPath();
+    for(var x=0;x<=w;x+=4){
+      var k=(x/w)*Math.PI*4;
+      var amp=26*Math.exp(-Math.pow((x-cx)/(w*0.34),2));
+      var y=cy+260 + Math.sin(k + t*0.04)*amp;
+      x===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    }
+    ctx.strokeStyle='rgba(94,230,208,0.22)'; ctx.lineWidth=1.4; ctx.stroke();
+    t+=1; raf=requestAnimationFrame(draw);
+  }
+  function startSonar(){ size(); if(reduce){draw_once();return;} if(!raf) draw(); }
+  function stopSonar(){ if(raf){cancelAnimationFrame(raf); raf=null;} }
+  function draw_once(){ draw(); stopSonar(); }
+  window.addEventListener('resize', function(){ if(raf||reduce){ size(); if(reduce) draw_once(); } });
+  startSonar();
+
+  /* ----------------- streaming logs + follow toggle ----------------- */
+  var consoleEl=document.getElementById('console');
+  var followBox=document.getElementById('followBox');
+  var jumpBtn=document.getElementById('jumpBtn');
+  var liveTag=document.getElementById('liveTag');
+  var logTimer=null, clock=Date.UTC(2026,5,21,17,24,13), seeded=false;
+
+  // realistic log pool for the status_code service
+  var POOL=[
+    ['info','uvicorn.access',  '::1 - "POST /create_new_dict HTTP/1.1" <b>201</b>'],
+    ['info','status_code',     'stored dict <em>demo</em> (1 key)'],
+    ['info','uvicorn.access',  '::1 - "POST /get_dict HTTP/1.1" <b>200</b>'],
+    ['info','status_code',     'get_dict(<em>demo</em>) -> 200'],
+    ['info','uvicorn.access',  '::1 - "GET /openapi.json HTTP/1.1" <b>200</b>'],
+    ['info','daeploy.service', 'health check ok'],
+    ['warn','daeploy.service', 'call_every task ran 1.74s (period 1.00s)'],
+    ['info','uvicorn.access',  '::1 - "GET /~health HTTP/1.1" <b>200</b>'],
+    ['err', 'status_code',     "KeyError: 'missing' in get_dict — returning 404"],
+    ['info','uvicorn.access',  '::1 - "POST /get_dict HTTP/1.1" <b>404</b>'],
+    ['info','status_code',     'created dict <em>session-42</em> (3 keys)'],
+  ];
+  var pi=0;
+  function fmtTs(ms){
+    var d=new Date(ms);
+    function p(n){return (n<10?'0':'')+n;}
+    return d.getUTCFullYear()+'-'+p(d.getUTCMonth()+1)+'-'+p(d.getUTCDate())+' '+
+           p(d.getUTCHours())+':'+p(d.getUTCMinutes())+':'+p(d.getUTCSeconds());
+  }
+  function nearBottom(){
+    return consoleEl.scrollHeight - consoleEl.scrollTop - consoleEl.clientHeight < 24;
+  }
+  function appendLine(){
+    var item=POOL[pi % POOL.length]; pi++;
+    clock += 800 + Math.floor((pi*53)%1400); // deterministic-ish spacing, no Math.random needed for look
+    var lvl=item[0], src=item[1], msg=item[2];
+    var row=document.createElement('div');
+    row.className='logline'+(lvl==='err'?' err':lvl==='warn'?' warn':'');
+    var label=lvl==='err'?'ERROR':lvl==='warn'?'WARN ':'INFO ';
+    row.innerHTML='<span class="ts">'+fmtTs(clock)+'</span>'+
+                  '<span class="lvl '+lvl+'">'+label+'</span>'+
+                  '<span class="txt"><span class="dim">'+src+'</span>  '+msg+'</span>';
+    consoleEl.appendChild(row);
+    // cap buffer
+    while(consoleEl.childElementCount>400) consoleEl.removeChild(consoleEl.firstChild);
+    if(followBox.checked){ consoleEl.scrollTop=consoleEl.scrollHeight; }
+    else { jumpBtn.classList.add('show'); }
+  }
+  function tick(){ appendLine(); if(pi%3===0 && followBox.checked) consoleEl.scrollTop=consoleEl.scrollHeight; }
+
+  function setLive(on){
+    liveTag.classList.toggle('paused', !on);
+    liveTag.childNodes[1].textContent = on ? 'Live' : 'Paused';
+  }
+  function startLogs(){
+    if(!seeded){ for(var i=0;i<28;i++) appendLine(); seeded=true; consoleEl.scrollTop=consoleEl.scrollHeight; }
+    if(!logTimer) logTimer=setInterval(tick, 900);
+    setLive(followBox.checked);
+  }
+  function stopLogs(){ if(logTimer){clearInterval(logTimer); logTimer=null;} }
+  function jumpToLatest(){
+    followBox.checked=true; setLive(true);
+    consoleEl.scrollTop=consoleEl.scrollHeight; jumpBtn.classList.remove('show');
+  }
+  // toggling follow
+  followBox.addEventListener('change', function(){
+    setLive(followBox.checked);
+    if(followBox.checked){ consoleEl.scrollTop=consoleEl.scrollHeight; jumpBtn.classList.remove('show'); }
+  });
+  // if the user scrolls up while following, pause follow (read history)
+  consoleEl.addEventListener('scroll', function(){
+    if(followBox.checked && !nearBottom()){
+      followBox.checked=false; setLive(false); jumpBtn.classList.add('show');
+    } else if(!followBox.checked && nearBottom()){
+      jumpBtn.classList.remove('show');
+    }
+  });
+</script>

@@ -1,38 +1,166 @@
-<html>
-    <head>
-        <title>Daeploy</title>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-    </head>
-    <body>
-        <div class="container h-100 d-flex justify-content-center">
-            <div class="jumbotron my-auto">
-              <img src="https://daeploy.com/wp-content/uploads/2021/05/daeploy-blue.png" />
-              <form action="{{ ACTION }}" method="POST">
-                  <div class="col-xs-1 mt-5" align="center">
-                    <input type="text" name="username" placeholder="Username">
-                  </div>
-                  <div class="col-xs-1 mt-2" align="center">
-                    <input type="password" name="password" placeholder="Password">
-                  </div>
-                  <div class="col-xs-1 mt-2" align="center">
-                    <button class="btn btn-outline-secondary">
-                        Login
-                    </button>
-                  </div>
-              </form>
-              </div>
-         </div>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Daeploy — Sign in</title>
+  <link rel="icon" href="/assets/favicon.ico">
+  <link rel="stylesheet" href="/assets/tokens.css">
+  <style>
+    *{box-sizing:border-box}
+    html,body{margin:0}
+    body{
+      background:var(--ground);
+      color:var(--text);
+      font-family:var(--sans);
+      -webkit-font-smoothing:antialiased;
+      line-height:1.5;
+      overflow-x:hidden;
+    }
 
-    </body>
-<!-- Latest compiled and minified CSS -->
-<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    /* ---------- shared bits ---------- */
+    .mark{display:inline-flex;align-items:center;gap:.6rem}
+    .wordmark{
+      font-weight:600;
+      font-size:1.4rem;
+      letter-spacing:-.02em;
+    }
+    .wordmark b{color:var(--accent);font-weight:600}
+    button{font-family:inherit}
 
-<!-- jQuery library -->
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    /* =====================================================
+       LOGIN
+    ===================================================== */
+    .login-wrap{
+      min-height:100vh;
+      display:grid;
+      place-items:center;
+      padding:2rem;
+      position:relative;
+      overflow:hidden;
+    }
+    #sonar{position:absolute;inset:0;width:100%;height:100%;z-index:0;opacity:.55}
+    .login-wrap::after{ /* vignette to settle the wave */
+      content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
+      background:radial-gradient(120% 90% at 50% 30%,transparent 40%,var(--ground) 100%);
+    }
+    .card{
+      position:relative;z-index:2;
+      width:100%;max-width:392px;
+      background:linear-gradient(180deg,rgba(28,36,56,.92),rgba(22,28,44,.92));
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:2.4rem 2.1rem 2rem;
+      box-shadow:var(--shadow);
+      backdrop-filter:blur(8px);
+    }
+    .card .mark{margin-bottom:1.5rem}
+    .card h1{
+      font-size:1.18rem;font-weight:560;margin:.1rem 0 .15rem;letter-spacing:-.01em;
+    }
+    .card .sub{color:var(--muted);font-size:.86rem;margin:0 0 1.6rem}
+    .field{margin-bottom:.85rem}
+    .field label{
+      display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;
+      text-transform:uppercase;color:var(--faint);margin:0 0 .4rem .15rem;
+    }
+    .field input{
+      width:100%;background:var(--ground);color:var(--text);
+      border:1px solid var(--line);border-radius:10px;
+      padding:.72rem .85rem;font-size:.92rem;font-family:var(--sans);
+      transition:border-color .15s,box-shadow .15s;
+    }
+    .field input::placeholder{color:var(--faint)}
+    .field input:focus{
+      outline:none;border-color:var(--accent);
+      box-shadow:0 0 0 3px rgba(94,230,208,.14);
+    }
+    .btn-primary{
+      width:100%;margin-top:.7rem;
+      background:var(--accent);color:var(--accent-ink);
+      border:none;border-radius:10px;
+      padding:.78rem 1rem;font-size:.92rem;font-weight:650;letter-spacing:.01em;
+      cursor:pointer;transition:transform .08s,filter .15s;
+    }
+    .btn-primary:hover{filter:brightness(1.07)}
+    .btn-primary:active{transform:translateY(1px)}
+    .card .foot{
+      margin-top:1.5rem;padding-top:1.15rem;border-top:1px solid var(--line-soft);
+      display:flex;align-items:center;justify-content:space-between;
+      font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;color:var(--faint);
+      text-transform:uppercase;
+    }
+    .dot-ok{width:7px;height:7px;border-radius:50%;background:var(--ok);display:inline-block;
+      box-shadow:0 0 0 3px rgba(61,220,151,.16)}
 
-<!-- Popper JS -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
-
-<!-- Latest compiled JavaScript -->
-<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    @media (prefers-reduced-motion:reduce){
+      #sonar{opacity:.32}
+    }
+  </style>
+</head>
+<body>
+  <div class="login-wrap">
+    <canvas id="sonar"></canvas>
+    <div class="card">
+      <div class="mark">
+        <img src="/assets/daeploy_mark.svg" width="30" height="30" alt="">
+        <span class="wordmark">dae<b>ploy</b></span>
+      </div>
+      <h1>Sign in to your control plane</h1>
+      <p class="sub">Deploy and manage your services from one place.</p>
+      <form action="{{ ACTION }}" method="POST">
+        <div class="field">
+          <label for="u">Username</label>
+          <input id="u" name="username" type="text" placeholder="admin" autocomplete="username">
+        </div>
+        <div class="field">
+          <label for="p">Password</label>
+          <input id="p" name="password" type="password" placeholder="••••••••" autocomplete="current-password">
+        </div>
+        <button class="btn-primary" type="submit">Log in</button>
+      </form>
+      <div class="foot">
+        <span><span class="dot-ok"></span>&nbsp;&nbsp;manager online</span>
+        <span>by Viking Analytics</span>
+      </div>
+    </div>
+  </div>
+  <script>
+    var cv=document.getElementById('sonar'), ctx=cv.getContext('2d'), raf=null, t=0;
+    var reduce = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+    function size(){
+      var d=window.devicePixelRatio||1;
+      cv.width=cv.clientWidth*d; cv.height=cv.clientHeight*d;
+      ctx.setTransform(d,0,0,d,0,0);
+    }
+    function draw(){
+      var w=cv.clientWidth, h=cv.clientHeight, cx=w/2, cy=h*0.42;
+      ctx.clearRect(0,0,w,h);
+      // concentric sonar rings
+      for(var i=0;i<5;i++){
+        var r=((t*0.6+i*70)%360);
+        ctx.beginPath();
+        ctx.arc(cx,cy,r,0,Math.PI*2);
+        ctx.strokeStyle='rgba(94,230,208,'+(0.10*(1-r/360))+')';
+        ctx.lineWidth=1;
+        ctx.stroke();
+      }
+      // waveform line
+      ctx.beginPath();
+      for(var x=0;x<=w;x+=4){
+        var k=(x/w)*Math.PI*4;
+        var amp=26*Math.exp(-Math.pow((x-cx)/(w*0.34),2));
+        var y=cy+260 + Math.sin(k + t*0.04)*amp;
+        x===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+      }
+      ctx.strokeStyle='rgba(94,230,208,0.22)'; ctx.lineWidth=1.4; ctx.stroke();
+      t+=1; raf=requestAnimationFrame(draw);
+    }
+    function startSonar(){ size(); if(reduce){draw_once();return;} if(!raf) draw(); }
+    function stopSonar(){ if(raf){cancelAnimationFrame(raf); raf=null;} }
+    function draw_once(){ draw(); stopSonar(); }
+    window.addEventListener('resize', function(){ if(raf||reduce){ size(); if(reduce) draw_once(); } });
+    startSonar();
+  </script>
+</body>
+</html>

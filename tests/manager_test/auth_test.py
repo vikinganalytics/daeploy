@@ -33,7 +33,7 @@ def test_login_page(exclude_middleware):
 
 def test_verification_without_auth(database):
 
-    response = client.get("/auth/verify", allow_redirects=False)
+    response = client.get("/auth/verify", follow_redirects=False)
     assert response.status_code == 200
 
 
@@ -43,39 +43,39 @@ def test_failed_login(database, auth_enabled):
     response = client.post(
         "/auth/login",
         data={"username": "admin", "password": "wrongpassword"},
-        allow_redirects=False,
+        follow_redirects=False,
     )
     assert response.status_code == 303
 
     # No access after
-    response = client.get("/auth/verify", allow_redirects=False)
+    response = client.get("/auth/verify", follow_redirects=False)
     assert response.status_code == 303
 
 
 def test_cookie_token(database, auth_enabled):
 
     # No access from beginning
-    response = client.get("/auth/verify", allow_redirects=False)
+    response = client.get("/auth/verify", follow_redirects=False)
     assert response.status_code == 303
 
     # Login
     response = client.post(
         "/auth/login",
         data={"username": "admin", "password": "admin"},
-        allow_redirects=False,
+        follow_redirects=False,
     )
     assert response.status_code == 303
 
     # Check that we have access!
-    response = client.get("/auth/verify", allow_redirects=False)
+    response = client.get("/auth/verify", follow_redirects=False)
     assert response.status_code == 200
 
     # Logout
-    response = client.get("/auth/logout", allow_redirects=False)
+    response = client.get("/auth/logout", follow_redirects=False)
     assert response.status_code == 303
 
     # No access at the end
-    response = client.get("/auth/verify", allow_redirects=False)
+    response = client.get("/auth/verify", follow_redirects=False)
     assert response.status_code == 303
 
 
@@ -85,7 +85,7 @@ def test_API_token(clear_cookies, database, auth_enabled):
     response = client.get(
         "/auth/verify",
         headers={"Authorization": f"Bearer mumbojumbo"},
-        allow_redirects=True,
+        follow_redirects=True,
     )
     assert response.status_code == 401
 
@@ -111,7 +111,7 @@ def test_API_token(clear_cookies, database, auth_enabled):
     response = client.get(
         "/auth/verify",
         headers={"Authorization": f"Bearer {token}"},
-        allow_redirects=False,
+        follow_redirects=False,
     )
     assert response.status_code == 200
 
@@ -119,7 +119,7 @@ def test_API_token(clear_cookies, database, auth_enabled):
     response = client.get(
         "/auth/verify",
         headers={"Authorization": f"Bearer {token}"},
-        allow_redirects=True,
+        follow_redirects=True,
     )
     assert response.status_code == 200
 
@@ -131,6 +131,6 @@ def test_API_token(clear_cookies, database, auth_enabled):
     response = client.get(
         "/auth/verify",
         headers={"Authorization": f"Bearer {token}"},
-        allow_redirects=True,
+        follow_redirects=True,
     )
     assert response.status_code == 401

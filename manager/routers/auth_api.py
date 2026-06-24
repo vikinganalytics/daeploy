@@ -115,8 +115,9 @@ def show_login_page(request: Request, destination: Optional[str] = "/"):
     # noqa: DAR101,DAR201,DAR401
     """
     return TEMPLATES.TemplateResponse(
-        "login.html",
-        {"request": request, "ACTION": f"/auth/login?destination={destination}"},
+        request=request,
+        name="login.html",
+        context={"ACTION": f"/auth/login?destination={destination}"},
         status_code=401,
     )
 
@@ -143,7 +144,12 @@ def login_user(
         LOGGER.exception(f"User {username} failed to login!")
         return RedirectResponse(url=destination, status_code=303)
 
-    if not bcrypt.checkpw(password.get_secret_value().encode(), record.password):
+    stored_pw = (
+        record.password.encode()
+        if isinstance(record.password, str)
+        else record.password
+    )
+    if not bcrypt.checkpw(password.get_secret_value().encode(), stored_pw):
         return RedirectResponse(url=destination, status_code=303)
 
     # Construct token

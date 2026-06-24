@@ -38,7 +38,7 @@ def change_user(client, username, password):
     client.post(
         "/auth/login",
         data={"username": username, "password": password},
-        allow_redirects=False,
+        follow_redirects=False,
     )
 
 

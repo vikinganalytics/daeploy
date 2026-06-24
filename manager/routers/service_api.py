@@ -5,11 +5,13 @@ import subprocess
 from datetime import datetime
 from typing import List, Optional
 from pathlib import Path
+from urllib.parse import quote
 from pydantic import ValidationError, Json
 
 from cookiecutter.main import cookiecutter
-from fastapi import APIRouter, HTTPException, File, UploadFile, Form
-from fastapi.responses import StreamingResponse
+from fastapi import APIRouter, HTTPException, File, Request, UploadFile, Form
+from fastapi.responses import HTMLResponse, StreamingResponse
+from fastapi.templating import Jinja2Templates
 from docker.errors import ImageNotFound, ImageLoadError
 
 from manager.exceptions import (
@@ -37,6 +39,7 @@ from manager.constants import (
     DAEPLOY_PREFIX,
     DAEPLOY_TAR_FILE_NAME,
     DAEPLOY_DEFAULT_INTERNAL_PORT,
+    get_manager_version,
 )
 from manager.checks import (
     check_service_exists_json_body,
@@ -54,6 +57,7 @@ PICKLE_TEMPLATE_DIR = THIS_DIR.parent / "templates" / "daeploy_pickle_template/"
 LOGGER = logging.getLogger(__name__)
 
 ROUTER = APIRouter()
+TEMPLATES = Jinja2Templates(directory="manager/templates")
 
 
 @ROUTER.get("/", response_model=List[ServiceResponse])
@@ -87,7 +91,7 @@ def new_service_from_git_repo(service_request: ServiceGitRequest):
 
     """
     check_service_exists(service_request.name, service_request.version)
-    image = build_service_image_s2i(service_request.git_url, service_request)
+    image = build_service_image_s2i(str(service_request.git_url), service_request)
     start_service_from_image(image, service_request)
 
     return "Accepted"
@@ -323,6 +327,25 @@ def assign_main_service(service: BaseService):
     if main_version:
         proxy.create_mirror_configuration(service.name, main_version, shadow_versions)
     return "OK"
+
+
+@ROUTER.get("/~logs/view", response_class=HTMLResponse)
+def service_logs_view(request: Request, name: str, version: str):
+    """HTML view that streams a service's logs with a follow/auto-scroll toggle."""
+    stream_url = (
+        f"/services/~logs?name={quote(name)}&version={quote(version)}"
+        "&follow=true&tail=200"
+    )
+    return TEMPLATES.TemplateResponse(
+        request=request,
+        name="logs.html",
+        context={
+            "title": name,
+            "subtitle": f"v{version}",
+            "stream_url": stream_url,
+            "manager_version": get_manager_version(),
+        },
+    )
 
 
 @ROUTER.get("/~logs", response_class=StreamingResponse)
