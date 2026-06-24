@@ -38,7 +38,6 @@ def local_docker_connection():
 
 
 def test_starting_new_service(local_docker_connection):
-
     url = local_docker_connection.create_service(
         image="traefik/whoami:latest",
         name="test",
@@ -56,7 +55,6 @@ def test_starting_new_service(local_docker_connection):
 
 
 def test_start_image_service_with_run_args(local_docker_connection):
-
     local_docker_connection.create_service(
         image="traefik/whoami:latest",
         name="test",
@@ -85,7 +83,6 @@ def test_start_image_service_with_run_args(local_docker_connection):
 
 
 def test_starting_two_service_different_version(local_docker_connection):
-
     first_url = local_docker_connection.create_service(
         image="traefik/whoami:latest",
         name="test",
@@ -162,7 +159,6 @@ def test_with_failing_services_port_allocation(local_docker_connection):
 
 
 def test_with_failing_services_restart(local_docker_connection):
-
     client = docker.from_env()
 
     local_docker_connection.create_service(
@@ -196,7 +192,6 @@ def test_with_failing_services_restart(local_docker_connection):
 
 @pytest.mark.asyncio
 async def test_service_logs(local_docker_connection):
-
     local_docker_connection.create_service(
         image="traefik/whoami:latest",
         name="test",
