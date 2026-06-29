@@ -35,6 +35,7 @@
     }
     .act:hover{color:var(--text);border-color:var(--accent-dim)}
     .act.danger:hover{color:var(--crit);border-color:var(--crit)}
+    .act:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
 
     .page{flex:1;min-height:0;display:flex;padding:1.2rem 1.6rem 1.6rem;}
 
@@ -183,7 +184,7 @@
         matchCount=document.getElementById('matchCount'),
         exportBtn=document.getElementById('exportBtn');
 
-    var searchActive=false, streamCtrl=null, searchTimer=null;
+    var searchActive=false, streamCtrl=null, searchTimer=null, searchCtrl=null;
 
     function nearBottom(){return consoleEl.scrollHeight-consoleEl.scrollTop-consoleEl.clientHeight<24;}
     function setLive(on){liveTag.classList.toggle('paused',!on);document.getElementById('liveLabel').textContent=on?'Live':'Paused';}
@@ -246,18 +247,21 @@
     async function runSearch(term){
       searchActive=true;
       if(streamCtrl)streamCtrl.abort();
+      if(searchCtrl)searchCtrl.abort(); searchCtrl=new AbortController();
       setLive(false); jumpBtn.classList.remove('show'); matchCount.textContent='…';
       try{
-        var resp=await fetch(FULL_URL,{headers:{'Accept':'text/plain'}});
-        var text=await resp.text(), q=term.toLowerCase(), matches=0;
+        var resp=await fetch(FULL_URL,{headers:{'Accept':'text/plain'},signal:searchCtrl.signal});
+        var text=await resp.text();
+        if(!searchActive)return;
+        var q=term.toLowerCase(), matches=0;
         consoleEl.textContent='';
         text.split('\n').forEach(function(line){
           if(line && line.toLowerCase().indexOf(q)>-1){matches++; appendMatch(line,term);}
         });
         matchCount.textContent=matches+' match'+(matches===1?'':'es');
-      }catch(e){ matchCount.textContent='search failed'; }
+      }catch(e){ if(e.name!=='AbortError')matchCount.textContent='search failed'; }
     }
-    function clearSearch(){ searchActive=false; matchCount.textContent=''; startStream(); }
+    function clearSearch(){ searchActive=false; matchCount.textContent=''; if(searchCtrl)searchCtrl.abort(); startStream(); }
 
     searchBox.addEventListener('input',function(){
       clearTimeout(searchTimer);
