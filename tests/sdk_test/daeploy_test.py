@@ -224,7 +224,6 @@ def test_get_paramter_by_api():
     service.add_parameter("myparameter", 10)
 
     with TestClient(service.app) as client:
-
         response = client.get(
             "/~parameters/myparameter", headers={"accept": "application/json"}
         )
@@ -256,7 +255,6 @@ def test_update_parameter():
     service.add_parameter("myparameter", 10)
 
     with TestClient(service.app) as client:
-
         req = {"value": 1000}
 
         response = client.post(
@@ -271,7 +269,6 @@ def test_internal_parameter():
     service.add_parameter("myparameter", 10, expose=False)
 
     with TestClient(service.app) as client:
-
         req = {"value": 1000}
 
         response = client.post(
@@ -287,7 +284,6 @@ def test_set_parameter():
     service.set_parameter("myparameter", 20)
 
     with TestClient(service.app) as client:
-
         response = client.get(
             "/~parameters/myparameter", headers={"accept": "application/json"}
         )
@@ -678,7 +674,6 @@ def test_call_every_decorator_long_execution_time():
 
 
 def test_database_table_creation(database):
-
     timestamp = datetime.datetime.utcnow()
     db.write_to_ts("float", 1.0, timestamp)
     db.write_to_ts("text", "1", timestamp)
@@ -695,7 +690,6 @@ def test_database_table_creation(database):
 
 
 def test_jsonable_type_db(database):
-
     timestamp = datetime.datetime.utcnow()
     db.write_to_ts("dict", {"a": 4}, timestamp)
     await_database_queue()
@@ -704,7 +698,6 @@ def test_jsonable_type_db(database):
 
 
 def test_continuous_storing_of_and_reading_of_variables(database):
-
     for i in range(200):
         timestamp = datetime.datetime.utcnow()
         db.write_to_ts("float", float(i), timestamp)
@@ -736,7 +729,6 @@ def test_edge_case_type_storing(database):
 
 
 def test_read_timerange(database):
-
     before = datetime.datetime.utcnow()
 
     # Use explicit, strictly-increasing timestamps for the 200 writes. The
