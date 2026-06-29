@@ -165,3 +165,14 @@ def test_logs_toolbar_has_search_and_export():
     assert "EXPORT_BASENAME" in html and "FULL_URL" in html
     assert "a.download" in html  # triggers a file download
     assert "createTextNode" in html  # XSS-safe highlight
+
+
+def test_dashboard_grid_widens_services_and_fills_viewport():
+    css = (ASSETS / "dashboard_styles.css").read_text().replace(" ", "")
+    # Services hero is wider than the slim Notifications rail
+    assert "grid-template-columns:2.6fr0.9fr" in css
+    assert "grid-template-columns:1.85fr1fr" not in css
+    # Page fills the viewport height (minus the banner) and centers when short
+    assert "min-height:calc(100vh-4rem)" in css
+    assert "margin-block:auto" in css
+    assert "box-sizing:border-box" in css
