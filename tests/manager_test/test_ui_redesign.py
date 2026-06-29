@@ -176,3 +176,12 @@ def test_dashboard_grid_widens_services_and_fills_viewport():
     assert "min-height:calc(100vh-4rem)" in css
     assert "margin-block:auto" in css
     assert "box-sizing:border-box" in css
+
+
+def test_notifications_panel_has_explanation():
+    from manager.routers import dashboard_api
+
+    layout = str(dashboard_api.app.layout)
+    assert "Alerts services raise" in layout  # one-line description of the panel
+    css = (ASSETS / "dashboard_styles.css").read_text()
+    assert ".panel-sub" in css

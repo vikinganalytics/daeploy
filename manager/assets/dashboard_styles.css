@@ -49,6 +49,7 @@ a{color:inherit;text-decoration:none;}
   padding:1rem 1.2rem .85rem;border-bottom:1px solid var(--line-soft);
 }
 .panel-head h2{font-size:.82rem;letter-spacing:.04em;font-weight:600;margin:0}
+.panel-sub{margin:.25rem 0 0;font-size:11px;line-height:1.4;color:var(--muted)}
 .count{font-family:var(--mono);font-size:11px;color:var(--faint)}
 
 /* ---------- service rows ---------- */

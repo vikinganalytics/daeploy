@@ -336,7 +336,18 @@ app.layout = html.Div(
                             children=[
                                 html.Div(
                                     className="panel-head",
-                                    children=[html.H2("Notifications")],
+                                    children=[
+                                        html.Div(
+                                            [
+                                                html.H2("Notifications"),
+                                                html.P(
+                                                    "Alerts services raise via the SDK"
+                                                    " notify() — info, warnings, critical.",
+                                                    className="panel-sub",
+                                                ),
+                                            ]
+                                        )
+                                    ],
                                 ),
                                 html.Div(
                                     id="notifications-content",
