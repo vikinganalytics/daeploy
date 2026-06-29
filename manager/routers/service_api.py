@@ -340,7 +340,7 @@ def service_logs_view(request: Request, name: str, version: str):
             "title": name,
             "subtitle": f"v{version}",
             "stream_url": f"{base}&follow=true&tail=200",
-            "full_url": f"{base}&tail=all",
+            "full_url": base,
             "export_basename": f"{name}_v{version}",
             "manager_version": get_manager_version(),
         },
