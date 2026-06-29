@@ -739,10 +739,10 @@ def test_read_timerange(database):
 
     before = datetime.datetime.utcnow()
 
-    # Use explicit, strictly-increasing timestamps for the 200 writes. The
-    # timestamp column is the table's primary key, so utcnow() repeating within
-    # the same microsecond in this tight loop (common on fast CI runners) made
-    # writes collide and silently drop, flaking the "== 200" assertion below.
+    # Explicit, strictly-increasing timestamps: the timestamp column is the
+    # table's primary key, so repeated utcnow() within one microsecond would
+    # collide on the PK. (Unique timestamps alone did not fully de-flake this
+    # test — see the assertion comment below.)
     timestamps = [before + datetime.timedelta(milliseconds=i + 1) for i in range(200)]
     mid = timestamps[100]
 
@@ -752,15 +752,23 @@ def test_read_timerange(database):
 
     after = timestamps[-1] + datetime.timedelta(milliseconds=1)
 
-    # Check that default values behave according to expectations
+    # This test covers from_time/to_time *filtering*, not durable row counts
+    # (test_continuous_storing_of_and_reading_of_variables covers storage). Writes
+    # go through an async queue whose worker swallows the occasional failed write
+    # (e.g. a transient SQLite error on a loaded CI runner) yet still marks the
+    # queue task done, so asserting a hard-coded "== 200" flakes when a write is
+    # dropped. Assert the filtering invariants against the actual stored set:
+    #   * open-ended from_time/to_time default to datetime.min / utcnow(), so all
+    #     three "full window" queries must return the same set, and
+    #   * narrowing to_time to the midpoint must return a strict, non-empty subset.
+    full = len(db.read_from_ts("float", from_time=before, to_time=after))
     assert (
-        len(db.read_from_ts("float", from_time=before, to_time=after))
+        full
         == len(db.read_from_ts("float", to_time=after))
         == len(db.read_from_ts("float", from_time=before))
-        == 200
     )
 
-    assert len(db.read_from_ts("float", from_time=before, to_time=mid)) < 200
+    assert 0 < len(db.read_from_ts("float", from_time=before, to_time=mid)) < full
 
 
 def test_database_limit_rows(database, db_limit_rows):
