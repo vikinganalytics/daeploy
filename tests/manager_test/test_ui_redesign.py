@@ -153,3 +153,15 @@ def test_manager_logs_view_full_url_and_basename(test_client):
     assert r.status_code == 200
     assert "/logs/stream?tail=all" in r.text
     assert 'EXPORT_BASENAME = "manager"' in r.text
+
+
+def test_logs_toolbar_has_search_and_export():
+    html = TPL.joinpath("logs.html").read_text()
+    assert 'id="searchBox"' in html
+    assert 'id="matchCount"' in html
+    assert 'id="exportBtn"' in html
+    assert "function runSearch" in html
+    assert "function startStream" in html        # cancellable live tail
+    assert "EXPORT_BASENAME" in html and "FULL_URL" in html
+    assert "a.download" in html                  # triggers a file download
+    assert "createTextNode" in html              # XSS-safe highlight
