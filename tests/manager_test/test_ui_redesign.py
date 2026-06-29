@@ -131,3 +131,11 @@ def test_dashboard_page_width_widened():
     css = (ASSETS / "dashboard_styles.css").read_text().replace(" ", "")
     assert "max-width:1600px" in css
     assert "max-width:1180px" not in css
+
+
+def test_logs_view_is_full_bleed():
+    html = TPL.joinpath("logs.html").read_text().replace(" ", "")
+    assert "max-width:1180px" not in html   # logs page no longer capped
+    assert "height:60vh" not in html         # console no longer fixed-height
+    assert "min-height:100vh" in html        # body fills viewport
+    assert "flex:1" in html                  # console/panel flex-fill
