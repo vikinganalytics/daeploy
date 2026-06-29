@@ -176,10 +176,13 @@ def test_dashboard_grid_widens_services_and_fills_viewport():
     # Services hero is wider than the slim Notifications rail
     assert "grid-template-columns:2.6fr0.9fr" in css
     assert "grid-template-columns:1.85fr1fr" not in css
-    # Page fills the viewport height (minus the banner) and centers when short
+    # Page fills the viewport height (minus the banner); content is biased to
+    # the top with a small, capped gap (not centered, which floated the panels
+    # to mid-screen and left a large gap above on tall monitors).
     assert "min-height:calc(100vh-4rem)" in css
-    assert "margin-block:auto" in css
     assert "box-sizing:border-box" in css
+    assert "margin-block:auto" not in css  # no full-height vertical centering
+    assert "margin-top:clamp(" in css  # small capped top gap on .grid
 
 
 def test_notifications_panel_has_explanation():
