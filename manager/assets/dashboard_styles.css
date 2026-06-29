@@ -36,7 +36,11 @@ a{color:inherit;text-decoration:none;}
 }
 .grid{
   display:grid;grid-template-columns:2.6fr 0.9fr;gap:1.4rem;align-items:start;
-  margin-block:auto;width:100%;
+  width:100%;
+  /* Bias content toward the top with a small, capped gap below the banner —
+     the remaining viewport slack falls below, so a few short rows no longer
+     float to mid-screen with a large empty band above. */
+  margin-top:clamp(0.5rem, 5vh, 2.5rem);
 }
 
 /* ---------- panels ---------- */
