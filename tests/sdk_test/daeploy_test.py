@@ -735,14 +735,22 @@ def test_edge_case_type_storing(database):
     assert db.read_from_ts("my.normal.float")[-1].value == 10.10
 
 
-def test_read_timerange(database):
+def test_read_timerange(database, monkeypatch):
+
+    # Root cause of this test's historic flakiness: clean_database() is the only
+    # code path that deletes rows, and it re-reads DAEPLOY_SERVICE_DB_TABLE_LIMIT
+    # on every call. A leaked periodic clean (e.g. with the "1seconds" limit that
+    # db_limit_second sets) trims the OLDEST rows as they age past the limit,
+    # mid-test — so successive reads disagreed and a wider window could return
+    # FEWER rows than a narrower one (200 == 195/191/...). Pin a huge limit for
+    # the duration of this test so any concurrent clean is a no-op for our data.
+    monkeypatch.setenv("DAEPLOY_SERVICE_DB_TABLE_LIMIT", "36500days")
 
     before = datetime.datetime.utcnow()
 
     # Explicit, strictly-increasing timestamps: the timestamp column is the
     # table's primary key, so repeated utcnow() within one microsecond would
-    # collide on the PK. (Unique timestamps alone did not fully de-flake this
-    # test — see the assertion comment below.)
+    # collide on the PK.
     timestamps = [before + datetime.timedelta(milliseconds=i + 1) for i in range(200)]
     mid = timestamps[100]
 
@@ -752,23 +760,19 @@ def test_read_timerange(database):
 
     after = timestamps[-1] + datetime.timedelta(milliseconds=1)
 
-    # This test covers from_time/to_time *filtering*, not durable row counts
-    # (test_continuous_storing_of_and_reading_of_variables covers storage). Writes
-    # go through an async queue whose worker swallows the occasional failed write
-    # (e.g. a transient SQLite error on a loaded CI runner) yet still marks the
-    # queue task done, so asserting a hard-coded "== 200" flakes when a write is
-    # dropped. Assert the filtering invariants against the actual stored set:
-    #   * open-ended from_time/to_time default to datetime.min / utcnow(), so all
-    #     three "full window" queries must return the same set, and
-    #   * narrowing to_time to the midpoint must return a strict, non-empty subset.
+    # Check the from_time/to_time defaults: open-ended from_time/to_time default
+    # to datetime.min / utcnow(), so all three "full window" forms return the
+    # same set; narrowing to_time to the midpoint returns a strict, non-empty
+    # subset.
     full = len(db.read_from_ts("float", from_time=before, to_time=after))
     assert (
         full
         == len(db.read_from_ts("float", to_time=after))
         == len(db.read_from_ts("float", from_time=before))
+        == 200
     )
 
-    assert 0 < len(db.read_from_ts("float", from_time=before, to_time=mid)) < full
+    assert 0 < len(db.read_from_ts("float", from_time=before, to_time=mid)) < 200
 
 
 def test_database_limit_rows(database, db_limit_rows):
