@@ -135,10 +135,10 @@ def test_dashboard_page_width_widened():
 
 def test_logs_view_is_full_bleed():
     html = TPL.joinpath("logs.html").read_text().replace(" ", "")
-    assert "max-width:1180px" not in html   # logs page no longer capped
-    assert "height:60vh" not in html         # console no longer fixed-height
-    assert "min-height:100vh" in html        # body fills viewport
-    assert "flex:1" in html                  # console/panel flex-fill
+    assert "max-width:1180px" not in html  # logs page no longer capped
+    assert "height:60vh" not in html  # console no longer fixed-height
+    assert "min-height:100vh" in html  # body fills viewport
+    assert "flex:1" in html  # console/panel flex-fill
 
 
 def test_service_logs_view_full_url_and_basename(test_client_logged_in):
@@ -161,7 +161,7 @@ def test_logs_toolbar_has_search_and_export():
     assert 'id="matchCount"' in html
     assert 'id="exportBtn"' in html
     assert "function runSearch" in html
-    assert "function startStream" in html        # cancellable live tail
+    assert "function startStream" in html  # cancellable live tail
     assert "EXPORT_BASENAME" in html and "FULL_URL" in html
-    assert "a.download" in html                  # triggers a file download
-    assert "createTextNode" in html              # XSS-safe highlight
+    assert "a.download" in html  # triggers a file download
+    assert "createTextNode" in html  # XSS-safe highlight
