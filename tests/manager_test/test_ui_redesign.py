@@ -125,3 +125,9 @@ def test_manager_logs_view_route(test_client):
     assert 'id="console"' in body and 'id="followBox"' in body
     assert "/logs/stream?follow=true" in body
     assert "/assets/tokens.css" in body
+
+
+def test_dashboard_page_width_widened():
+    css = (ASSETS / "dashboard_styles.css").read_text().replace(" ", "")
+    assert "max-width:1600px" in css
+    assert "max-width:1180px" not in css
