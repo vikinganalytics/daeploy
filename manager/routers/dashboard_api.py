@@ -342,7 +342,8 @@ app.layout = html.Div(
                                                 html.H2("Notifications"),
                                                 html.P(
                                                     "Alerts services raise via the SDK"
-                                                    " notify() — info, warnings, critical.",
+                                                    " notify() — info, warnings,"
+                                                    " critical.",
                                                     className="panel-sub",
                                                 ),
                                             ]
