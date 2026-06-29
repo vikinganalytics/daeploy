@@ -96,11 +96,13 @@ a{color:inherit;text-decoration:none;}
 /* ---------- service actions ---------- */
 .svc-actions{grid-area:actions;display:flex;gap:.4rem}
 .lnk{
-  font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;
-  color:var(--muted);text-decoration:none;border-bottom:1px solid transparent;padding:.1rem 0;
-  transition:color .15s,border-color .15s;
+  font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--muted);text-decoration:none;
+  border:1px solid var(--line);border-radius:7px;padding:.34rem .6rem;
+  transition:color .15s,border-color .15s,background .15s;
 }
-.lnk:hover{color:var(--accent);border-color:var(--accent)}
+.lnk:hover{color:var(--accent);border-color:var(--accent-dim);background:rgba(94,230,208,.06)}
+.lnk:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
 /* ---------- notifications ---------- */
 .note{

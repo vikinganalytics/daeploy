@@ -185,3 +185,14 @@ def test_notifications_panel_has_explanation():
     assert "Alerts services raise" in layout  # one-line description of the panel
     css = (ASSETS / "dashboard_styles.css").read_text()
     assert ".panel-sub" in css
+
+
+def test_service_links_look_like_buttons():
+    css = (ASSETS / "dashboard_styles.css").read_text().replace(" ", "")
+    # .lnk is now a bordered pill, not underline-on-hover text
+    assert ".lnk{" in css
+    lnk_block = css.split(".lnk{", 1)[1].split("}", 1)[0]
+    assert "border:1pxsolid" in lnk_block
+    assert "border-radius:" in lnk_block
+    # keyboard focus ring, matching .act
+    assert ".lnk:focus-visible{" in css
