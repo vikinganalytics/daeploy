@@ -160,27 +160,28 @@ git commit -m "Make the logs view a full-screen responsive console"
 
 ---
 
-## Task 3: Add `full_url` + `export_basename` to both log-view routes
+## Task 3: Pass `full_url` + `export_basename` to both log views (and expose them in the template)
 
 **Files:**
 - Modify: `manager/routers/service_api.py` (`service_logs_view`)
 - Modify: `manager/routers/logging_api.py` (`manager_logs_view`)
+- Modify: `manager/templates/logs.html` (declare the two JS vars so the values render; Task 4 uses them)
 - Test: `tests/manager_test/test_ui_redesign.py`
 
 **Interfaces:**
-- Produces: two new template context values consumed by Task 4 — `full_url` (the log endpoint with `tail=all`, used by export/search) and `export_basename` (download filename stem).
+- Produces: two new template context values + JS globals consumed by Task 4 — `full_url` → `var FULL_URL` (the log endpoint with `tail=all`, for export/search) and `export_basename` → `var EXPORT_BASENAME` (download filename stem).
 
 - [ ] **Step 1: Write the failing tests** (append)
 
 ```python
-def test_service_logs_view_passes_full_url_and_basename(test_client_logged_in):
+def test_service_logs_view_full_url_and_basename(test_client_logged_in):
     r = test_client_logged_in.get("/services/~logs/view?name=demo&version=0.1.0")
     assert r.status_code == 200
     assert "/services/~logs?name=demo&version=0.1.0&tail=all" in r.text
     assert 'EXPORT_BASENAME = "demo_v0.1.0"' in r.text
 
 
-def test_manager_logs_view_passes_full_url_and_basename(test_client):
+def test_manager_logs_view_full_url_and_basename(test_client):
     r = test_client.get("/logs/view")
     assert r.status_code == 200
     assert "/logs/stream?tail=all" in r.text
@@ -189,10 +190,8 @@ def test_manager_logs_view_passes_full_url_and_basename(test_client):
 
 - [ ] **Step 2: Run them, expect FAIL**
 
-Run: `./venv/bin/python -m pytest tests/manager_test/test_ui_redesign.py -k "passes_full_url" -v`
-Expected: FAIL (`full_url`/`export_basename` not in context yet; `EXPORT_BASENAME` is added to the template in Task 4, so these may fail on either the context value or the template var — that's fine, they go green after Task 4).
-
-NOTE: `EXPORT_BASENAME = "..."` is emitted by the `logs.html` `<script>` added in **Task 4**. These two tests therefore pass only once **both** Task 3 (context) and Task 4 (template) are done. Keep them; they are the cross-cutting guard. (The `tail=all` substring is produced by Task 3 alone via `full_url`.)
+Run: `./venv/bin/python -m pytest tests/manager_test/test_ui_redesign.py -k "full_url_and_basename" -v`
+Expected: FAIL (neither the context values nor the `FULL_URL`/`EXPORT_BASENAME` JS vars exist yet).
 
 - [ ] **Step 3: Edit `manager/routers/service_api.py`** — replace the body of `service_logs_view`:
 
@@ -239,11 +238,31 @@ def manager_logs_view(request: Request):
     )
 ```
 
-- [ ] **Step 5: Black + commit** (tests for this task go green after Task 4)
+- [ ] **Step 5: Expose the values in `manager/templates/logs.html`.** In the `<script>` block, replace this single line:
+
+```html
+    var STREAM_URL = "{{ stream_url|safe }}";
+```
+with:
+```html
+    var STREAM_URL = "{{ stream_url|safe }}";
+    var FULL_URL   = "{{ full_url|safe }}";
+    var EXPORT_BASENAME = "{{ export_basename }}";
+```
+(These declarations are unused until Task 4 wires up export/search — harmless for now, and they make the rendered values testable.)
+
+- [ ] **Step 6: Run the tests, expect PASS**
+
+Run: `./venv/bin/python -m pytest tests/manager_test/test_ui_redesign.py -k "full_url_and_basename" -v`
+Expected: PASS. Also confirm existing render tests still pass:
+Run: `./venv/bin/python -m pytest tests/manager_test/test_ui_redesign.py -k "logs_view or manager_logs_view" -v`
+Expected: PASS.
+
+- [ ] **Step 7: Black + commit**
 
 ```bash
 /home/kaveh/miniconda3/bin/python -m black manager/routers/service_api.py manager/routers/logging_api.py
-git add manager/routers/service_api.py manager/routers/logging_api.py tests/manager_test/test_ui_redesign.py
+git add manager/routers/service_api.py manager/routers/logging_api.py manager/templates/logs.html tests/manager_test/test_ui_redesign.py
 git commit -m "Pass full_url + export_basename to the log views"
 ```
 
