@@ -139,3 +139,17 @@ def test_logs_view_is_full_bleed():
     assert "height:60vh" not in html         # console no longer fixed-height
     assert "min-height:100vh" in html        # body fills viewport
     assert "flex:1" in html                  # console/panel flex-fill
+
+
+def test_service_logs_view_full_url_and_basename(test_client_logged_in):
+    r = test_client_logged_in.get("/services/~logs/view?name=demo&version=0.1.0")
+    assert r.status_code == 200
+    assert "/services/~logs?name=demo&version=0.1.0&tail=all" in r.text
+    assert 'EXPORT_BASENAME = "demo_v0.1.0"' in r.text
+
+
+def test_manager_logs_view_full_url_and_basename(test_client):
+    r = test_client.get("/logs/view")
+    assert r.status_code == 200
+    assert "/logs/stream?tail=all" in r.text
+    assert 'EXPORT_BASENAME = "manager"' in r.text

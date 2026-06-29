@@ -161,6 +161,8 @@
   </div>
   <script>
     var STREAM_URL = "{{ stream_url|safe }}";
+    var FULL_URL   = "{{ full_url|safe }}";
+    var EXPORT_BASENAME = "{{ export_basename }}";
     var consoleEl=document.getElementById('console'),
         followBox=document.getElementById('followBox'),
         jumpBtn=document.getElementById('jumpBtn'),

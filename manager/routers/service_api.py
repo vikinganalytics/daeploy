@@ -332,17 +332,16 @@ def assign_main_service(service: BaseService):
 @ROUTER.get("/~logs/view", response_class=HTMLResponse)
 def service_logs_view(request: Request, name: str, version: str):
     """HTML view that streams a service's logs with a follow/auto-scroll toggle."""
-    stream_url = (
-        f"/services/~logs?name={quote(name)}&version={quote(version)}"
-        "&follow=true&tail=200"
-    )
+    base = f"/services/~logs?name={quote(name)}&version={quote(version)}"
     return TEMPLATES.TemplateResponse(
         request=request,
         name="logs.html",
         context={
             "title": name,
             "subtitle": f"v{version}",
-            "stream_url": stream_url,
+            "stream_url": f"{base}&follow=true&tail=200",
+            "full_url": f"{base}&tail=all",
+            "export_basename": f"{name}_v{version}",
             "manager_version": get_manager_version(),
         },
     )
