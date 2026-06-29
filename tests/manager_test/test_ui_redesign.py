@@ -169,3 +169,34 @@ def test_logs_toolbar_has_search_and_export():
     assert "EXPORT_BASENAME" in html and "FULL_URL" in html
     assert "a.download" in html  # triggers a file download
     assert "createTextNode" in html  # XSS-safe highlight
+
+
+def test_dashboard_grid_widens_services_and_fills_viewport():
+    css = (ASSETS / "dashboard_styles.css").read_text().replace(" ", "")
+    # Services hero is wider than the slim Notifications rail
+    assert "grid-template-columns:2.6fr0.9fr" in css
+    assert "grid-template-columns:1.85fr1fr" not in css
+    # Page fills the viewport height (minus the banner) and centers when short
+    assert "min-height:calc(100vh-4rem)" in css
+    assert "margin-block:auto" in css
+    assert "box-sizing:border-box" in css
+
+
+def test_notifications_panel_has_explanation():
+    from manager.routers import dashboard_api
+
+    layout = str(dashboard_api.app.layout)
+    assert "Alerts services raise" in layout  # one-line description of the panel
+    css = (ASSETS / "dashboard_styles.css").read_text()
+    assert ".panel-sub" in css
+
+
+def test_service_links_look_like_buttons():
+    css = (ASSETS / "dashboard_styles.css").read_text().replace(" ", "")
+    # .lnk is now a bordered pill, not underline-on-hover text
+    assert ".lnk{" in css
+    lnk_block = css.split(".lnk{", 1)[1].split("}", 1)[0]
+    assert "border:1pxsolid" in lnk_block
+    assert "border-radius:" in lnk_block
+    # keyboard focus ring, matching .act
+    assert ".lnk:focus-visible{" in css
