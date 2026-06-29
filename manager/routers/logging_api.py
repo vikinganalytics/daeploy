@@ -69,6 +69,8 @@ def manager_logs_view(request: Request):
             "title": "manager",
             "subtitle": f"v: {get_manager_version()}",
             "stream_url": "/logs/stream?follow=true&tail=400",
+            "full_url": "/logs/stream?tail=all",
+            "export_basename": "manager",
             "manager_version": get_manager_version(),
         },
     )

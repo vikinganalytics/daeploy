@@ -29,7 +29,7 @@ a{color:inherit;text-decoration:none;}
 .act.danger:hover{color:var(--crit);border-color:var(--crit)}
 
 /* ---------- page / grid ---------- */
-.page{max-width:1180px;margin:0 auto;padding:1.8rem 1.6rem 4rem}
+.page{max-width:1600px;margin:0 auto;padding:1.8rem 1.6rem 4rem}
 .grid{display:grid;grid-template-columns:1.85fr 1fr;gap:1.4rem;align-items:start}
 
 /* ---------- panels ---------- */
