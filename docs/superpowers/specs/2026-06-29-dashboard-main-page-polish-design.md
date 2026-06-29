@@ -56,12 +56,17 @@ plus an accessible `:focus-visible` ring to match `.act`.
 ### 4. Fix top-heavy emptiness
 Vertically center the page content when it is shorter than the viewport, while
 falling back to normal top-aligned scrolling once there are enough services to
-fill the screen. Implemented with flex auto-margins (which center but never
-clip):
+fill the screen. Implemented with a viewport-relative min-height plus flex
+auto-margins (which center but never clip):
 
-- The body becomes a flex column filling `min-height:100vh` (banner + page).
-- `.page` becomes a flex child with `flex:1` and `display:flex;
-  flex-direction:column`.
+- The dashboard is a Dash app: the layout is mounted inside Dash's own wrapper
+  divs, so a `body { flex }` chain would not reliably reach `.page`. Instead,
+  size `.page` directly against the viewport.
+- `.page` gets `min-height:calc(100vh - 4rem)` (the `4rem` budgets for the top
+  banner), `box-sizing:border-box` (there is no global reset, and `.page` has
+  padding), and `display:flex; flex-direction:column`. `vh` is
+  viewport-relative regardless of ancestor heights, so this needs no changes to
+  body or the Dash wrappers.
 - The inner `.grid` gets `margin-block:auto`. Auto margins center the grid
   vertically when there is spare room; when the grid is taller than the
   available space the margins collapse to zero and the page scrolls normally —
@@ -79,7 +84,8 @@ Extend the existing guard tests in `tests/manager_test/test_ui_redesign.py`
 - `.lnk` is styled as a bordered button (border + border-radius) and has a
   `:focus-visible` rule.
 - `.grid` uses the new `2.6fr 0.9fr` template.
-- Vertical-fill rule present (`min-height:100vh` on body, `flex:1` on `.page`).
+- Vertical-fill rule present (`.page` has `min-height:calc(100vh - 4rem)` and
+  `.grid` has `margin-block:auto`).
 
 Run locally before pushing: `black --check`, `flake8`, `pylint manager`, and
 `pytest tests/manager_test/test_ui_redesign.py`.
