@@ -730,15 +730,19 @@ def test_edge_case_type_storing(database):
 
 def test_read_timerange(database):
     before = datetime.datetime.utcnow()
-    mid = None
 
-    for i in range(200):
-        db.write_to_ts("float", float(i), datetime.datetime.utcnow())
-        if i == 100:
-            mid = datetime.datetime.utcnow()
+    # Use explicit, strictly-increasing timestamps for the 200 writes. The
+    # timestamp column is the table's primary key, so utcnow() repeating within
+    # the same microsecond in this tight loop (common on fast CI runners) made
+    # writes collide and silently drop, flaking the "== 200" assertion below.
+    timestamps = [before + datetime.timedelta(milliseconds=i + 1) for i in range(200)]
+    mid = timestamps[100]
+
+    for i, timestamp in enumerate(timestamps):
+        db.write_to_ts("float", float(i), timestamp)
     await_database_queue()
 
-    after = datetime.datetime.utcnow()
+    after = timestamps[-1] + datetime.timedelta(milliseconds=1)
 
     # Check that default values behave according to expectations
     assert (

@@ -1,4 +1,6 @@
-sphinx
+# sphinx-multiversion (unmaintained) breaks on Sphinx 8+ (Config.read signature
+# change). Pin Sphinx < 8 until multiversion is replaced/updated.
+sphinx<8
 sphinx-rtd-theme
 sphinx-multiversion
 pip-licenses

@@ -18,13 +18,27 @@ HTML_INDEX_TEMPLATE = """\
 THIS_DIR = Path(__file__).parent
 BUILD_DIR = (THIS_DIR / "build" / "html").resolve()
 
-versions = filter(lambda x: x.is_dir(), BUILD_DIR.iterdir())
 
-versions = map(lambda x: version.parse(x.name), versions)
+def _as_release(name):
+    """Parse a build-dir name as a release version.
 
-versions = filter(lambda v: not (v.is_prerelease or v.is_devrelease), versions)
+    Returns None for non-version dirs (e.g. ``develop``) and for
+    pre-/dev-releases, so they are excluded from the redirect target.
+    Newer ``packaging`` raises ``InvalidVersion`` instead of returning a
+    legacy version, so the parse must be guarded.
+    """
+    try:
+        parsed = version.parse(name)
+    except version.InvalidVersion:
+        return None
+    if parsed.is_prerelease or parsed.is_devrelease:
+        return None
+    return parsed
 
-versions = sorted(versions, reverse=True)
+
+dir_names = [p.name for p in BUILD_DIR.iterdir() if p.is_dir()]
+
+versions = sorted(filter(None, (_as_release(name) for name in dir_names)), reverse=True)
 
 the_version = str(versions[0])
 
