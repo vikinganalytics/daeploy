@@ -194,6 +194,14 @@ def test_notifications_panel_has_explanation():
     assert ".panel-sub" in css
 
 
+def test_service_rows_are_compact():
+    css = (ASSETS / "dashboard_styles.css").read_text().replace(" ", "")
+    assert ".svc{" in css
+    svc_block = css.split(".svc{", 1)[1].split("}", 1)[0]
+    # tight vertical row padding so more services fit without scrolling
+    assert "padding:.5rem1.2rem" in svc_block
+
+
 def test_service_links_look_like_buttons():
     css = (ASSETS / "dashboard_styles.css").read_text().replace(" ", "")
     # .lnk is now a bordered pill, not underline-on-hover text

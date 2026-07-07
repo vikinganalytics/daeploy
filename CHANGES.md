@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. This project adheres to [Semantic Versioning](https://semver.org/).
 
+## 1.5.0
+
+### New Features
+
+- Logs viewer: in-page search with match highlighting and a match count, one-click export of the full log to a file, and a responsive full-screen console (both service and manager logs).
+- Dashboard polish: wider Services panel with a slim, self-explanatory Notifications rail; `LOGS`/`DOCS` rendered as clear buttons with keyboard focus rings; content biased to the top with a small capped gap; and denser service rows so more services fit without scrolling.
+
+### Bugfixes
+
+- Logs export and search now return the actual log instead of a validation error (the view no longer requests the invalid `tail=all`).
+- Stabilized the flaky `test_read_timerange` SDK test (a concurrent database clean could trim rows mid-test).
+
 ## 1.4.0
 
 ### New Features
