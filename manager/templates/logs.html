@@ -6,7 +6,9 @@
   <link rel="icon" href="/assets/favicon.ico">
   <link rel="stylesheet" href="/assets/tokens.css">
   <style>
-    body{background:var(--ground);color:var(--text);font-family:var(--sans);margin:0;}
+    html,body{height:100%;}
+    body{background:var(--ground);color:var(--text);font-family:var(--sans);margin:0;
+      display:flex;flex-direction:column;min-height:100vh;}
 
     /* ---------- top bar ---------- */
     .top{
@@ -33,12 +35,13 @@
     }
     .act:hover{color:var(--text);border-color:var(--accent-dim)}
     .act.danger:hover{color:var(--crit);border-color:var(--crit)}
+    .act:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
 
-    .page{max-width:1180px;margin:0 auto;padding:1.8rem 1.6rem 4rem}
+    .page{flex:1;min-height:0;display:flex;padding:1.2rem 1.6rem 1.6rem;}
 
     .panel{
       background:var(--surface);border:1px solid var(--line-soft);border-radius:16px;
-      overflow:hidden;
+      overflow:hidden;flex:1;display:flex;flex-direction:column;min-height:0;width:100%;
     }
 
     /* ---------- service status dot ---------- */
@@ -64,6 +67,14 @@
     .live-tag.paused{color:var(--faint)}
     .live-tag.paused .d{background:var(--faint);box-shadow:none;animation:none}
     .logs-tools{display:flex;align-items:center;gap:.9rem}
+    .searchbox{
+      background:var(--ground);border:1px solid var(--line);border-radius:8px;
+      color:var(--text);font-family:var(--mono);font-size:12px;padding:.35rem .6rem;width:210px;
+    }
+    .searchbox::placeholder{color:var(--faint)}
+    .searchbox:focus{outline:none;border-color:var(--accent-dim);box-shadow:0 0 0 3px rgba(94,230,208,.14)}
+    .match-count{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;color:var(--faint);min-width:64px}
+    .console mark{background:rgba(94,230,208,.28);color:var(--text);border-radius:2px;padding:0 1px}
 
     /* follow switch */
     .follow{display:inline-flex;align-items:center;gap:.55rem;cursor:pointer;user-select:none}
@@ -84,9 +95,9 @@
     }
     .follow input:checked ~ .flabel{color:var(--text)}
 
-    .console-wrap{position:relative}
+    .console-wrap{position:relative;flex:1;min-height:0;display:flex;}
     .console{
-      height:60vh;min-height:320px;overflow-y:auto;overflow-x:hidden;
+      flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;
       font-family:var(--mono);font-size:12.5px;line-height:1.7;
       padding:.6rem 0;background:
         linear-gradient(180deg,rgba(94,230,208,.025),transparent 120px);
@@ -144,6 +155,9 @@
         <div class="ctx"><span class="sdot run live"></span>
           <span class="name">{{ title }}</span><span class="ver">{{ subtitle }}</span></div>
         <div class="logs-tools">
+          <input type="search" id="searchBox" class="searchbox" placeholder="Search logs…" autocomplete="off" aria-label="Search logs">
+          <span class="match-count" id="matchCount"></span>
+          <button class="act" id="exportBtn" type="button">Export</button>
           <span class="live-tag" id="liveTag"><span class="d"></span><span id="liveLabel">Live</span></span>
           <label class="follow" title="Auto-scroll to newest logs">
             <input type="checkbox" id="followBox" checked>
@@ -159,34 +173,54 @@
   </div>
   <script>
     var STREAM_URL = "{{ stream_url|safe }}";
+    var FULL_URL   = "{{ full_url|safe }}";
+    var EXPORT_BASENAME = "{{ export_basename }}";
+
     var consoleEl=document.getElementById('console'),
         followBox=document.getElementById('followBox'),
         jumpBtn=document.getElementById('jumpBtn'),
-        liveTag=document.getElementById('liveTag');
+        liveTag=document.getElementById('liveTag'),
+        searchBox=document.getElementById('searchBox'),
+        matchCount=document.getElementById('matchCount'),
+        exportBtn=document.getElementById('exportBtn');
+
+    var searchActive=false, streamCtrl=null, searchTimer=null, searchCtrl=null;
+
     function nearBottom(){return consoleEl.scrollHeight-consoleEl.scrollTop-consoleEl.clientHeight<24;}
     function setLive(on){liveTag.classList.toggle('paused',!on);document.getElementById('liveLabel').textContent=on?'Live':'Paused';}
     function classify(line){var u=line.toUpperCase();
       if(u.indexOf('ERROR')>-1||u.indexOf('CRITICAL')>-1)return'err';
       if(u.indexOf('WARN')>-1)return'warn';return'info';}
-    function appendLine(text){
-      if(!text)return;
+    function newRow(text){
       var lvl=classify(text), row=document.createElement('div');
       row.className='logline'+(lvl==='err'?' err':lvl==='warn'?' warn':'');
+      return row;
+    }
+    function appendLine(text){
+      if(!text)return;
+      var row=newRow(text);
       row.textContent=text;            // textContent = safe, no XSS from log content
       consoleEl.appendChild(row);
       while(consoleEl.childElementCount>400)consoleEl.removeChild(consoleEl.firstChild);
       if(followBox.checked)consoleEl.scrollTop=consoleEl.scrollHeight; else jumpBtn.classList.add('show');
     }
     function jumpToLatest(){followBox.checked=true;setLive(true);consoleEl.scrollTop=consoleEl.scrollHeight;jumpBtn.classList.remove('show');}
+
     followBox.addEventListener('change',function(){setLive(followBox.checked);
       if(followBox.checked){consoleEl.scrollTop=consoleEl.scrollHeight;jumpBtn.classList.remove('show');}});
     consoleEl.addEventListener('scroll',function(){
+      if(searchActive)return;
       if(followBox.checked&&!nearBottom()){followBox.checked=false;setLive(false);jumpBtn.classList.add('show');}
       else if(!followBox.checked&&nearBottom()){jumpBtn.classList.remove('show');}});
-    // stream the real endpoint
-    (async function(){
+
+    // ---- live tail (cancellable) ----
+    async function startStream(){
+      if(streamCtrl)streamCtrl.abort();
+      streamCtrl=new AbortController();
+      consoleEl.textContent='';
+      followBox.checked=true; setLive(true); jumpBtn.classList.remove('show');
       try{
-        var resp=await fetch(STREAM_URL,{headers:{'Accept':'text/plain'}});
+        var resp=await fetch(STREAM_URL,{headers:{'Accept':'text/plain'},signal:streamCtrl.signal});
         var reader=resp.body.getReader(), dec=new TextDecoder(), buf='';
         while(true){
           var r=await reader.read(); if(r.done)break;
@@ -196,8 +230,63 @@
         }
         if(buf)appendLine(buf);
         setLive(false);
-      }catch(e){appendLine('— log stream ended —');setLive(false);}
-    })();
+      }catch(e){ if(e.name!=='AbortError'){appendLine('— log stream ended —');setLive(false);} }
+    }
+
+    // ---- search: filter to matching lines over full history ----
+    function appendMatch(text,term){
+      var row=newRow(text), lc=text.toLowerCase(), q=term.toLowerCase(), i=0, idx;
+      while((idx=lc.indexOf(q,i))>-1){
+        if(idx>i)row.appendChild(document.createTextNode(text.slice(i,idx)));
+        var m=document.createElement('mark'); m.textContent=text.slice(idx,idx+term.length); row.appendChild(m);
+        i=idx+term.length;
+      }
+      if(i<text.length)row.appendChild(document.createTextNode(text.slice(i)));
+      consoleEl.appendChild(row);
+    }
+    async function runSearch(term){
+      searchActive=true;
+      if(streamCtrl)streamCtrl.abort();
+      if(searchCtrl)searchCtrl.abort(); searchCtrl=new AbortController();
+      setLive(false); jumpBtn.classList.remove('show'); matchCount.textContent='…';
+      try{
+        var resp=await fetch(FULL_URL,{headers:{'Accept':'text/plain'},signal:searchCtrl.signal});
+        var text=await resp.text();
+        if(!searchActive)return;
+        var q=term.toLowerCase(), matches=0;
+        consoleEl.textContent='';
+        text.split('\n').forEach(function(line){
+          if(line && line.toLowerCase().indexOf(q)>-1){matches++; appendMatch(line,term);}
+        });
+        matchCount.textContent=matches+' match'+(matches===1?'':'es');
+      }catch(e){ if(e.name!=='AbortError')matchCount.textContent='search failed'; }
+    }
+    function clearSearch(){ searchActive=false; matchCount.textContent=''; if(searchCtrl)searchCtrl.abort(); startStream(); }
+
+    searchBox.addEventListener('input',function(){
+      clearTimeout(searchTimer);
+      var term=searchBox.value;
+      searchTimer=setTimeout(function(){ if(term.trim()==='')clearSearch(); else runSearch(term); },250);
+    });
+
+    // ---- export: download full history as a .log file ----
+    exportBtn.addEventListener('click',async function(){
+      var old=exportBtn.textContent; exportBtn.textContent='…'; exportBtn.disabled=true;
+      try{
+        var resp=await fetch(FULL_URL,{headers:{'Accept':'text/plain'}});
+        var text=await resp.text();
+        var d=new Date(), p=function(n){return String(n).padStart(2,'0');};
+        var ts=''+d.getUTCFullYear()+p(d.getUTCMonth()+1)+p(d.getUTCDate())+'-'+p(d.getUTCHours())+p(d.getUTCMinutes())+p(d.getUTCSeconds());
+        var a=document.createElement('a');
+        a.href=URL.createObjectURL(new Blob([text],{type:'text/plain'}));
+        a.download=EXPORT_BASENAME+'_'+ts+'.log';
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(function(){URL.revokeObjectURL(a.href);},1000);
+      }catch(e){ alert('Export failed: '+e); }
+      finally{ exportBtn.textContent=old; exportBtn.disabled=false; }
+    });
+
+    startStream();
   </script>
 </body>
 </html>

@@ -29,8 +29,19 @@ a{color:inherit;text-decoration:none;}
 .act.danger:hover{color:var(--crit);border-color:var(--crit)}
 
 /* ---------- page / grid ---------- */
-.page{max-width:1180px;margin:0 auto;padding:1.8rem 1.6rem 4rem}
-.grid{display:grid;grid-template-columns:1.85fr 1fr;gap:1.4rem;align-items:start}
+.page{
+  max-width:1600px;margin:0 auto;padding:1.8rem 1.6rem 4rem;
+  box-sizing:border-box;min-height:calc(100vh - 4rem);
+  display:flex;flex-direction:column;
+}
+.grid{
+  display:grid;grid-template-columns:2.6fr 0.9fr;gap:1.4rem;align-items:start;
+  width:100%;
+  /* Bias content toward the top with a small, capped gap below the banner —
+     the remaining viewport slack falls below, so a few short rows no longer
+     float to mid-screen with a large empty band above. */
+  margin-top:clamp(0.5rem, 5vh, 2.5rem);
+}
 
 /* ---------- panels ---------- */
 .panel{
@@ -42,6 +53,7 @@ a{color:inherit;text-decoration:none;}
   padding:1rem 1.2rem .85rem;border-bottom:1px solid var(--line-soft);
 }
 .panel-head h2{font-size:.82rem;letter-spacing:.04em;font-weight:600;margin:0}
+.panel-sub{margin:.25rem 0 0;font-size:11px;line-height:1.4;color:var(--muted)}
 .count{font-family:var(--mono);font-size:11px;color:var(--faint)}
 
 /* ---------- service rows ---------- */
@@ -50,7 +62,7 @@ a{color:inherit;text-decoration:none;}
   grid-template-columns:1.3fr .7fr auto;
   grid-template-areas:"id state actions";
   align-items:center;gap:.8rem;
-  padding:.95rem 1.2rem;border-bottom:1px solid var(--line-soft);
+  padding:.5rem 1.2rem;border-bottom:1px solid var(--line-soft);
   transition:background .15s;
 }
 .svc:last-child{border-bottom:none}
@@ -88,11 +100,13 @@ a{color:inherit;text-decoration:none;}
 /* ---------- service actions ---------- */
 .svc-actions{grid-area:actions;display:flex;gap:.4rem}
 .lnk{
-  font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;
-  color:var(--muted);text-decoration:none;border-bottom:1px solid transparent;padding:.1rem 0;
-  transition:color .15s,border-color .15s;
+  font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--muted);text-decoration:none;
+  border:1px solid var(--line);border-radius:7px;padding:.34rem .6rem;
+  transition:color .15s,border-color .15s,background .15s;
 }
-.lnk:hover{color:var(--accent);border-color:var(--accent)}
+.lnk:hover{color:var(--accent);border-color:var(--accent-dim);background:rgba(94,230,208,.06)}
+.lnk:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
 /* ---------- notifications ---------- */
 .note{

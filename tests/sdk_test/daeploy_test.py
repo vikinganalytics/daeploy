@@ -735,28 +735,44 @@ def test_edge_case_type_storing(database):
     assert db.read_from_ts("my.normal.float")[-1].value == 10.10
 
 
-def test_read_timerange(database):
+def test_read_timerange(database, monkeypatch):
+
+    # Root cause of this test's historic flakiness: clean_database() is the only
+    # code path that deletes rows, and it re-reads DAEPLOY_SERVICE_DB_TABLE_LIMIT
+    # on every call. A leaked periodic clean (e.g. with the "1seconds" limit that
+    # db_limit_second sets) trims the OLDEST rows as they age past the limit,
+    # mid-test — so successive reads disagreed and a wider window could return
+    # FEWER rows than a narrower one (200 == 195/191/...). Pin a huge limit for
+    # the duration of this test so any concurrent clean is a no-op for our data.
+    monkeypatch.setenv("DAEPLOY_SERVICE_DB_TABLE_LIMIT", "36500days")
 
     before = datetime.datetime.utcnow()
-    mid = None
 
-    for i in range(200):
-        db.write_to_ts("float", float(i), datetime.datetime.utcnow())
-        if i == 100:
-            mid = datetime.datetime.utcnow()
+    # Explicit, strictly-increasing timestamps: the timestamp column is the
+    # table's primary key, so repeated utcnow() within one microsecond would
+    # collide on the PK.
+    timestamps = [before + datetime.timedelta(milliseconds=i + 1) for i in range(200)]
+    mid = timestamps[100]
+
+    for i, timestamp in enumerate(timestamps):
+        db.write_to_ts("float", float(i), timestamp)
     await_database_queue()
 
-    after = datetime.datetime.utcnow()
+    after = timestamps[-1] + datetime.timedelta(milliseconds=1)
 
-    # Check that default values behave according to expectations
+    # Check the from_time/to_time defaults: open-ended from_time/to_time default
+    # to datetime.min / utcnow(), so all three "full window" forms return the
+    # same set; narrowing to_time to the midpoint returns a strict, non-empty
+    # subset.
+    full = len(db.read_from_ts("float", from_time=before, to_time=after))
     assert (
-        len(db.read_from_ts("float", from_time=before, to_time=after))
+        full
         == len(db.read_from_ts("float", to_time=after))
         == len(db.read_from_ts("float", from_time=before))
         == 200
     )
 
-    assert len(db.read_from_ts("float", from_time=before, to_time=mid)) < 200
+    assert 0 < len(db.read_from_ts("float", from_time=before, to_time=mid)) < 200
 
 
 def test_database_limit_rows(database, db_limit_rows):
