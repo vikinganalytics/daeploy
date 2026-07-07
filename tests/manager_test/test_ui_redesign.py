@@ -125,3 +125,89 @@ def test_manager_logs_view_route(test_client):
     assert 'id="console"' in body and 'id="followBox"' in body
     assert "/logs/stream?follow=true" in body
     assert "/assets/tokens.css" in body
+
+
+def test_dashboard_page_width_widened():
+    css = (ASSETS / "dashboard_styles.css").read_text().replace(" ", "")
+    assert "max-width:1600px" in css
+    assert "max-width:1180px" not in css
+
+
+def test_logs_view_is_full_bleed():
+    html = TPL.joinpath("logs.html").read_text().replace(" ", "")
+    assert "max-width:1180px" not in html  # logs page no longer capped
+    assert "height:60vh" not in html  # console no longer fixed-height
+    assert "min-height:100vh" in html  # body fills viewport
+    assert "flex:1" in html  # console/panel flex-fill
+
+
+def test_service_logs_view_full_url_and_basename(test_client_logged_in):
+    r = test_client_logged_in.get("/services/~logs/view?name=demo&version=0.1.0")
+    assert r.status_code == 200
+    # full_url omits tail so the endpoint receives tail=None -> Docker "all".
+    # Passing the literal tail=all 422s (the param is typed int).
+    assert '"/services/~logs?name=demo&version=0.1.0"' in r.text
+    assert "tail=all" not in r.text
+    assert 'EXPORT_BASENAME = "demo_v0.1.0"' in r.text
+
+
+def test_manager_logs_view_full_url_and_basename(test_client):
+    r = test_client.get("/logs/view")
+    assert r.status_code == 200
+    assert '"/logs/stream"' in r.text
+    assert "tail=all" not in r.text
+    assert 'EXPORT_BASENAME = "manager"' in r.text
+
+
+def test_logs_toolbar_has_search_and_export():
+    html = TPL.joinpath("logs.html").read_text()
+    assert 'id="searchBox"' in html
+    assert 'id="matchCount"' in html
+    assert 'id="exportBtn"' in html
+    assert "function runSearch" in html
+    assert "function startStream" in html  # cancellable live tail
+    assert "EXPORT_BASENAME" in html and "FULL_URL" in html
+    assert "a.download" in html  # triggers a file download
+    assert "createTextNode" in html  # XSS-safe highlight
+
+
+def test_dashboard_grid_widens_services_and_fills_viewport():
+    css = (ASSETS / "dashboard_styles.css").read_text().replace(" ", "")
+    # Services hero is wider than the slim Notifications rail
+    assert "grid-template-columns:2.6fr0.9fr" in css
+    assert "grid-template-columns:1.85fr1fr" not in css
+    # Page fills the viewport height (minus the banner); content is biased to
+    # the top with a small, capped gap (not centered, which floated the panels
+    # to mid-screen and left a large gap above on tall monitors).
+    assert "min-height:calc(100vh-4rem)" in css
+    assert "box-sizing:border-box" in css
+    assert "margin-block:auto" not in css  # no full-height vertical centering
+    assert "margin-top:clamp(" in css  # small capped top gap on .grid
+
+
+def test_notifications_panel_has_explanation():
+    from manager.routers import dashboard_api
+
+    layout = str(dashboard_api.app.layout)
+    assert "Alerts services raise" in layout  # one-line description of the panel
+    css = (ASSETS / "dashboard_styles.css").read_text()
+    assert ".panel-sub" in css
+
+
+def test_service_rows_are_compact():
+    css = (ASSETS / "dashboard_styles.css").read_text().replace(" ", "")
+    assert ".svc{" in css
+    svc_block = css.split(".svc{", 1)[1].split("}", 1)[0]
+    # tight vertical row padding so more services fit without scrolling
+    assert "padding:.5rem1.2rem" in svc_block
+
+
+def test_service_links_look_like_buttons():
+    css = (ASSETS / "dashboard_styles.css").read_text().replace(" ", "")
+    # .lnk is now a bordered pill, not underline-on-hover text
+    assert ".lnk{" in css
+    lnk_block = css.split(".lnk{", 1)[1].split("}", 1)[0]
+    assert "border:1pxsolid" in lnk_block
+    assert "border-radius:" in lnk_block
+    # keyboard focus ring, matching .act
+    assert ".lnk:focus-visible{" in css
