@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. This project adheres to [Semantic Versioning](https://semver.org/).
 
+## 1.5.1
+
+### Security
+
+- Bumped manager dependencies to resolve High-severity advisories: `cryptography` (46.0.7 → 50.0.0), `pyjwt` (2.12.1 → 2.13.0), and `python-multipart` (0.0.26 → 0.0.27).
+
+### Bugfixes
+
+- The logs viewer no longer goes blank over time. The manager reused a single Docker log client whose connections leaked whenever a live-follow log stream was closed, so eventually every log request would hang and the page rendered empty. Each log request now uses its own client, released when the stream ends.
+
 ## 1.5.0
 
 ### New Features
