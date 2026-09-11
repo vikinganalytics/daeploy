@@ -73,13 +73,6 @@ class ConnectorBase(ABC):
 
 class LocalDockerConnector(ConnectorBase):
     CLIENT = docker.from_env()
-    _AIO_CLIENT = None
-
-    @classmethod
-    def _get_aio_client(cls):
-        if cls._AIO_CLIENT is None:
-            cls._AIO_CLIENT = aiodocker.Docker()
-        return cls._AIO_CLIENT
 
     def __init__(self):
         # Create our own docker network
@@ -401,27 +394,35 @@ class LocalDockerConnector(ConnectorBase):
             AsyncGenerator[str, None]: Async infinite generator if following,
             else async finite generator.
         """
-        container = await self._get_aio_client().containers.get(
-            create_container_name(service.name, service.version)
-        )
+        # Use a fresh aiodocker client per request and close it in `finally`, so
+        # the underlying connection is always released -- including when the
+        # browser abandons a follow=True stream (closing the logs page). A
+        # long-lived cached client leaked those connections until its pool
+        # exhausted and every log request hung (empty logs page).
+        client = aiodocker.Docker()
+        try:
+            container = await client.containers.get(
+                create_container_name(service.name, service.version)
+            )
 
-        kwargs = {
-            "tail": tail if tail else "all",
-            "stdout": True,
-            "stderr": True,
-            "follow": follow,
-        }
+            kwargs = {
+                "tail": tail if tail else "all",
+                "stdout": True,
+                "stderr": True,
+                "follow": follow,
+            }
+            if since:
+                kwargs["since"] = datetime_to_timestamp(since)
+            logs = container.log(**kwargs)
 
-        if since:
-            kwargs["since"] = datetime_to_timestamp(since)
-        logs = container.log(**kwargs)
-
-        if follow:
-            async for log in logs:
-                yield log
-        else:
-            for log in await logs:
-                yield log
+            if follow:
+                async for log in logs:
+                    yield log
+            else:
+                for log in await logs:
+                    yield log
+        finally:
+            await client.close()
 
     def manager_logs(self, since: datetime) -> str:
         """Get the manager logs from a certain time
@@ -453,24 +454,29 @@ class LocalDockerConnector(ConnectorBase):
             else async finite generator.
         """
         manager = self._get_manager_container()
-        container = await self._get_aio_client().containers.get(manager.id)
+        # Fresh client per request, closed in `finally` (see service_logs for why).
+        client = aiodocker.Docker()
+        try:
+            container = await client.containers.get(manager.id)
 
-        kwargs = {
-            "tail": tail if tail else "all",
-            "stdout": True,
-            "stderr": True,
-            "follow": follow,
-        }
-        if since:
-            kwargs["since"] = datetime_to_timestamp(since)
-        logs = container.log(**kwargs)
+            kwargs = {
+                "tail": tail if tail else "all",
+                "stdout": True,
+                "stderr": True,
+                "follow": follow,
+            }
+            if since:
+                kwargs["since"] = datetime_to_timestamp(since)
+            logs = container.log(**kwargs)
 
-        if follow:
-            async for log in logs:
-                yield log
-        else:
-            for log in await logs:
-                yield log
+            if follow:
+                async for log in logs:
+                    yield log
+            else:
+                for log in await logs:
+                    yield log
+        finally:
+            await client.close()
 
 
 RTE_CONN = LocalDockerConnector()
